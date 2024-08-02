@@ -13,7 +13,10 @@ def get_all_file_paths(directory):
             file_paths.append(os.path.join(root, file))
     return file_paths
 
-class DataSet:
+class DataSet1:
+    """
+    用文件夹中的标签作为标签的数据集
+    """
     def __init__(self, path:str='./datas/train') -> None:
         img_floders_path = path + '/img'        # 图片文件夹路径
         label_floders_path = path + '/label'    # 标签文件夹路径
@@ -43,4 +46,40 @@ class DataSet:
             label = f.read().strip()
 
         return torch.from_numpy(img), label
+    
+
+class DataSet2:
+    """
+    用文件夹作为标签的数据集
+    """
+    def __init__(self, path:str='./datas/train') -> None:
+        self.path_list = get_all_file_paths(path)       # 获取所有文件路径
+
+    def __len__(self):
+        return len(self.path_list)
+    
+    def __getitem__(self, index):
+        img_path = self.path_list[index]
+        label = os.path.basename(os.path.dirname(img_path))
+
+        img = cv2.imread(img_path)          # 读取图片
+        return torch.from_numpy(img), label
+
+
+
+class ImageDataLoader:
+    def __init__(self, dataset, batch_size=1):
+        self.dataset = dataset
+        self.batch_size = batch_size
+
+    def __iter__(self):
+        self.count = 0
+        return self
+    
+    def __next__(self):
+        if self.count >= len(self.dataset):
+            raise StopIteration
+        img, label = self.dataset[self.count]
+        self.count += 1
+        return img, label
 

@@ -36,12 +36,9 @@ class CNN(nn.Module):
         )
 
 
-    def forward(self, img:cv2.typing.MatLike):
-        """输入任意大小图片"""
-        # 将图片调整到128*128
-        img = cv2.resize(img, (128, 128))
-        # 将图片转换为tensor
-        img_tensor = torch.tensor(img, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0)
+    def forward(self, img_tensor:torch.Tensor):
+        img_tensor = img_tensor.float()  # 将数据转换为float类型
+        img_tensor = img_tensor.permute(0, 3, 1, 2)  # 交换维度
         # 0号节点
         img_tensor = self.node0(img_tensor)
         # 1号节点

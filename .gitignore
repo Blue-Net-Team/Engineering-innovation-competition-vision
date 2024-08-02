@@ -139,3 +139,12 @@ cython_debug/
 
 # vscode
 .vscode/
+
+# train datas
+datas/
+*.jpg
+*.png
+*.txt
+
+# test
+*test*

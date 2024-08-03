@@ -1,4 +1,5 @@
 import os
+import threading
 import cv2
 import torch
 from torch.utils.data import DataLoader, Dataset
@@ -69,4 +70,32 @@ class DataSet2(Dataset):
 
         img = cv2.imread(img_path)          # 读取图片
         return torch.from_numpy(img), label
+
+
+class LoadCap:
+    def __init__(self):
+        self.cap = cv2.VideoCapture(0)
+        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
+        self.img = None
+
+    def get_img(self):
+        while True:
+            ret, frame = self.cap.read()
+            if ret:
+                self.img = frame
+
+    def __len__(self):
+        return 1
+    
+    def __iter__(self):
+        self.thread = threading.Thread(target=self.get_img)
+        self.thread.start()
+        return self
+    
+    def __next__(self):
+        if self.img is not None:
+            return self.img
+        else:
+            return None
+        
 

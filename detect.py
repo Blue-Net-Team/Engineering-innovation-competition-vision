@@ -2,6 +2,13 @@ import torch
 import cv2
 from model import CNN
 from utils import LoadCap
+import torch.nn.functional as F
+
+COLOR_DICT = {
+    0:'R',
+    1:'G',
+    2:'B',
+}
 
 def detect(x0:int, y0:int, x1:int, y1:int):
     cap_loader = LoadCap()
@@ -21,6 +28,8 @@ def detect(x0:int, y0:int, x1:int, y1:int):
         with torch.no_grad():
             output = cnn(img)
             prediction = torch.argmax(output, dim=1)
+            probabilities = F.softmax(output, dim=1)
 
             print(output)
-            print(prediction)
+            # print(probabilities)
+            print(f'color:{COLOR_DICT[prediction.item()]}, probability:{probabilities[0][prediction.item()].item()}')   # type:ignore

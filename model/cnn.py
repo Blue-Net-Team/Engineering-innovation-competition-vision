@@ -18,6 +18,8 @@ class CNN(nn.Module):
 
         #1号节点，将64*64的图片进行卷积
         self.node1 = nn.Sequential(
+            # 归一化
+            nn.BatchNorm2d(64),
             nn.Conv2d(64, 128, 3, 1, 1),
             nn.ReLU(),
             nn.Conv2d(128, 128, 3, 1, 1),
@@ -27,6 +29,8 @@ class CNN(nn.Module):
 
         # 全连接层
         self.fc = nn.Sequential(
+            # 归一化
+            nn.BatchNorm2d(128),
             nn.Flatten(),
             nn.Linear(128*32*32, 1024),
             nn.ReLU(),

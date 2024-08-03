@@ -17,13 +17,13 @@ def train(epochs=100):
     # 检查是否有可用的GPU
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # 创建数据集
-    dataset = utils.DataSet2(ifrandom=False)
+    dataset = utils.DataSet2(ifrandom=True)
     # 创建数据加载器
     dataloader = utils.DataLoader(dataset, batch_size=1)
     # 创建模型
     cnn = model.CNN().to(device)
     # 创建优化器
-    optimizer = torch.optim.Adam(cnn.parameters(), lr=0.001)
+    optimizer = torch.optim.SGD(cnn.parameters(), lr=0.001, momentum=0.5)
     # 创建损失函数
     loss_fn = torch.nn.CrossEntropyLoss()
     # 创建TensorBoard的写入器
@@ -38,7 +38,7 @@ def train(epochs=100):
             # 前向传播
             output = cnn(img)
             # 计算损失
-            loss = loss_fn(output, torch.tensor([COLOR_DICT[label[0]]])).to(device)
+            loss = loss_fn(output, torch.tensor([COLOR_DICT[label[0]]]).to(device))
             # 反向传播
             optimizer.zero_grad()
             loss.backward()

@@ -45,6 +45,7 @@ def train(epochs=100):
             optimizer.step()
             # 打印损失
             print(f'epoch:{epoch}, i:{i}, loss:{loss.item()}')
+            # FIXME:此处tensorboard不分步，所有的loss都会显示在同一图像上
             writer.add_scalar('Loss', loss.item(), i)
             loss_avg += loss.item()
         writer.add_scalar('Loss avg', loss_avg/len(dataloader), i + epoch * len(dataloader))

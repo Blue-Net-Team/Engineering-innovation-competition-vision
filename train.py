@@ -29,6 +29,8 @@ def train(epochs=100):
     # 创建TensorBoard的写入器
     writer = SummaryWriter()
 
+    nums = 0
+
     # 训练
     for epoch in range(epochs):
         loss_avg = 0
@@ -45,8 +47,8 @@ def train(epochs=100):
             optimizer.step()
             # 打印损失
             print(f'epoch:{epoch}, i:{i}, loss:{loss.item()}')
-            # FIXME:此处tensorboard不分步，所有的loss都会显示在同一图像上
-            writer.add_scalar('Loss', loss.item(), i)
+            writer.add_scalar('Loss', loss.item(), nums)
+            nums += 1
             loss_avg += loss.item()
         writer.add_scalar('Loss avg', loss_avg/len(dataloader), i + epoch * len(dataloader))
         print(f'epoch:{epoch}, loss_avg:{loss_avg/len(dataloader)}')

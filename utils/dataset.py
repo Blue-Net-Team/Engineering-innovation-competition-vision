@@ -4,7 +4,12 @@ import cv2
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-
+COLOR_DIC = {
+    'R':0,
+    'G':1,
+    'B':2,
+    'W':3
+}
 def get_all_file_paths(directory):
     """
     获取目录下所有文件的路径
@@ -68,13 +73,17 @@ class DataSet2(Dataset):
         img_path = self.path_list[index]
         label = os.path.basename(os.path.dirname(img_path))
 
+        label = COLOR_DIC[label]            # 将标签转换为数字
+
         img = cv2.imread(img_path)          # 读取图片
         return torch.from_numpy(img), label
 
 
 class LoadCap:
-    def __init__(self):
-        self.cap = cv2.VideoCapture(0)
+    def __init__(self, _id:int=0) -> None:
+        self.cap = cv2.VideoCapture(_id)
+        # 关闭自动白平衡
+        self.cap.set(cv2.CAP_PROP_AUTO_WB, 0)
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         self.img = None
 
@@ -99,3 +108,4 @@ class LoadCap:
             return None
         
 
+d = DataSet2()

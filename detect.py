@@ -23,7 +23,7 @@ COLOR_DICT = {
 
 # 加载模型
 cnn = CNN()
-cnn.load_state_dict(torch.load("best_model.pth"))
+cnn.load_state_dict(torch.load("best_model.pth", map_location=torch.device('cpu')))
 cnn.eval()
 
 

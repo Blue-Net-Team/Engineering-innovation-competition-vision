@@ -21,10 +21,10 @@ class Main:
         with open("ROI.json", "r") as f:
             ROI = json.load(f)
 
-        self.x0 = ROI["x0"]
-        self.y0 = ROI["y0"]
-        self.x1 = ROI["x1"]
-        self.y1 = ROI["y1"]
+        self.x0 = ROI[0]
+        self.y0 = ROI[1]
+        self.x1 = ROI[2]
+        self.y1 = ROI[3]
 
         self.cap = LoadCap(0)
         self.streaming = VideoStreaming("192.168.137.141", 8000)
@@ -48,4 +48,4 @@ class Main:
 
 
 if __name__ == "__main__":
-    Main().main()
+    Main().main(True)

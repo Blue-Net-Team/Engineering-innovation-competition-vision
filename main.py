@@ -3,12 +3,13 @@
 r"""
 * author: git config IVEN_CN && git config 13377529851@QQ.com
 * Date: 2024-09-08 17:37:29 +0800
-* LastEditTime: 2024-09-08 17:44:58 +0800
+* LastEditTime: 2024-09-08 18:32:16 +0800
 * FilePath: \工创25\main.py
 * details: 主文件
 * Copyright (c) 2024 by IVEN, All Rights Reserved. 
 """
 import json
+import time
 
 import cv2
 import detect
@@ -33,6 +34,10 @@ class Main:
         if debug:
             self.streaming.connecting()
             self.streaming.start()
+        
+        start_time = time.time()
+        frame_count = 0
+
         for img in self.cap:
             if img is None:
                 continue
@@ -44,7 +49,11 @@ class Main:
 
             img = img[self.y0 : self.y1, self.x0 : self.x1]
             res = detect.detect(img)
-            print(res)
+            frame_count += 1
+            end_time = time.time()
+            fps = frame_count / (end_time - start_time)
+
+            print(f"FPS: {fps:.2f}, color: {res[0]}, probability: {res[1]:.2f}")
 
 
 if __name__ == "__main__":

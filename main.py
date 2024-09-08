@@ -40,8 +40,8 @@ class Main:
                 continue
             start_time = time.time()
 
-            img = img[self.y0 : self.y1, self.x0 : self.x1]
-            res = detect.detect(img)
+            img1 = img[self.y0 : self.y1, self.x0 : self.x1]
+            res = detect.detect(img1)
 
             end_time = time.time()
             fps = 1 / (end_time - start_time)

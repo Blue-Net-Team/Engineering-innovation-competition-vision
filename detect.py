@@ -3,8 +3,8 @@
 r"""
 * author: git config IVEN_CN && git config 13377529851@QQ.com
 * Date: 2024-07-28 23:32:28 +0800
-* LastEditTime: 2024-09-04 18:06:02 +0800
-* FilePath: \ColorDetector-base-on-pytorch\detect.py
+* LastEditTime: 2024-09-08 17:41:06 +0800
+* FilePath: \工创25\detect.py
 * details: 识别函数
 * Copyright (c) 2024 by IVEN, All Rights Reserved. 
 """
@@ -35,11 +35,5 @@ def detect(img: cv2.typing.MatLike):
         output = cnn(img)
         prediction = torch.argmax(output, dim=1)
         probabilities = F.softmax(output, dim=1)
-
-        print(output)
-        # print(probabilities)
-        print(
-            f"color:{COLOR_DICT[prediction.item()]}, probability:{probabilities[0][prediction.item()].item()}"
-        )  # type:ignore
     
     return COLOR_DICT[prediction.item()], probabilities[0][prediction.item()].item()

@@ -30,30 +30,29 @@ class Main:
         self.cap = LoadCap(0)
         self.streaming = VideoStreaming("192.168.137.141", 8000)
 
-    def main(self, debug:bool=False):
+    def main(self, debug: bool = False):
         if debug:
             self.streaming.connecting()
             self.streaming.start()
-        
-        start_time = time.time()
-        frame_count = 0
 
         for img in self.cap:
             if img is None:
                 continue
-
-            if debug:
-                img_send = img.copy()
-                cv2.rectangle(img_send, (self.x0, self.y0), (self.x1, self.y1), (0, 255, 0), 1)
-                self.streaming.send(img_send)
+            start_time = time.time()
 
             img = img[self.y0 : self.y1, self.x0 : self.x1]
             res = detect.detect(img)
-            frame_count += 1
+
             end_time = time.time()
-            fps = frame_count / (end_time - start_time)
+            fps = 1 / (end_time - start_time)
 
             print(f"FPS: {fps:.2f}, color: {res[0]}, probability: {res[1]:.2f}")
+            if debug:
+                img_send = img.copy()
+                cv2.rectangle(
+                    img_send, (self.x0, self.y0), (self.x1, self.y1), (0, 255, 0), 1
+                )
+                self.streaming.send(img_send)
 
 
 if __name__ == "__main__":

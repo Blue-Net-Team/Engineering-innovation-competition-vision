@@ -2,12 +2,14 @@
 # -*- coding: utf-8 -*-
 r"""
 * author: git config IVEN_CN && git config 13377529851@QQ.com
-* Date: 2024-09-08 17:37:29 +0800
-* LastEditTime: 2024-09-08 18:32:16 +0800
-* FilePath: \工创25\main.py
+* Date: 2024-09-08 18:48:36 +0800
+* LastEditTime: 2024-09-08 18:51:17 +0800
+* FilePath: \ColorDetector-base-on-pytorch\main.py
 * details: 主文件
+
 * Copyright (c) 2024 by IVEN, All Rights Reserved. 
 """
+
 import json
 import time
 
@@ -28,10 +30,11 @@ class Main:
         self.y1 = ROI[3]
 
         self.cap = LoadCap(0)
-        self.streaming = VideoStreaming("192.168.137.141", 8000)
 
     def main(self, debug: bool = False):
         if debug:
+            # 下面写的是树莓派的ip地址
+            self.streaming = VideoStreaming("192.168.137.141", 8000)
             self.streaming.connecting()
             self.streaming.start()
 
@@ -56,4 +59,5 @@ class Main:
 
 
 if __name__ == "__main__":
+    # 如果不需要图传，将main()中的debug参数设置为False
     Main().main(True)

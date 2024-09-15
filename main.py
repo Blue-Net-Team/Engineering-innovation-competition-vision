@@ -3,7 +3,7 @@
 r"""
 * author: git config IVEN_CN && git config 13377529851@QQ.com
 * Date: 2024-09-08 18:48:36 +0800
-* LastEditTime: 2024-09-08 18:51:17 +0800
+* LastEditTime: 2024-09-11 15:40:23 +0800
 * FilePath: \ColorDetector-base-on-pytorch\main.py
 * details: 主文件
 

@@ -3,8 +3,8 @@
 r"""
 * author: git config IVEN_CN && git config 13377529851@QQ.com
 * Date: 2024-07-28 23:32:28 +0800
-* LastEditTime: 2024-09-08 17:41:06 +0800
-* FilePath: \工创25\detect.py
+* LastEditTime: 2024-09-08 18:50:13 +0800
+* FilePath: \ColorDetector-base-on-pytorch\detect.py
 * details: 识别函数
 * Copyright (c) 2024 by IVEN, All Rights Reserved. 
 """

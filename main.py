@@ -35,18 +35,29 @@ class Main:
             self.streaming.connecting()
             self.streaming.start()
 
+        count = 0
+        total_time = 0
+
         for img in self.cap:
             if img is None:
                 continue
-            start_time = time.time()
+            if count % 10 == 0:
+                st = time.perf_counter()
 
             img1 = img[self.y0 : self.y1, self.x0 : self.x1]
             res = detect.detect(img1)
 
-            end_time = time.time()
-            fps = 1 / (end_time - start_time)
+            if count % 10 == 9:
+                et = time.perf_counter()
+                total_time += et - st
+                avg_fps = 10 / total_time
+                total_time = 0
+                print(f"Average FPS: {avg_fps:.2f}, color: {res[0]}, probability: {res[1]:.2f}")
+            else:
+                total_time += time.perf_counter() - st
 
-            print(f"FPS: {fps:.2f}, color: {res[0]}, probability: {res[1]:.2f}")
+            count += 1
+
             if debug:
                 img_send = img.copy()
                 cv2.rectangle(

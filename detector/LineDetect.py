@@ -3,7 +3,7 @@
 r"""
 * author: git config IVEN_CN && git config 13377529851@QQ.com
 * Date: 2024-09-16 17:45:35 +0800
-* LastEditTime: 2024-09-16 21:16:19 +0800
+* LastEditTime: 2024-09-17 13:13:34 +0800
 * FilePath: \工创2025\detector\LineDetect.py
 * details: 直线检测器相关文件
 
@@ -11,9 +11,9 @@ r"""
 """
 import cv2
 import numpy as np
+from Detect import Detect
 
-
-class LineDetector:
+class LineDetector(Detect):
     """
     直线检测
     ----
@@ -31,20 +31,6 @@ class LineDetector:
     Hough_threshold = 70
     minLineLength = 50
     maxLineGap = 10
-
-    def sharpen(self, _img: cv2.typing.MatLike):
-        """
-        锐化图片
-        ----
-        :param img: 需要锐化的图片
-        """
-        # 锐化卷积核
-        kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
-        img = _img.copy()
-        img = cv2.filter2D(img, -1, kernel)  # 锐化
-        for i in range(3):
-            img = cv2.GaussianBlur(img, (3, 3), 0)  # 高斯模糊
-        return img
 
     def createTrackbar(self):
         cv2.namedWindow("Trackbar")

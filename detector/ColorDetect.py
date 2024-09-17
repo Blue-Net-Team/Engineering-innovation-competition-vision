@@ -40,11 +40,3 @@ class ColorDetector:
         prediction = torch.argmax(output, dim=1)
         probabilities = F.softmax(output, dim=1)
         return prediction, probabilities
-
-# 将模型转换为 ONNX 格式并保存
-if __name__ == "__main__":
-    cnn = cnn.CNN()
-    cnn.load_state_dict(torch.load("best_model.pth"))
-    cnn.eval()
-    dummy_input = torch.randn(1, 20, 20, 3)
-    torch.onnx.export(cnn, dummy_input, "best_model.onnx", opset_version=11)

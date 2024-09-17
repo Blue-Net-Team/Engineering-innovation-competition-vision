@@ -46,7 +46,7 @@ class LineDetector:
             img = cv2.GaussianBlur(img, (3, 3), 0)  # 高斯模糊
         return img
 
-    def creatTrackbar(self):
+    def createTrackbar(self):
         cv2.namedWindow("Trackbar")
         cv2.createTrackbar("Min_val", "Trackbar", self.Min_val, 255, self.__callback)
         cv2.createTrackbar("Max_val", "Trackbar", self.Max_val, 255, self.__callback)

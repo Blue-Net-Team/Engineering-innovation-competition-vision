@@ -1,4 +1,7 @@
 try:
     from cnn import *
 except ImportError:
-    from detector.model.cnn import *
+    try:
+        from detector.model.cnn import *
+    except ModuleNotFoundError:
+        from model.cnn import *

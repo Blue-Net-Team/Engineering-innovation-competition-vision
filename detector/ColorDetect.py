@@ -11,7 +11,11 @@ r"""
 import torch
 import torch.nn.functional as F
 import cv2
-from detector.model import cnn
+try:
+    from detector.model import cnn
+except ModuleNotFoundError:
+    from model import cnn
+
 import onnxruntime as ort
 import numpy as np
 

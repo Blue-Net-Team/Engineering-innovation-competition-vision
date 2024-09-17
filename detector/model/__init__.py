@@ -1,4 +1,4 @@
 try:
     from cnn import *
 except ImportError:
-    from model.cnn import *
+    from detector.model.cnn import *

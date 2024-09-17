@@ -19,7 +19,7 @@ class Usart(serial.Serial):
     * 发送数据的时候可以指定包头包尾
     """
 
-    def __init__(self, port, baudrate, timeout):
+    def __init__(self, port, baudrate=9600, timeout=None):
         super().__init__(port=port, baudrate=baudrate, timeout=timeout)
 
     def read(self, head: str, tail: str = "\n") -> str:
@@ -60,3 +60,10 @@ class Usart(serial.Serial):
         """
         HEAD, TAIL = head.encode("ascii"), tail.encode("ascii")
         super().write(HEAD + data.encode("ascii") + TAIL)
+
+    def clear(self):
+        """
+        清除缓存区
+        """
+        super().reset_input_buffer()
+        super().reset_output_buffer()

@@ -9,21 +9,25 @@ r"""
 * Copyright (c) 2024 by IVEN, All Rights Reserved. 
 """
 import torch
-import torch.nn.functional as F
 import cv2
-try:
-    from detector.model import cnn
-except ModuleNotFoundError:
-    from model import cnn
+from detector.model import CNN
+import torch.nn.functional as F
 
-import onnxruntime as ort
-import numpy as np
+COLOR_DICT = {
+    0:'R',
+    1:'G',
+    2:'B',
+    3:'W'
+}
 
 class ColorDetector:
-    def __init__(self, model_path="best_model.onnx"):
+    def __init__(self, model_path="best_model.pth"):
         # 加载模型
+        self.cnn = CNN()
+        self.cnn.load_state_dict(torch.load(model_path))
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.session = ort.InferenceSession(model_path, providers=['CUDAExecutionProvider' if self.device == 'cuda' else 'CPUExecutionProvider'])
+        self.cnn.to(self.device)
+        self.cnn.eval()
 
     def detect(self, img: cv2.typing.MatLike):
         """
@@ -32,11 +36,12 @@ class ColorDetector:
         :param img: 图片
         :return: 颜色，概率
         """
-        img = np.expand_dims(img, axis=0).astype(np.float32)
+        # img = cv2.resize(img, (128, 128))
+        img = torch.from_numpy(img).unsqueeze(0).float().to(self.device)
 
-        inputs = {self.session.get_inputs()[0].name: img}
-        outputs = self.session.run(None, inputs)
-        output = torch.tensor(outputs[0])
-        prediction = torch.argmax(output, dim=1)
-        probabilities = F.softmax(output, dim=1)
-        return prediction, probabilities
+        with torch.no_grad():
+            output = self.cnn(img)
+            prediction = torch.argmax(output, dim=1)
+            probabilities = F.softmax(output, dim=1)
+        
+        return COLOR_DICT[prediction.item()], probabilities[0][prediction.item()].item()

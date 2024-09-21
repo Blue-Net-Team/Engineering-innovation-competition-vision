@@ -11,7 +11,10 @@ r"""
 """
 
 import cv2
-from Detect import Detect
+try:
+    from Detect import Detect
+except ModuleNotFoundError:
+    from detector.Detect import Detect
 
 class CircleDetector(Detect):
     """

@@ -1,4 +1,4 @@
 from detector.model import cnn
-from CircleDetect import CircleDetector
-from ColorDetect import ColorDetector
-from LineDetect import LineDetector
+from detector.CircleDetect import CircleDetector
+from detector.ColorDetect import ColorDetector
+from detector.LineDetect import LineDetector

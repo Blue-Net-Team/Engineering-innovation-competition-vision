@@ -52,12 +52,11 @@ class Solution:
                 # 颜色识别
                 color, prob = self.color_detector.detect(ROI_img)
 
-                color = COLOR_DIC[color.item()]  # type:ignore
-                cv2.rectangle(img, pt0, pt1, (0, 255, 0), 1)
-                cv2.circle(img, point, r, (0, 255, 0), 1)
+                cv2.rectangle(_img, pt0, pt1, (0, 255, 0), 1)
+                cv2.circle(_img, point, r, (0, 255, 0), 1)
                 cv2.putText(
                     _img,
-                    f"{color}, {prob.max().item():.2f}",
+                    f"{color}, {prob:.2f}",
                     (point[0], point[1] - 20),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.5,
@@ -93,8 +92,7 @@ class Solution:
         ----
         本方法会在传入的图像上画出直线和交点
         """
-        img = _img.copy()
-        angel1, angel2, cross_point = self.line_detector.find_line(img, draw=True)
+        angel1, angel2, cross_point = self.line_detector.find_line(_img, draw=True)
         return angel1, angel2, cross_point
 
     def read_serial(self, head: str, tail: str):

@@ -10,7 +10,7 @@ r"""
 """
 import cv2
 import torch
-import model
+import detector.model
 import utils
 import torch.optim
 from torch.utils.tensorboard import SummaryWriter

@@ -40,8 +40,8 @@ def train(epochs=100):
     dataset = utils.DataSet2(ifrandom=False)
     test_dataset = utils.DataSet2('./datas/test')
     # 创建数据加载器
-    train_dataloader = utils.DataLoader(dataset, batch_size=64, shuffle=True)
-    test_dataloader = utils.DataLoader(test_dataset, batch_size=64, shuffle=True)
+    train_dataloader = utils.DataLoader(dataset, batch_size=150, shuffle=True)
+    test_dataloader = utils.DataLoader(test_dataset, batch_size=100, shuffle=True)
     # 创建模型
     cnn = detector.model.CNN().to(device)
     # 加载预训练模型

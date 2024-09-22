@@ -49,8 +49,11 @@ class Solution:
 
                 # 颜色识别区
                 ROI_img = img[pt0[1] : pt1[1], pt0[0] : pt1[0]]
-                # 颜色识别
-                color, prob = self.color_detector.detect(ROI_img)
+                try:
+                    # 颜色识别
+                    color, prob = self.color_detector.detect(ROI_img)
+                except:
+                    color, prob = "?", 1.0
 
                 cv2.rectangle(_img, pt0, pt1, (0, 255, 0), 1)
                 cv2.circle(_img, point, r, (0, 255, 0), 1)

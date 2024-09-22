@@ -5,6 +5,10 @@ opencv-python
 torch
 torchvision
 
+# ------onnx-------
+# onnx
+# onnxruntime
+
 # -------train-------
 tqdm
 tensorboard

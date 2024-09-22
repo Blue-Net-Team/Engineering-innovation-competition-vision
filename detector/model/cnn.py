@@ -44,7 +44,7 @@ class CNN(nn.Module):
             nn.Linear(512, 128),
             nn.ReLU(),
             nn.Dropout(0.5),  # 添加Dropout层
-            nn.Linear(128, 4)
+            nn.Linear(128, 3)
         )
 
     def forward(self, img_tensor: torch.Tensor):

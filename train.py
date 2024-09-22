@@ -14,7 +14,7 @@ import torch
 import detector.model
 import utils
 import torch.optim
-from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter       # type:ignore
 from tqdm import tqdm
 
 
@@ -43,7 +43,7 @@ def train(epochs=100):
     train_dataloader = utils.DataLoader(dataset, batch_size=64, shuffle=True)
     test_dataloader = utils.DataLoader(test_dataset, batch_size=64, shuffle=True)
     # 创建模型
-    cnn = model.CNN().to(device)
+    cnn = detector.model.CNN().to(device)
     # 加载预训练模型
     # cnn.load_state_dict(torch.load('pre_train.pth'))
     # 创建优化器

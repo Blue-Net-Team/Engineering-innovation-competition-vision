@@ -8,6 +8,7 @@ r"""
 * details: 
 * Copyright (c) 2024 by IVEN, All Rights Reserved. 
 """
+import datetime
 import cv2
 import torch
 import detector.model
@@ -54,6 +55,9 @@ def train(epochs=100):
 
     nums = 0
 
+    # 日期
+    now = datetime.datetime.now()
+    now = now.strftime('%Y-%m-%d-%H-%M-%S')
     # 训练
     for epoch in range(epochs):
         Accuracy = 0
@@ -97,11 +101,11 @@ def train(epochs=100):
         print(f'epoch:{epoch}, Accuracy:{_accuracy}')
         if _accuracy > Accuracy:
             Accuracy = _accuracy
-            torch.save(cnn.state_dict(), 'best_model.pth')
+            torch.save(cnn.state_dict(), f'best_model{now}.pth')
 
 
     # 保存模型
-    torch.save(cnn.state_dict(), 'final_model.pth')
+    torch.save(cnn.state_dict(), f'final_model{now}.pth')
     # 关闭TensorBoard的写入器
     writer.close()
 

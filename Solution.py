@@ -18,12 +18,11 @@ COLOR_DIC = {0: "R", 1: "G", 2: "B", 3: "W"}
 
 
 class Solution:
-    circle_detector = detector.CircleDetector()
-    color_detector = detector.ColorDetector()
-    line_detector = detector.LineDetector()
-    uart = Usart("dev/ttyTHS1")
-
-    def __init__(self):
+    def __init__(self, pth_path: str = "best_model.pth"):
+        self.circle_detector = detector.CircleDetector()
+        self.color_detector = detector.ColorDetector(pth_path)
+        self.line_detector = detector.LineDetector()
+        self.uart = Usart("/dev/ttyTHS1")
         pass
 
     def material_detect(

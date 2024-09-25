@@ -3,7 +3,7 @@
 r"""
 * author: git config IVEN_CN && git config 13377529851@QQ.com
 * Date: 2024-09-16 17:45:35 +0800
-* LastEditTime: 2024-09-17 13:13:34 +0800
+* LastEditTime: 2024-09-25 18:37:11 +0800
 * FilePath: \工创2025\detector\LineDetect.py
 * details: 直线检测器相关文件
 
@@ -27,13 +27,15 @@ class LineDetector(Detect):
     """
 
     # canny边缘检测参数
-    Min_val = 0
+    Min_val = 120
     Max_val = 255
 
     # 霍夫直线检测参数
     Hough_threshold = 70
-    minLineLength = 50
+    minLineLength = 200
     maxLineGap = 10
+
+    bias = 3
 
     def createTrackbar(self):
         cv2.namedWindow("Trackbar")
@@ -48,6 +50,7 @@ class LineDetector(Detect):
         cv2.createTrackbar(
             "maxLineGap", "Trackbar", self.maxLineGap, 600, self.__callback
         )
+        cv2.createTrackbar("bias", "Trackbar", self.bias, 10, self.__callback)
 
     def __callback(self, x):
         self.Min_val = cv2.getTrackbarPos("Min_val", "Trackbar")
@@ -55,26 +58,31 @@ class LineDetector(Detect):
         self.Hough_threshold = cv2.getTrackbarPos("Hough_threshold", "Trackbar")
         self.minLineLength = cv2.getTrackbarPos("minLineLength", "Trackbar")
         self.maxLineGap = cv2.getTrackbarPos("maxLineGap", "Trackbar")
+        self.bias = cv2.getTrackbarPos("bias", "Trackbar")
 
-    def __draw_line(self, img: cv2.typing.MatLike, line):
+    def __draw_line(self, img: cv2.typing.MatLike, line, _color = (0, 0, 255)):
         """
         通过直线参数画出直线
         ----
         :param img: 传入的图像数据
         :param line: 直线参数
         """
-        rho, theta = line
-        a = np.cos(theta)
-        b = np.sin(theta)
-        x0 = a * rho
-        y0 = b * rho
-        x1 = int(x0 + 1000 * (-b))
-        y1 = int(y0 + 1000 * (a))
-        x2 = int(x0 - 1000 * (-b))
-        y2 = int(y0 - 1000 * (a))
-        cv2.line(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
+        x1, y1, x2, y2 = line
+        
+        cv2.line(img, (x1, y1), (x2, y2), _color, 1)
 
-    def find_line(self, _img: cv2.typing.MatLike, draw: bool = False):
+    def __draw_point(self, img: cv2.typing.MatLike, point: tuple[int, int]):
+        """
+        画出交点
+        ----
+        :param img: 传入的图像数据
+        :param point: 交点坐标
+        """
+        cv2.circle(img, point, 4, (255, 0, 0), 3)
+
+    def find_line(
+        self, _img: cv2.typing.MatLike, draw: bool = False, 
+    ) -> tuple[int, int, tuple[int, int]] | tuple[None, None, None]:
         """
         找出直角
         ----
@@ -84,43 +92,80 @@ class LineDetector(Detect):
         :return: 两个直线的角度，两直线的交点坐标
         """
         img = _img.copy()
-        self.sharpen(img)  # 锐化
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # 转为灰度图
         self.sharpen(img)  # 锐化
 
         # canny边缘检测
         img = cv2.Canny(img, self.Min_val, self.Max_val)
 
-        # 膨胀
-        kernel = np.ones((2, 2), np.uint8)
-        img = cv2.dilate(img, kernel, iterations=1)
+        # 锐化
+        img = self.sharpen(img)
+
+        img = cv2.inRange(img, np.array([50]), np.array([255]))
+
+        cv2.imshow("canny", img)
 
         # 霍夫直线检测
-        lines = cv2.HoughLines(
+        lines = cv2.HoughLinesP(
             img,
             1,
             np.pi / 180,
             self.Hough_threshold,
-            min_theta=0,
-            max_theta=np.pi,
+            minLineLength=self.minLineLength,
+            maxLineGap=self.maxLineGap,
         )
 
-        if draw and lines is not None:
-            for i in range(len(lines)):
-                for j in range(i + 1, len(lines)):
-                    rho1, theta1 = lines[i][0]
-                    rho2, theta2 = lines[j][0]
-                    angle = abs(theta1 - theta2)
-                    if abs(np.pi / 2 - angle) < np.pi / 180:  # 夹角接近90度
-                        self.__draw_line(_img, (rho1, theta1))
-                        self.__draw_line(_img, (rho2, theta2))
+        if lines is None:       # 未检测到直线,直接返回
+            return None, None, None
+        
+        for line in lines:      # 画出能识别出来的直线（绿色）
+            self.__draw_line(_img, line[0], (0, 255, 0))
 
-                        angel1 = theta1 * 180 / np.pi
-                        angel2 = theta2 * 180 / np.pi
-                        
-                        # 交点坐标
-                        x = (rho1 * np.sin(theta2) - rho2 * np.sin(theta1)) / np.sin(theta2 - theta1)
-                        y = (rho1 * np.cos(theta2) - rho2 * np.cos(theta1)) / np.sin(theta1 - theta2)
+        line_dict = {  # 用角度作为键值，直线作为值
+            int(
+                np.degrees(np.arctan2(line[0][3] - line[0][1], line[0][2] - line[0][0]))
+            ): line[0]
+            for line in lines
+        }
 
-                        return angel1, angel2, (x, y)
+        for degree in line_dict:
+            # 计算目标角度
+            if degree > 0:
+                target_degree = degree - 90
+                target_degree_range = range((degree - 90) - self.bias, (degree - 90) + self.bias)
+            elif degree <= 0:
+                target_degree = degree + 90
+                target_degree_range = range((degree + 90) - self.bias, (degree + 90) + self.bias)
+
+            for target_degree in target_degree_range:
+                if target_degree in line_dict:
+
+                    line = line_dict[degree]  # 基准直线
+                    target_line = line_dict[target_degree]  # 目标直线
+
+                    # 计算交点
+                    x1, y1, x2, y2 = line
+                    x3, y3, x4, y4 = target_line
+                    try:
+                        cross_point = (
+                            int(int(
+                                (x1 * y2 - y1 * x2) * (x3 - x4)
+                                - (x1 - x2) * (x3 * y4 - y3 * x4)
+                            )
+                            / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))),
+                            int(int(
+                                (x1 * y2 - y1 * x2) * (y3 - y4)
+                                - (y1 - y2) * (x3 * y4 - y3 * x4)
+                            )
+                            / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)))
+                        )
+                    except ValueError:
+                        return None, None, None
+
+                    if draw:  # 画出直线
+                        self.__draw_line(_img, line)
+                        self.__draw_line(_img, target_line)
+                        # self.__draw_point(_img, cross_point)
+
+                    return degree, target_degree, cross_point
         return None, None, None

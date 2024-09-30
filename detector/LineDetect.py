@@ -130,12 +130,8 @@ class LineDetector(Detect):
 
         for degree in line_dict:
             # 计算目标角度
-            if degree > 0:
-                target_degree = degree - 90
-                target_degree_range = range((degree - 90) - self.bias, (degree - 90) + self.bias)
-            elif degree <= 0:
-                target_degree = degree + 90
-                target_degree_range = range((degree + 90) - self.bias, (degree + 90) + self.bias)
+            target_degree = degree - 90 if degree > 0 else degree + 90
+            target_degree_range = range(target_degree - self.bias, target_degree + self.bias)
 
             for target_degree in target_degree_range:
                 if target_degree in line_dict:

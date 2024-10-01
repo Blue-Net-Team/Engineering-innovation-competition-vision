@@ -117,9 +117,6 @@ class LineDetector(Detect):
 
         if lines is None:       # 未检测到直线,直接返回
             return None, None, None
-        
-        for line in lines:      # 画出能识别出来的直线（绿色）
-            self.__draw_line(_img, line[0], (0, 255, 0))
 
         line_dict = {  # 用角度作为键值，直线作为值
             int(
@@ -129,9 +126,11 @@ class LineDetector(Detect):
         }
 
         for degree in line_dict:
+            # 画出直线
+            self.__draw_line(_img, line_dict[degree], (0, 255, 0))
             # 计算目标角度
-            target_degree = degree - 90 if degree > 0 else degree + 90
-            target_degree_range = range(target_degree - self.bias, target_degree + self.bias)
+            _target_degree = degree - 90 if degree > 0 else degree + 90
+            target_degree_range = range(_target_degree - self.bias, _target_degree + self.bias)
 
             for target_degree in target_degree_range:
                 if target_degree in line_dict:

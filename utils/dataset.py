@@ -82,9 +82,6 @@ class DataSet2(Dataset):
 class LoadCap:
     def __init__(self, _id:int=0) -> None:
         self.cap = cv2.VideoCapture(_id)
-        # 关闭自动白平衡
-        self.cap.set(cv2.CAP_PROP_AUTO_WB, 0)
-        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         self.img = None
 
     def get_img(self):

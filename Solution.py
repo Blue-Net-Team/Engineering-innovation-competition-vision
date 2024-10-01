@@ -26,8 +26,8 @@ class Solution:
         pass
 
     def material_detect(
-        self, _img: cv2.typing.MatLike
-    ) -> list[tuple[str, tuple[int, int]]] | None:
+        self, _img
+    ):
         """
         材料检测
         ----
@@ -68,7 +68,7 @@ class Solution:
                 return_lst.append((color, point))
             return return_lst
 
-    def annulus_detect(self, _img: cv2.typing.MatLike) -> list[tuple[int, int]] | None:
+    def annulus_detect(self, _img):
         """
         圆环检测
         ----
@@ -88,7 +88,7 @@ class Solution:
                 points.append(point)
             return points
 
-    def right_angle_detect(self, _img: cv2.typing.MatLike):
+    def right_angle_detect(self, _img):
         """
         直角检测
         ----

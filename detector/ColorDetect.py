@@ -29,7 +29,7 @@ class ColorDetector:
         self.cnn.to(self.device)
         self.cnn.eval()
 
-    def detect(self, img: cv2.typing.MatLike):
+    def detect(self, img):
         """
         识别颜色
         ----

@@ -8,7 +8,7 @@ class Detect:
     ----
     提供了卷积锐化的方法--sharpen
     """
-    def sharpen(self, _img: cv2.typing.MatLike):
+    def sharpen(self, _img):
         """
         锐化图片
         ----

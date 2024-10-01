@@ -60,7 +60,7 @@ class LineDetector(Detect):
         self.maxLineGap = cv2.getTrackbarPos("maxLineGap", "Trackbar")
         self.bias = cv2.getTrackbarPos("bias", "Trackbar")
 
-    def __draw_line(self, img: cv2.typing.MatLike, line, _color = (0, 0, 255)):
+    def __draw_line(self, img, line, _color = (0, 0, 255)):
         """
         通过直线参数画出直线
         ----
@@ -71,7 +71,7 @@ class LineDetector(Detect):
         
         cv2.line(img, (x1, y1), (x2, y2), _color, 1)
 
-    def __draw_point(self, img: cv2.typing.MatLike, point: tuple[int, int]):
+    def __draw_point(self, img, point):
         """
         画出交点
         ----
@@ -81,8 +81,8 @@ class LineDetector(Detect):
         cv2.circle(img, point, 4, (255, 0, 0), 3)
 
     def find_line(
-        self, _img: cv2.typing.MatLike, draw: bool = False, 
-    ) -> tuple[int, int, tuple[int, int]] | tuple[None, None, None]:
+        self, _img, draw: bool = False, 
+    ):
         """
         找出直角
         ----

@@ -32,7 +32,7 @@ class LineDetector(Detect):
 
     # 霍夫直线检测参数
     Hough_threshold = 70
-    minLineLength = 200
+    minLineLength = 0
     maxLineGap = 10
 
     bias = 3

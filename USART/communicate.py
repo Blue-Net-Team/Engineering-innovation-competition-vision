@@ -8,6 +8,12 @@ r"""
 * details: 通信文件，用于存放串口通信相关代码
 * Copyright (c) 2024 by IVEN, All Rights Reserved. 
 """
+import sys
+sys.path.append("/usr/local/lib/python3.6/dist-packages")
+print("add sys path /usr/local/lib/python3.6/dist-packages")
+sys.path.append("/home/iven/.local/lib/python3.6/site-packages")
+print("add sys path /home/iven/.local/lib/python3.6/site-packages")
+
 import serial
 
 

@@ -3,7 +3,7 @@
 r"""
 * author: git config IVEN_CN && git config 13377529851@QQ.com
 * Date: 2024-09-17 15:03:05 +0800
-* LastEditTime: 2024-09-17 16:29:10 +0800
+* LastEditTime: 2024-10-02 09:50:43 +0800
 * FilePath: \工创2025\Solution.py
 * details: 解决方案，包含了主要需求的解决方案代码
 
@@ -18,16 +18,14 @@ COLOR_DIC = {0: "R", 1: "G", 2: "B", 3: "W"}
 
 
 class Solution:
-    def __init__(self, pth_path: str = "best_model.pth"):
+    def __init__(self, pth_path: str, ser_port: str):
         self.circle_detector = detector.CircleDetector()
         self.color_detector = detector.ColorDetector(pth_path)
         self.line_detector = detector.LineDetector()
-        self.uart = Usart("/dev/ttyTHS1")
+        self.uart = Usart(ser_port)
         pass
 
-    def material_detect(
-        self, _img
-    ):
+    def material_detect(self, _img):
         """
         材料检测
         ----
@@ -93,6 +91,9 @@ class Solution:
         直角检测
         ----
         本方法会在传入的图像上画出直线和交点
+
+        :param _img: 传入的图像
+        :return: 两直线的角度，交点坐标
         """
         angel1, angel2, cross_point = self.line_detector.find_line(_img, draw=True)
         return angel1, angel2, cross_point

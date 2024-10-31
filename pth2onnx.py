@@ -5,7 +5,7 @@ r"""
 * Date: 2024-09-17 14:19:32 +0800
 * LastEditTime: 2024-09-17 14:20:50 +0800
 * FilePath: \工创2025\pth2onnx.py
-* details: 
+* details: 将pth文件转换成onnx
 * Copyright (c) 2024 by IVEN, All Rights Reserved. 
 """
 from detector.model import cnn

@@ -3,7 +3,7 @@
 r"""
 * author: git config IVEN_CN && git config 13377529851@QQ.com
 * Date: 2024-09-17 15:03:05 +0800
-* LastEditTime: 2024-10-02 09:50:43 +0800
+* LastEditTime: 2024-10-31 17:50:06 +0800
 * FilePath: \工创2025\Solution.py
 * details: 解决方案，包含了主要需求的解决方案代码
 
@@ -15,6 +15,10 @@ from USART.communicate import Usart
 import detector
 
 COLOR_DIC = {0: "R", 1: "G", 2: "B", 3: "W"}
+
+
+def show(img):
+    return cv2.imshow("img", img)
 
 
 class Solution:

@@ -3,11 +3,13 @@
 r"""
 * author: git config IVEN_CN && git config 13377529851@QQ.com
 * Date: 2024-07-28 23:32:28 +0800
-* LastEditTime: 2024-09-17 13:45:07 +0800
+* LastEditTime: 2024-11-20 18:08:37 +0800
 * FilePath: \工创2025\detector\ColorDetect.py
 * details: 识别函数
 * Copyright (c) 2024 by IVEN, All Rights Reserved. 
 """
+import json
+import numpy as np
 import torch
 import cv2
 from detector.model import CNN
@@ -43,5 +45,123 @@ class ColorDetector:
             output = self.cnn(img)
             prediction = torch.argmax(output, dim=1)
             probabilities = F.softmax(output, dim=1)
-        
+
         return COLOR_DICT[prediction.item()], probabilities[0][prediction.item()].item()
+
+
+class TraditionalColorDetector:
+    """
+    传统颜色识别
+    ----
+    使用中央色相阈值和色相容差来识别颜色
+    """
+
+    LOW_H1: int
+    UP_H1: int
+
+    LOW_H2: int | None
+    UP_H2: int | None
+
+    centre: int = 0
+    error: int = 10
+
+    def __init__(self):
+        self.update_range()
+        pass
+
+    def binarization(self, _img: cv2.typing.MatLike):
+        """
+        二值化
+        ----
+        :param img: 图片
+        :return: 二值化图片
+        """
+        img = _img.copy()
+        # 高斯滤波
+        img = cv2.GaussianBlur(img, (15, 15), 2)
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        if self.LOW_H2 is None:
+            low = np.array([self.LOW_H1, 5, 10])
+            up = np.array([self.UP_H1, 255, 250])
+            mask = cv2.inRange(hsv, low, up)
+        else:
+            low1 = np.array([self.LOW_H1, 5, 5])
+            up1 = np.array([self.UP_H1, 255, 250])
+
+            low2 = np.array([self.LOW_H2, 5, 5])
+            up2 = np.array([self.UP_H2, 255, 250])
+
+            mask1 = cv2.inRange(hsv, low1, up1)
+            mask2 = cv2.inRange(hsv, low2, up2)
+            mask = cv2.bitwise_or(mask1, mask2)
+
+        kernel = np.ones((3, 3), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=1)
+
+        return mask
+
+    def createTrackbar(self):
+        """
+        创建调节条
+        ----
+        """
+        cv2.namedWindow("Trackbar")
+        cv2.createTrackbar("Centre", "Trackbar", self.centre, 180, self.__callback)
+        cv2.createTrackbar("Error", "Trackbar", self.error, 40, self.__callback)
+        cv2.createTrackbar("save", "Trackbar", 0, 1, self.__save)
+
+
+    def __callback(self, x):
+        self.centre = cv2.getTrackbarPos("Centre", "Trackbar")
+        self.error = cv2.getTrackbarPos("Error", "Trackbar")
+
+        self.update_range()
+
+    def __save(self, x):
+        if x == 1:
+            self.save_params("./color params.json")
+        else:
+            pass
+        
+    def update_range(self):
+        minH = self.centre - self.error
+        maxH = self.centre + self.error
+
+        if minH < 0:
+            self.LOW_H2 = 180 + minH
+            self.UP_H2 = 180
+
+            self.LOW_H1 = 0
+            self.UP_H1 = maxH
+        elif maxH > 180:
+            self.LOW_H2 = 0
+            self.UP_H2 = maxH - 180
+
+            self.LOW_H1 = minH
+            self.UP_H1 = 180
+        else:
+            self.LOW_H1 = minH
+            self.UP_H1 = maxH
+
+            self.LOW_H2 = None
+            self.UP_H2 = None
+
+    def save_params(self, path):
+        """
+        保存参数
+        ----
+        :param path: 路径
+        """
+        with open(path, "w") as f:
+            json.dump({"centre": self.centre, "error": self.error}, f)
+
+    def load_param(self, path):
+        """
+        加载参数
+        ----
+        :param path: 路径
+        """
+        with open(path, "r") as f:
+            data = json.load(f)
+            self.centre = data["centre"]
+            self.error = data["error"]

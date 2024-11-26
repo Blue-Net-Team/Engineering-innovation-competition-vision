@@ -82,6 +82,11 @@ class DataSet2(Dataset):
 class LoadCap:
     def __init__(self, _id:int=0) -> None:
         self.cap = cv2.VideoCapture(_id)
+        self.cap.set(3, 1280)
+        self.cap.set(4, 720)
+        self.cap.set(5, 60)
+        self.cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
+
         self.img = None
 
     def get_img(self):

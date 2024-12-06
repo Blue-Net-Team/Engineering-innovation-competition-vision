@@ -3,19 +3,20 @@
 r"""
 * author: git config IVEN_CN && git config 13377529851@QQ.com
 * Date: 2024-07-28 23:32:28 +0800
-* LastEditTime: 2024-11-20 18:08:37 +0800
+* LastEditTime: 2024-11-28 12:09:05 +0800
 * FilePath: \工创2025\detector\ColorDetect.py
 * details: 识别函数
 * Copyright (c) 2024 by IVEN, All Rights Reserved. 
 """
 import json
+from typing import Union
 import numpy as np
 import torch
 import cv2
 from detector.model import CNN
 import torch.nn.functional as F
 
-COLOR_DICT = {
+COLOR_DICT: dict[Union[int, float, bool], str] = {
     0:'R',
     1:'G',
     2:'B',
@@ -46,7 +47,7 @@ class ColorDetector:
             prediction = torch.argmax(output, dim=1)
             probabilities = F.softmax(output, dim=1)
 
-        return COLOR_DICT[prediction.item()], probabilities[0][prediction.item()].item()
+        return COLOR_DICT[prediction.item()], probabilities[0][int(prediction.item())].item()
 
 
 class TraditionalColorDetector:
@@ -153,7 +154,7 @@ class TraditionalColorDetector:
         :param path: 路径
         """
         with open(path, "w") as f:
-            json.dump({"centre": self.centre, "error": self.error}, f)
+            json.dump({"color":{"centre": self.centre, "error": self.error}}, f)
 
     def load_param(self, path):
         """
@@ -163,5 +164,6 @@ class TraditionalColorDetector:
         """
         with open(path, "r") as f:
             data = json.load(f)
+            data = data["color"]
             self.centre = data["centre"]
             self.error = data["error"]

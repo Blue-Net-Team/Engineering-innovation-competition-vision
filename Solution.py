@@ -10,7 +10,9 @@ r"""
 * Copyright (c) 2024 by IVEN, All Rights Reserved. 
 """
 
+import json
 import cv2
+import numpy as np
 from USART.communicate import Usart
 import detector
 
@@ -23,10 +25,24 @@ def show(img):
 
 class Solution:
     def __init__(self, pth_path: str, ser_port: str):
+        """
+        解决方案
+        ----
+        Args:
+            pth_path (str): pytorch模型路径
+            ser_port (str): 串口号
+        """
         self.circle_detector = detector.CircleDetector()
         self.color_detector = detector.ColorDetector(pth_path)
         self.line_detector = detector.LineDetector()
         self.uart = Usart(ser_port)
+        
+        try:
+            with open("config.json", "r") as f:
+                config = json.load(f)
+                self.point:list[int] = config["point"]
+        except:
+            self.point = [0, 0]
         pass
 
     def material_detect(self, _img):

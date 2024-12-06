@@ -88,9 +88,10 @@ class LoadCap:
         self.cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
 
         self.img = None
+        self.flag = True
 
     def get_img(self):
-        while True:
+        while self.flag:
             ret, frame = self.cap.read()
             if ret:
                 self.img = frame
@@ -108,6 +109,9 @@ class LoadCap:
             return self.img
         else:
             return None
-        
-
-d = DataSet2()
+    
+    def release(self):
+        self.flag = False
+        self.thread.join()
+        self.cap.release()
+        cv2.destroyAllWindows()

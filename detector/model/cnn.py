@@ -15,25 +15,14 @@ class CNN(nn.Module):
         self.node0 = nn.Sequential(
             nn.Conv2d(3, 64, 3, 1, 1),
             nn.ReLU(),
-            nn.Conv2d(64, 64, 3, 1, 1),
-            nn.ReLU(),
-            nn.AvgPool2d(2, 2),  # 输出尺寸: 64x(img_size/2)x(img_size/2)
-            nn.Dropout(0.25)  # 添加Dropout层
-        )
-
-        # 1号节点，将图片进行卷积
-        self.node1 = nn.Sequential(
-            nn.BatchNorm2d(64),
             nn.Conv2d(64, 128, 3, 1, 1),
             nn.ReLU(),
-            nn.Conv2d(128, 128, 3, 1, 1),
-            nn.ReLU(),
-            nn.AvgPool2d(2, 2),  # 输出尺寸: 128x(img_size/4)x(img_size/4)
+            nn.AvgPool2d(2, 2),  # 输出尺寸: (img_size // 2, img_size // 2)
             nn.Dropout(0.25)  # 添加Dropout层
         )
 
         # 计算全连接层的输入神经元数量
-        fc_input_size = 128 * (img_size // 4) * (img_size // 4)
+        fc_input_size = (img_size // 2) * (img_size // 2) * 128  # 调整计算方式
 
         # 全连接层
         self.fc = nn.Sequential(
@@ -52,8 +41,6 @@ class CNN(nn.Module):
         img_tensor = img_tensor.permute(0, 3, 1, 2)  # 交换维度
         # 0号节点
         img_tensor = self.node0(img_tensor)
-        # 1号节点
-        img_tensor = self.node1(img_tensor)
         # 全连接层
         img_tensor = self.fc(img_tensor)
         return img_tensor

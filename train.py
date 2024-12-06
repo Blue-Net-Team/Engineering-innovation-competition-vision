@@ -110,4 +110,4 @@ def train(epochs=100):
     writer.close()
 
 if __name__ == '__main__':
-    train(1000)
+    train(70)

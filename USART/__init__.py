@@ -1,4 +1,1 @@
-try:
-    from communicate import *
-except ModuleNotFoundError:
-    from USART.communicate import *
+from .communicate import *

@@ -197,8 +197,13 @@ class TraditionalColorDetector:
         ----
         :param path: 路径
         """
+        with open(path, "r") as f:
+            config = json.load(f)
+
+        config["color"] = {"centre": self.centre, "error": self.error}
+
         with open(path, "w") as f:
-            json.dump({"color":{"centre": self.centre, "error": self.error}}, f)
+            json.dump(config, f, indent=4)
 
     def load_param(self, path):
         """

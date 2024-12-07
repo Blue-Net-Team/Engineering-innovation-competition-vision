@@ -120,18 +120,20 @@ class CircleDetector(Detect):
         if circle_type not in ["material", "annulus"]:
             raise ValueError("circle_type must be 'material' or 'annulus'")
         
-        config = {
-            circle_type: {
-                "dp": self.dp,
-                "minDist": self.minDist,
-                "param1": self.param1,
-                "param2": self.param2,
-                "minRadius": self.minRadius,
-                "maxRadius": self.maxRadius,
-            }
+        with open(jsion_path, 'r') as file:
+            config = json.load(file)
+        
+        config[circle_type] = {
+            "dp": self.dp,
+            "minDist": self.minDist,
+            "param1": self.param1,
+            "param2": self.param2,
+            "minRadius": self.minRadius,
+            "maxRadius": self.maxRadius
         }
+        
         with open(jsion_path, "w") as f:
-            json.dump(config, f)
+            json.dump(config, f, indent=4)
             
     def load_config(self, jsion_path, circle_type):
         """

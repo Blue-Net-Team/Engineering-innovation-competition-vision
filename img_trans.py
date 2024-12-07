@@ -1,13 +1,29 @@
-#!./.venv/Scripts/python.exe
-# -*- coding: utf-8 -*-
 r"""
-* author: git config IVEN_CN && git config 13377529851@QQ.com
-* Date: 2024-09-08 18:13:18 +0800
-* LastEditTime: 2024-09-08 19:10:55 +0800
-* FilePath: \ColorDetector-base-on-pytorch\img_trans.py
-* details: 远程图传文件
+远程图传
+====
+该模块包含两个类：
 
-* Copyright (c) 2024 by IVEN, All Rights Reserved. 
+`VideoStreaming`: 
+----
+视频流传输类(服务端)
+
+方法:
+    - `__init__(self, host, port)`: 初始化，设置主机IP地址和端口号
+    - `connecting(self)`: 连接客户端
+    - `start(self)`: 开始传输视频流
+    - `send(self, _img: cv2.typing.MatLike) -> bool`: 发送图像数据
+    
+`ReceiveImg`:
+----
+接收视频流类(客户端)
+
+方法:
+    - `__init__(self, host, port)`: 初始化，设置主机IP地址和端口号
+    - `read(self)`: 读取图像数据
+    
+注意:
+----
+服务端不能主动向客户端发送数据，只能等待客户端连接后发送数据
 """
 
 import io
@@ -18,19 +34,21 @@ import numpy as np
 
 
 class VideoStreaming(object):
-    """视频流传输类"""
+    """服务端视频发送"""
 
     def __init__(self, host, port):
         """初始化
         ----
-        * host: 主机IP地址
-        * port: 端口号"""
+        Args:
+            host (str): 主机IP地址
+            port (int): 端口号
+        """
         self.server_socket = socket.socket()  # 获取socket.socket()实例
         self.server_socket.bind((host, port))  # 绑定主机IP地址和端口号
         self.server_socket.listen(5)  # 设置监听数量
 
     def connecting(self):
-        """连接Client"""
+        """连接客户端"""
         print("等待连接")
         self.connection, self.client_address = (
             self.server_socket.accept()
@@ -43,16 +61,27 @@ class VideoStreaming(object):
         print("连接成功")
 
     def start(self) -> None:
-        """开始传输视频流"""
+        """
+        开始传输视频流
+        ----
+        调用之前必须先调用`connecting`方法
+        """
         print("Client Host Name:", self.host_name)
         print("Connection from: ", self.client_address)
         print("Streaming...")
         self.stream = io.BytesIO()  # 创建一个io流，用于存放二进制数据
 
     def send(self, _img: cv2.typing.MatLike) -> bool:
-        """发送图像数据
+        """
+        发送图像数据
         ----
-        * _img: 传入的图像数据"""
+        调用之前必须先调用`start`方法
+        
+        Args:
+            _img (cv2.typing.MatLike): 图像数据
+        Returns:
+            bool: 发送是否成功
+        """
         try:
             try:
                 img_encode = cv2.imencode(".jpg", _img)[1]  # 编码
@@ -85,10 +114,15 @@ class VideoStreaming(object):
 
 
 class ReceiveImg(object):
+    """客户端接收视频流"""
     def __init__(self, host, port):
-        """初始化
-        * host: 树莓派的IP地址
-        * port: 端口号，与树莓派设置的端口号一致"""
+        """
+        初始化
+        ----
+        Args:
+            host (str): 主机IP地址
+            port (int): 端口号
+        """
         self.client_socket = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM
         )  # 设置创建socket服务的Client客服务的参数
@@ -105,6 +139,15 @@ class ReceiveImg(object):
         print("请按‘q’退出图像传输!")
 
     def read(self):
+        """
+        读取图像数据
+        ----
+        读取前必须先启动服务端
+        
+        Returns:
+            bool: 读取是否成功
+            np.ndarray: 图像数据
+        """
         try:
             msg = self.connection.read(1024)  # 读makefile传输文件，一次读1024个字节
             self.stream_bytes += msg

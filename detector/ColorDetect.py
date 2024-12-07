@@ -91,7 +91,10 @@ class ColorDetector:
             prediction = torch.argmax(output, dim=1)
             probabilities = F.softmax(output, dim=1)
 
-        return COLOR_DICT[prediction.item()], probabilities[0][int(prediction.item())].item()
+        return (
+            COLOR_DICT[prediction.item()],
+            probabilities[0][int(prediction.item())].item(),
+        )
 
 
 class TraditionalColorDetector:
@@ -155,7 +158,6 @@ class TraditionalColorDetector:
         cv2.createTrackbar("Error", "Trackbar", self.error, 40, self.__callback)
         cv2.createTrackbar("save", "Trackbar", 0, 1, self.__save)
 
-
     def __callback(self, x):
         self.centre = cv2.getTrackbarPos("Centre", "Trackbar")
         self.error = cv2.getTrackbarPos("Error", "Trackbar")
@@ -167,7 +169,7 @@ class TraditionalColorDetector:
             self.save_params("./color params.json")
         else:
             pass
-        
+
     def update_range(self):
         minH = self.centre - self.error
         maxH = self.centre + self.error

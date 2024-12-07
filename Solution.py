@@ -50,9 +50,11 @@ class Solution:
         材料检测
         ----
         本方法会在传入的图像上画出圆形区域和颜色识别区
-
-        :param _img: 图片
-        :return: 颜色(str)，位置(tuple)列表，如果没识别到园则返回None
+        
+        Args:
+            _img (np.ndarray): 图片
+        Returns:
+            list: 颜色和圆心坐标
         """
         return_lst = []  # 返回值
         img = _img.copy()
@@ -85,6 +87,7 @@ class Solution:
                 )
                 return_lst.append((color, point))
             return return_lst
+        return [[None, None]]
 
     def annulus_detect(self, _img):
         """

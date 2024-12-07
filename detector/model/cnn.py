@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class CNN(nn.Module):
-    """用神经网络识别颜色，红绿蓝白"""
+    """用神经网络识别颜色，红绿蓝"""
     def __init__(self, img_size=20) -> None:
         """
         初始化

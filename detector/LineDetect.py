@@ -1,13 +1,36 @@
-#!./.venv/Scripts/python.exe
-# -*- coding: utf-8 -*-
-r"""
-* author: git config IVEN_CN && git config 13377529851@QQ.com
-* Date: 2024-09-16 17:45:35 +0800
-* LastEditTime: 2024-09-25 18:37:11 +0800
-* FilePath: \工创2025\detector\LineDetect.py
-* details: 直线检测器相关文件
+"""
+直线检测模块
+====
+LineDetector类
+----
+继承自 Detect 类，用于检测图像中的直线，并提供以下功能：
 
-* Copyright (c) 2024 by IVEN, All Rights Reserved. 
+属性:
+- `Min_val (int)`: canny 边缘检测的最小阈值
+- `Max_val (int)`: canny 边缘检测的最大阈值
+- `Hough_threshold (int)`: 霍夫直线检测的阈值
+- `minLineLength (int)`: 霍夫直线检测的最小直线长度
+- `maxLineGap (int)`: 霍夫直线检测的最大间隔
+- `bias (int)`: 角度偏差
+
+方法:
+- `createTrackbar(self):`
+    创建用于调整参数的滑动条窗口
+- `__callback(self, x):`
+    滑动条回调函数，用于更新参数值
+- `__draw_line(self, img, line, _color=(0, 0, 255)):`
+    通过直线参数在图像上画出直线
+- `__draw_point(self, img, point):`
+    在图像上画出交点
+- `find_line(self, _img, draw: bool = False):`
+    找出图像中的直线，并计算两条直线的夹角和交点坐标
+    
+    参数:
+        - `_img (numpy.ndarray)`: 传入的图像数据
+        - `draw (bool)`: 是否在传入的图像中画出直线
+    返回:
+        - `tuple`: 两个直线的角度，两直线的交点坐标
+
 """
 import cv2
 import numpy as np

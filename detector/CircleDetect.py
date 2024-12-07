@@ -1,13 +1,37 @@
-#!./.venv/Scripts/python.exe
-# -*- coding: utf-8 -*-
-r"""
-* author: git config IVEN_CN && git config 13377529851@QQ.com
-* Date: 2024-09-16 18:10:09 +0800
-* LastEditTime: 2024-09-17 13:18:17 +0800
-* FilePath: \工创2025\detector\CircleDetect.py
-* details: 使用霍夫圆检测算法检测圆形，得到圆心
+"""
+圆形检测器模块
+====
+提供了一个用于检测图像中圆形的识别器。
 
-* Copyright (c) 2024 by IVEN, All Rights Reserved. 
+CircleDetector类
+----
+继承自 `Detect` 类，实现了圆形检测的功能。
+
+方法:
+    - `createTrackbar(self)`:
+        创建用于调整霍夫圆环参数的滑动条窗口。
+    - `__callback(self, x)`:
+        滑动条回调函数，用于更新霍夫圆环参数。
+    - `detect(self, _img)`:
+        检测图像中的圆形。
+
+        参数:
+            - `_img (numpy.ndarray)`: 需要检测的图像。
+        返回:
+            `tuple`: 圆心坐标列表和半径列表，如果没有检测到圆形则返回 (None, None)。
+    - `save_config(self, jsion_path, circle_type)`:
+        保存当前配置到指定的 JSON 文件中。
+
+        参数:
+            - `jsion_path (str)`: 配置文件路径。
+            - `circle_type (str)`: 圆形类型，包含 "material"（物料圆环）和 "annulus"（地面圆环）。
+    - `load_config(self, jsion_path, circle_type)`:
+        从指定的 JSON 文件中加载配置。
+
+        参数:
+            - `jsion_path (str)`: 配置文件路径。
+            - `circle_type (str)`: 圆形类型，包含 "material"（物料圆环）和 "annulus"（地面圆环）。
+
 """
 
 import json

@@ -1,13 +1,7 @@
-#!./.venv/Scripts/python.exe
-# -*- coding: utf-8 -*-
-r"""
-* author: git config IVEN_CN && git config 13377529851@QQ.com
-* Date: 2024-09-17 15:03:05 +0800
-* LastEditTime: 2024-10-31 17:50:06 +0800
-* FilePath: \工创2025\Solution.py
-* details: 解决方案，包含了主要需求的解决方案代码
-
-* Copyright (c) 2024 by IVEN, All Rights Reserved. 
+"""
+解决方案
+====
+与电控对接的顶层需求，包含了所有的检测和串口通信功能
 """
 
 import json

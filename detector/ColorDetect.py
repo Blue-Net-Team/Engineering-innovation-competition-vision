@@ -1,13 +1,57 @@
-#!./.venv/Scripts/python.exe
-# -*- coding: utf-8 -*-
 r"""
-* author: git config IVEN_CN && git config 13377529851@QQ.com
-* Date: 2024-07-28 23:32:28 +0800
-* LastEditTime: 2024-11-28 12:09:05 +0800
-* FilePath: \工创2025\detector\ColorDetect.py
-* details: 识别函数
-* Copyright (c) 2024 by IVEN, All Rights Reserved. 
+颜色检测模块
+====
+该模块包含两个类：ColorDetector 和 TraditionalColorDetector，用于颜色识别。
+
+ColorDetector:
+----
+使用卷积神经网络 (CNN) 进行颜色识别。
+
+方法:
+    - `__init__(model_path: str = "best_model.pth")`:
+        初始化 ColorDetector 类，加载预训练的 CNN 模型。
+    - `detect(img: np.ndarray) -> tuple[str, float]`:
+        识别输入图像的颜色。
+
+        参数:
+            - `img`: 输入图像 (numpy 数组)。
+        返回:
+            - 颜色 (str) 和概率 (float)。
+
+TraditionalColorDetector:
+---
+使用传统的颜色识别方法，通过中央色相阈值和色相容差来识别颜色。
+
+方法:
+    - `__init__()`:
+        初始化 TraditionalColorDetector 类，更新色相范围。
+    - `binarization(_img: cv2.typing.MatLike) -> np.ndarray`:
+        对输入图像进行二值化处理。
+
+        参数:
+            - `_img`: 输入图像 (cv2.typing.MatLike)。
+        返回:
+            - 二值化后的图像 (numpy 数组)。
+    - `createTrackbar()`:
+        创建调节条，用于调整色相中心和误差。
+    - `__callback(x: int)`:
+        调节条回调函数，更新色相范围。
+    - `__save(x: int)`:
+        保存参数回调函数，将当前参数保存到文件。
+    - `update_range()`:
+        更新色相范围，根据中心色相和误差计算上下限。
+    - `save_params(path: str)`:
+        保存当前参数到指定路径的 JSON 文件。
+
+        参数:
+            - `path`: 文件路径 (str)。
+    - `load_param(path: str)`:
+        从指定路径的 JSON 文件加载参数。
+
+        参数:
+            - `path`: 文件路径 (str)。
 """
+
 import json
 from typing import Union
 import numpy as np

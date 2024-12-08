@@ -13,9 +13,7 @@ class CNN(nn.Module):
 
         # 0号节点，将图片进行卷积
         self.node0 = nn.Sequential(
-            nn.Conv2d(3, 64, 3, 1, 1),
-            nn.ReLU(),
-            nn.Conv2d(64, 128, 3, 1, 1),
+            nn.Conv2d(3, 128, 3, 1, 1),
             nn.ReLU(),
             nn.AvgPool2d(2, 2),  # 输出尺寸: (img_size // 2, img_size // 2)
             nn.Dropout(0.25)  # 添加Dropout层
@@ -27,10 +25,7 @@ class CNN(nn.Module):
         # 全连接层
         self.fc = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(fc_input_size, 512),  # 调整全连接层的神经元数量
-            nn.ReLU(),
-            nn.Dropout(0.5),  # 添加Dropout层
-            nn.Linear(512, 128),
+            nn.Linear(fc_input_size, 128),  # 调整全连接层的神经元数量
             nn.ReLU(),
             nn.Dropout(0.5),  # 添加Dropout层
             nn.Linear(128, 3)

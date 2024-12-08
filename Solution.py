@@ -9,6 +9,10 @@ import cv2
 import numpy as np
 from USART.communicate import Usart
 import detector
+from colorama import Fore, Style, init
+
+# 初始化 colorama
+init(autoreset=True)
 
 COLOR_DIC = {0: "R", 1: "G", 2: "B", 3: "W"}
 
@@ -37,11 +41,12 @@ class Solution:
             with open("config.json", "r") as f:
                 config = json.load(f)
                 self.point: list[int] = config["point"]
+            self.material_circle_detector.load_config("config.json", "material")
+            self.annulus_circle_detector.load_config("config.json", "annulus")
         except:
             self.point = [0, 0]
+            print(Fore.RED + "配置文件读取失败")
 
-        self.material_circle_detector.load_config("config.json", "material")
-        self.annulus_circle_detector.load_config("config.json", "annulus")
         # endregion
 
     def material_detect(self, _img):

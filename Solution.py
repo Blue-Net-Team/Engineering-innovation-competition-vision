@@ -94,19 +94,70 @@ class Solution:
         ----
         本方法会在传入的图像上画出圆环和圆心
 
-        :param _img: 传入的图像
-        :return: 圆心坐标列表，如果没识别到园则返回None
+        Args:
+            _img (np.ndarray): 图片
+        Returns:
+            err (None|list): 如果检测到圆环则返回None，否则返回颜色和圆心坐标与标准位置的偏差
+            
+            `[[color, [dx,dy]],...]`
         """
-        points = []
+        res_dict = {color: [] for color in COLOR_DIC.values()}
+        
         img = _img.copy()
-        img_sharpen = self.circle_detector.sharpen(img)
-        points, rs = self.circle_detector.detect(img_sharpen)
-        if points is not None and rs is not None:
-            for point, r in zip(points, rs):
-                cv2.circle(_img, point, r, (0, 255, 0), 1)
-                cv2.circle(_img, point, 1, (255, 0, 0), 1)
-                points.append(point)
-            return points
+        img_sharpen = self.annulus_circle_detector.sharpen(img)
+        points, rs = self.annulus_circle_detector.detect_circle(img_sharpen)
+        if points is None or rs is None:
+            return [None, None]
+        
+        for point, r in zip(points, rs):
+            # 在原图上绘制圆环
+            cv2.circle(_img, point, r, (0, 255, 0), 1)
+            cv2.circle(_img, point, 1, (255, 0, 0), 1)
+            
+            color = self.detect_circle_edge_color(_img, point, r)
+            res_dict[color].append(point)
+            
+        # 将结果字典的坐标列表进行平均值计算
+        for color in res_dict:
+            res_dict[color] = np.mean(res_dict[color], axis=0) if res_dict[color] else []
+                
+        errs = [
+                [color, [res_dict[color][0] - self.point[0], res_dict[color][1] - self.point[1]]] 
+                if res_dict[color] else [color, None] 
+                for color in res_dict
+            ]
+
+        return errs
+    
+    def detect_circle_edge_color(self, _img:cv2.typing.MatLike, point:list[int]|tuple[int], r:int):
+        """
+        识别圆环的颜色
+        ----
+        *此方法不是顶层需求*
+
+        Args:
+            _img (cv2.typing.MatLike): 传入图片
+            point (Iterable[int]): 圆心坐标
+            r (int): 圆半径
+        Returns:
+            color (str): 颜色
+        """
+        # region 提取圆环区域
+        img = _img.copy()
+        mask = np.zeros(img.shape[:2], dtype=np.uint8)
+        cv2.circle(mask, point, r, (255,), 2)
+        ROI = cv2.bitwise_and(img, img, mask=mask)
+        # 将ROI非零部分取出变成20*20的图片
+        polar_img = cv2.warpPolar(ROI, (2*r, r), point, r, cv2.WARP_FILL_OUTLIERS)
+        # 将极坐标图像转换为方形图像
+        square_img = cv2.resize(polar_img, (20, 20))
+        # endregion
+        
+        # 颜色识别
+        color, prob = self.color_detector.detect(square_img)
+
+        return color
+        
 
     def right_angle_detect(self, _img):
         """

@@ -42,14 +42,15 @@ SERIAL_PORT = "dev/ttyUSB0"  # TODO: 填写串口号
 # region 主代码
 vs = VideoStreaming(IP, PORT)
 solution = Solution.Solution(MODEL_PATH, SERIAL_PORT)
-cap = LoadCap(0)
+cap1 = LoadCap(0)
+cap2 = LoadCap(1)  # 用于直线识别
 
 DEAL_IMG_DICT = {"show": Solution.show, "send": vs.send, "hide": lambda x: None}
 
 solution_dict = {  # TODO: 可能要更改对应任务的串口信号
-    "0": solution.material_detect,  # 物料检测
-    "1": solution.annulus_detect,  # 圆环检测
-    "2": solution.right_angle_detect,  # 直角检测
+    "0": (cap1, solution.material_detect),  # 物料检测
+    "1": (cap1, solution.annulus_detect),  # 圆环检测
+    "2": (cap2, solution.right_angle_detect),  # 直角检测
 }
 
 count = 0
@@ -63,12 +64,15 @@ while True:
     sign = solution.read_serial(head=HEAD, tail=TAIL)  # 读取串口
     # 判断信号是否合法
     if sign in solution_dict:  # 信号合法
-        for img in cap:
+        for img in solution_dict[sign][0]:
             if img is None:
                 continue
+
             if count % 10 == 0:
                 st = time.perf_counter()
-            solution_dict[sign](img)
+
+            res: str | None = solution_dict[sign][1](img)
+
             if count % 10 == 9:
                 et = time.perf_counter()
                 fps = 10 / (et - st)
@@ -84,6 +88,10 @@ while True:
             )
 
             DEAL_IMG_DICT[DEAL_IMG](img)
+
+            if res:
+                solution.write_serial(res, head=HEAD, tail=TAIL)
+                break
     else:  # 信号非法
         print("Invalid sign")
         continue

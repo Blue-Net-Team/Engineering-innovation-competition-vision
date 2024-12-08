@@ -26,18 +26,23 @@ class Solution:
             pth_path (str): pytorch模型路径
             ser_port (str): 串口号
         """
-        self.circle_detector = detector.CircleDetector()
+        self.material_circle_detector = detector.CircleDetector()
+        self.annulus_circle_detector = detector.CircleDetector()
         self.color_detector = detector.ColorDetector(pth_path)
         self.line_detector = detector.LineDetector()
         self.uart = Usart(ser_port)
         
+        # region 读取配置文件
         try:
             with open("config.json", "r") as f:
                 config = json.load(f)
                 self.point:list[int] = config["point"]
         except:
             self.point = [0, 0]
-        pass
+        
+        self.material_circle_detector.load_config("config.json", "material")
+        self.annulus_circle_detector.load_config("config.json", "annulus")
+        # endregion
 
     def material_detect(self, _img):
         """
@@ -52,8 +57,8 @@ class Solution:
         """
         return_lst = []  # 返回值
         img = _img.copy()
-        img_sharpen = self.circle_detector.sharpen(img)  # 锐化
-        points, rs = self.circle_detector.detect(img_sharpen)  # 检测圆形
+        img_sharpen = self.material_circle_detector.sharpen(img)  # 锐化
+        points, rs = self.material_circle_detector.detect_circle(img_sharpen)  # 检测圆形
         if points is not None and rs is not None:
             for point, r in zip(points, rs):
                 # 颜色识别区顶点

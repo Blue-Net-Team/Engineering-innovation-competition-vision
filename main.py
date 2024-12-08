@@ -53,8 +53,6 @@ solution_dict = {  # TODO: 可能要更改对应任务的串口信号
     "2": (cap2, solution.right_angle_detect),  # 直角检测
 }
 
-count = 0
-fps = 0
 
 if DEAL_IMG == "send":
     vs.connecting()
@@ -68,15 +66,20 @@ while True:
             if img is None:
                 continue
 
-            if count % 10 == 0:
-                st = time.perf_counter()
+            t0 = time.perf_counter()
+
+            try:
+                read_img_time = t0 - t1
+            except:
+                read_img_time = 0
 
             res: str | None = solution_dict[sign][1](img)
 
-            if count % 10 == 9:
-                et = time.perf_counter()
-                fps = 10 / (et - st)
-            count += 1
+            t1 = time.perf_counter()
+            detect_time = t1 - t0
+            process_time = read_img_time + detect_time
+            fps = 1 / process_time
+
             cv2.putText(
                 img,
                 f"FPS: {fps:.2f}",

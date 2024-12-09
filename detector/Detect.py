@@ -1,3 +1,4 @@
+import json
 import cv2
 import numpy as np
 
@@ -8,6 +9,7 @@ class Detect:
     ----
     提供了卷积锐化的方法--sharpen
     """
+
     def sharpen(self, _img):
         """
         锐化图片
@@ -21,3 +23,27 @@ class Detect:
         for i in range(3):
             img = cv2.GaussianBlur(img, (3, 3), 0)  # 高斯模糊
         return img
+
+    def save_config(self, path: str, config: dict):
+        """
+        重写配置
+        ----
+        此方法需要先读取配置并且修改后再调用，否则会覆盖原有配置
+
+        Args:
+            path (str): 保存路径
+            config (dict): 配置字典
+        """
+        with open(path, "w") as f:
+            json.dump(config, f, indent=4)
+
+    def load_config(self, path: str):
+        """
+        加载配置
+        ----
+        Args:
+            path (str): 配置文件路径
+        """
+        with open(path, "r") as f:
+            config = json.load(f)
+        return config

@@ -193,3 +193,38 @@ class LineDetector(Detect):
                     return degree, target_degree, cross_point
 
         return None, None, None
+
+    def save_config(self, path: str):
+        """
+        保存当前参数到指定路径的 JSON 文件
+        ----
+        Args:
+            path (str): 文件路径
+        """
+        config = super().load_config(path)
+        config["LineDetector"] = {
+            "Min_val": self.Min_val,
+            "Max_val": self.Max_val,
+            "Hough_threshold": self.Hough_threshold,
+            "minLineLength": self.minLineLength,
+            "maxLineGap": self.maxLineGap,
+            "bias": self.bias,
+        }
+        super().save_config(path, config)
+
+    def load_config(self, path: str):
+        """
+        从指定路径的 JSON 文件加载参数
+        ----
+        Args:
+            path (str): 文件路径
+        """
+        ori_config = super().load_config(path)
+        config = ori_config["LineDetector"]
+
+        self.Min_val = config["Min_val"]
+        self.Max_val = config["Max_val"]
+        self.Hough_threshold = config["Hough_threshold"]
+        self.minLineLength = config["minLineLength"]
+        self.maxLineGap = config["maxLineGap"]
+        self.bias = config["bias"]

@@ -60,8 +60,12 @@ class CircleDetector(Detect):
         cv2.createTrackbar("minDist", "Trackbar", self.minDist, 100, self.__callback)
         cv2.createTrackbar("param1", "Trackbar", self.param1, 100, self.__callback)
         cv2.createTrackbar("param2", "Trackbar", self.param2, 100, self.__callback)
-        cv2.createTrackbar("minRadius", "Trackbar", self.minRadius, 100, self.__callback)
-        cv2.createTrackbar("maxRadius", "Trackbar", self.maxRadius, 100, self.__callback)
+        cv2.createTrackbar(
+            "minRadius", "Trackbar", self.minRadius, 100, self.__callback
+        )
+        cv2.createTrackbar(
+            "maxRadius", "Trackbar", self.maxRadius, 100, self.__callback
+        )
 
         cv2.setTrackbarPos("dp", "Trackbar", self.dp)
         cv2.setTrackbarPos("minDist", "Trackbar", self.minDist)
@@ -119,22 +123,20 @@ class CircleDetector(Detect):
         """
         if circle_type not in ["material", "annulus"]:
             raise ValueError("circle_type must be 'material' or 'annulus'")
-        
-        with open(jsion_path, 'r') as file:
-            config = json.load(file)
-        
+
+        config = super().load_config(jsion_path)
+
         config[circle_type] = {
             "dp": self.dp,
             "minDist": self.minDist,
             "param1": self.param1,
             "param2": self.param2,
             "minRadius": self.minRadius,
-            "maxRadius": self.maxRadius
+            "maxRadius": self.maxRadius,
         }
-        
-        with open(jsion_path, "w") as f:
-            json.dump(config, f, indent=4)
-            
+
+        super().save_config(jsion_path, config)
+
     def load_config(self, jsion_path, circle_type):
         """
         加载配置
@@ -145,15 +147,13 @@ class CircleDetector(Detect):
         """
         if circle_type not in ["material", "annulus"]:
             raise ValueError("circle_type must be 'material' or 'annulus'")
-        
-        with open(jsion_path, "r") as f:
-            config = json.load(f)
+
+        config = super().load_config(jsion_path)
         config = config[circle_type]
-        
+
         self.dp = config["dp"]
         self.minDist = config["minDist"]
         self.param1 = config["param1"]
         self.param2 = config["param2"]
         self.minRadius = config["minRadius"]
         self.maxRadius = config["maxRadius"]
-

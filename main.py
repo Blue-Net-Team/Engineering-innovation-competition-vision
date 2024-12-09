@@ -48,7 +48,7 @@ cap2 = LoadCap(1)  # 用于直线识别
 DEAL_IMG_DICT = {"show": Solution.show, "send": vs.send, "hide": lambda x: None}
 
 solution_dict = {  # TODO: 可能要更改对应任务的串口信号
-    "0": (cap1, solution.material_detect),  # 物料检测
+    "0": (cap1, solution.get_rotator_centre),  # 获取转盘中心点
     "1": (cap1, solution.annulus_detect),  # 圆环检测
     "2": (cap2, solution.right_angle_detect),  # 直角检测
 }

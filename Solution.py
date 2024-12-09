@@ -21,6 +21,46 @@ def show(img):
     return cv2.imshow("img", img)
 
 
+def get_centre_point(point1, point2, point3):
+    """
+    获取三点圆的圆心
+    ----
+    Args:
+        point1 (tuple): 第一个点
+        point2 (tuple): 第二个点
+        point3 (tuple): 第三个点
+    Returns:
+        tuple: 圆心坐标
+    """
+    x1, y1 = point1  # A点
+    x2, y2 = point2  # B点
+    x3, y3 = point3  # C点
+
+    # AB中点
+    mid_1 = ((x1 + x2) / 2, (y1 + y2) / 2)
+    # BC中点
+    mid_2 = ((x2 + x3) / 2, (y2 + y3) / 2)
+
+    # AB中垂线斜率
+    _k_AB = (x1 - x2) / (y2 - y1)
+    # BC中垂线斜率
+    _k_BC = (x3 - x2) / (y2 - y3)
+
+    L = np.array(
+        [[_k_AB, -1],
+                [_k_BC, -1]]
+        )
+
+    R = np.array(
+        [[_k_AB * mid_1[0] - mid_1[1]],
+                [_k_BC * mid_2[0] - mid_2[1]]]
+        )
+
+    # 求解方程
+    x, y = np.linalg.solve(L, R)
+    return x, y
+
+
 class Solution:
     def __init__(self, pth_path: str, ser_port: str):
         """
@@ -40,58 +80,104 @@ class Solution:
         try:
             with open("config.json", "r") as f:
                 config = json.load(f)
-                self.point: list[int] = config["point"]
+                # 圆环中心点
+                self.annulus_point: list[int] = config["annulus_point"]
+                # 转盘中心点
+                self.rotator_centre_point = config["rotator_centre_point"]
+
+            # 加载物料识别的圆环参数
             self.material_circle_detector.load_config("config.json", "material")
+            # 加载圆环识别的圆环参数
             self.annulus_circle_detector.load_config("config.json", "annulus")
         except:
-            self.point = [0, 0]
+            self.annulus_point = [0, 0]
+            self.rotator_centre_point = [0, 0]
             print(Fore.RED + "配置文件读取失败")
 
         # endregion
 
     def material_detect(self, _img):
         """
-        材料检测
+        物料追踪
         ----
-        本方法会在传入的图像上画出圆形区域和颜色识别区
+        本方法不是顶层需求
+
+        **注意：** 本方法会修改传入的图像
 
         Args:
             _img (np.ndarray): 图片
         Returns:
-            str|None: 颜色
+            res_dict (dict): 结果字典，例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
         """
+        # 结果字典, 例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
+        # 初始化为{"R":None, "G":None, "B":None}
+        res_dict: dict[str, None | tuple] = {
+            color: None for color in COLOR_DIC.values()
+        }
+
         img = _img.copy()
         img_sharpen = self.material_circle_detector.sharpen(img)  # 锐化
-        points, rs = self.material_circle_detector.detect_circle(
-            img_sharpen
-        )  # 检测圆形
-        if points is not None and rs is not None:
-            for point, r in zip(points, rs):
-                # 颜色识别区顶点
-                pt0 = (int(point[0] - 10), int(point[1] - 10))
-                pt1 = (int(point[0] + 10), int(point[1] + 10))
 
-                # 颜色识别区
-                ROI_img = img[pt0[1] : pt1[1], pt0[0] : pt1[0]]
-                try:
-                    # 颜色识别
-                    color, prob = self.color_detector.detect(ROI_img)
-                except:
-                    color, prob = "?", 1.0
+        # 检测圆形
+        points, rs = self.material_circle_detector.detect_circle(img_sharpen)
 
-                cv2.rectangle(_img, pt0, pt1, (0, 255, 0), 1)
-                cv2.circle(_img, point, r, (0, 255, 0), 1)
-                cv2.putText(
-                    _img,
-                    f"{color}, {prob:.2f}",
-                    (point[0], point[1] - 20),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.5,
-                    (0, 255, 0),
-                    1,
-                )
-            return color
-        return None
+        # 如果检测不到圆形则返回None
+        if points is None or rs is None:
+            return res_dict
+
+        for point, r in zip(points, rs):
+            # 颜色识别区顶点
+            pt0 = (int(point[0] - 10), int(point[1] - 10))
+            pt1 = (int(point[0] + 10), int(point[1] + 10))
+
+            # 颜色识别区
+            ROI_img = img[pt0[1] : pt1[1], pt0[0] : pt1[0]]
+            try:
+                # 颜色识别
+                color, prob = self.color_detector.detect(ROI_img)
+            except:
+                color, prob = "?", 1.0
+
+            cv2.rectangle(_img, pt0, pt1, (0, 255, 0), 1)
+            cv2.circle(_img, point, r, (0, 255, 0), 1)
+            cv2.putText(
+                _img,
+                f"{color}, {prob:.2f}",
+                (point[0], point[1] - 20),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 255, 0),
+                1,
+            )
+
+            # 将point变成整形
+            point = (int(point[0]), int(point[1]))
+
+            res_dict[color] = point
+        return res_dict
+
+    def get_rotator_centre(self, _img):
+        """
+        获取转盘中心
+        ----
+        Args:
+            _img (Mat): 图片
+        Returns:
+            tuple: 转盘中心坐标
+        """
+        res_dict = self.material_detect(_img)
+        # 获取三个颜色的圆心坐标
+        R_point, G_point, B_point = res_dict["R"], res_dict["G"], res_dict["B"]
+        # 获取转盘中心
+        centre_point = get_centre_point(R_point, G_point, B_point)
+        # 转换为字符，便于发送
+        # 01代表正负号，后面的三个数字代表坐标
+        err = (
+                centre_point[0] - self.rotator_centre_point[0],
+                centre_point[1] - self.rotator_centre_point[1]
+            )
+        res = f"{'0' if err[0] < 0 else '1'}{str(err[0]).rjust(3, '0')}{'0' if err[1] < 0 else '1'}{str(err[1]).rjust(3, '0')}"
+        return res
 
     def annulus_detect(self, _img):
         """
@@ -104,7 +190,7 @@ class Solution:
         Returns:
             err (None|list): 如果检测到圆环则返回None，否则返回颜色和圆心坐标与标准位置的偏差
 
-            `[[color, [dx,dy]],...]`
+            `err`的格式为：以颜色字母开头，下一个01表示正负号，后面的数字表示偏差(补全成3位，FFF表示未检测到)
         """
         res_dict = {color: [] for color in COLOR_DIC.values()}
 
@@ -134,8 +220,8 @@ class Solution:
                 [
                     color,
                     [
-                        res_dict[color][0] - self.point[0],
-                        res_dict[color][1] - self.point[1],
+                        res_dict[color][0] - self.annulus_point[0],
+                        res_dict[color][1] - self.annulus_point[1],
                     ],
                 ]
                 if res_dict[color]

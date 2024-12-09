@@ -201,7 +201,10 @@ class LineDetector(Detect):
         Args:
             path (str): 文件路径
         """
-        config = super().load_config(path)
+        try:
+            config = super().load_config(path)
+        except:
+            config = {}
         config["LineDetector"] = {
             "Min_val": self.Min_val,
             "Max_val": self.Max_val,

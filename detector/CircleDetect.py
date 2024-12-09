@@ -124,7 +124,10 @@ class CircleDetector(Detect):
         if circle_type not in ["material", "annulus"]:
             raise ValueError("circle_type must be 'material' or 'annulus'")
 
-        config = super().load_config(jsion_path)
+        try:
+            config = super().load_config(jsion_path)
+        except:
+            config = {}
 
         config[circle_type] = {
             "dp": self.dp,

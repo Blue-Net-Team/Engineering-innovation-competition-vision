@@ -61,7 +61,7 @@ class LineDetector(Detect):
     minLineLength = 0  # 霍夫直线检测的最小直线长度
     maxLineGap = 10  # 霍夫直线检测的最大间隔
 
-    bias = 3
+    bias = 3            # 允许的角度误差
 
     def createTrackbar(self):
         cv2.namedWindow("Trackbar")

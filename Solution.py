@@ -74,6 +74,7 @@ class Solution:
         self.annulus_circle_detector = detector.CircleDetector()
         self.color_detector = detector.ColorDetector(pth_path)
         self.line_detector = detector.LineDetector()
+        self.polygon_detector = detector.PolygonDetector()
         self.uart = Usart(ser_port)
 
         # region 读取配置文件
@@ -84,10 +85,13 @@ class Solution:
                 self.annulus_point: list[int] = config["annulus_point"]
                 # 转盘中心点
                 self.rotator_centre_point = config["rotator_centre_point"]
+                # 多边形边数
+                self.nums = config["nums"]
         except Exception as e:
             self.annulus_point = [0, 0]
             self.rotator_centre_point = [0, 0]
-            print(Fore.RED + "配置文件读取annulus_point,rotator_centre_point失败")
+            self.nums = 0
+            print(Fore.RED + "配置文件读取annulus_point,rotator_centre_point,nums失败")
 
         # 加载物料识别的圆环参数
         load_err1 = self.material_circle_detector.load_config("config.json", "material")
@@ -95,8 +99,10 @@ class Solution:
         load_err2 = self.annulus_circle_detector.load_config("config.json", "annulus")
         # 加载直线检测的参数
         load_err3 = self.line_detector.load_config("config.json")
+        # 加载多边形检测的参数
+        load_err4 = self.polygon_detector.load_config("config.json")
 
-        err = [load_err1, load_err2, load_err3]
+        err = [load_err1, load_err2, load_err3, load_err4]
         if any(err):
             print(Fore.RED + "加载配置文件失败")
             for e in err:
@@ -127,8 +133,13 @@ class Solution:
         img = _img.copy()
         img_sharpen = self.material_circle_detector.sharpen(img)  # 锐化
 
-        # 检测圆形
-        points, rs = self.material_circle_detector.detect_circle(img_sharpen)
+        if self.nums == 0:
+            # 检测圆形
+            points, rs = self.material_circle_detector.detect_circle(img_sharpen)
+        else:
+            # 检测多边形
+            # 轮廓approx被抽象为rs
+            points, rs = self.polygon_detector.get_polygon_centre(img_sharpen, self.nums)
 
         # 如果检测不到圆形则返回None
         if points is None or rs is None:
@@ -147,8 +158,15 @@ class Solution:
             except:
                 color, prob = "?", 1.0
 
+            # 绘制颜色识别区
             cv2.rectangle(_img, pt0, pt1, (0, 255, 0), 1)
-            cv2.circle(_img, point, r, (0, 255, 0), 1)
+
+            if self.nums == 0:      # 圆形物料
+                cv2.circle(_img, point, r, (0, 255, 0), 1)
+            else:       # 多边形物料
+                cv2.polylines(_img, [r], True, (0, 255, 0), 2)
+
+            # 在显示对应的颜色
             cv2.putText(
                 _img,
                 f"{color}, {prob:.2f}",

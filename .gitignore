@@ -148,6 +148,7 @@ datas/
 
 # test
 *test*
+!test_Solution.py
 
 # torch
 *.pth

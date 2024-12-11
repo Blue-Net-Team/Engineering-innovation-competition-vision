@@ -110,8 +110,13 @@ class TraditionalColorDetector:
     LOW_H2: int | None
     UP_H2: int | None
 
-    centre: int = 0
+    centre: int = 65
     error: int = 10
+
+    L_S: int = 55
+    U_S: int = 255
+    L_V: int = 0
+    U_V: int = 255
 
     def __init__(self):
         self.update_range()
@@ -129,15 +134,15 @@ class TraditionalColorDetector:
         img = cv2.GaussianBlur(img, (15, 15), 2)
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         if self.LOW_H2 is None:
-            low = np.array([self.LOW_H1, 5, 10])
-            up = np.array([self.UP_H1, 255, 250])
+            low = np.array([self.LOW_H1, self.L_S, self.L_V])
+            up = np.array([self.UP_H1, self.U_S, self.U_V])
             mask = cv2.inRange(hsv, low, up)
         else:
-            low1 = np.array([self.LOW_H1, 5, 5])
-            up1 = np.array([self.UP_H1, 255, 250])
+            low1 = np.array([self.LOW_H1, self.L_S, self.L_V])
+            up1 = np.array([self.UP_H1, self.U_S, self.U_V])
 
-            low2 = np.array([self.LOW_H2, 5, 5])
-            up2 = np.array([self.UP_H2, 255, 250])
+            low2 = np.array([self.LOW_H2, self.L_S, self.L_V])
+            up2 = np.array([self.UP_H2, self.U_S, self.U_V])
 
             mask1 = cv2.inRange(hsv, low1, up1)
             mask2 = cv2.inRange(hsv, low2, up2)
@@ -156,11 +161,19 @@ class TraditionalColorDetector:
         cv2.namedWindow("Trackbar")
         cv2.createTrackbar("Centre", "Trackbar", self.centre, 180, self.__callback)
         cv2.createTrackbar("Error", "Trackbar", self.error, 40, self.__callback)
+        cv2.createTrackbar("L_S", "Trackbar", self.L_S, 255, self.__callback)
+        cv2.createTrackbar("U_S", "Trackbar", self.U_S, 255, self.__callback)
+        cv2.createTrackbar("L_V", "Trackbar", self.L_V, 255, self.__callback)
+        cv2.createTrackbar("U_V", "Trackbar", self.U_V, 255, self.__callback)
         cv2.createTrackbar("save", "Trackbar", 0, 1, self.__save)
 
     def __callback(self, x):
         self.centre = cv2.getTrackbarPos("Centre", "Trackbar")
         self.error = cv2.getTrackbarPos("Error", "Trackbar")
+        self.L_S = cv2.getTrackbarPos("L_S", "Trackbar")
+        self.U_S = cv2.getTrackbarPos("U_S", "Trackbar")
+        self.L_V = cv2.getTrackbarPos("L_V", "Trackbar")
+        self.U_V = cv2.getTrackbarPos("U_V", "Trackbar")
 
         self.update_range()
 

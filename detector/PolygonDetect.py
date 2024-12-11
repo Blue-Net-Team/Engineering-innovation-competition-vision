@@ -47,8 +47,6 @@ class PolygonDetector(Detect):
         """
         获取图像中的多边形的中心坐标
         ----
-        **注意：** 本方法会在传入的图像上画出轮廓和多边形的中心
-
         Args:
             _img (numpy.ndarray): 需要检测的图像
             nums (int): 多边形的边数

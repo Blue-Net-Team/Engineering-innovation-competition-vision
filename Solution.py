@@ -187,6 +187,9 @@ class Solution:
         """
         获取转盘中心
         ----
+        - 图片波动可能会返回none
+        - 没看到物料可能会返回none
+
         Args:
             _img (Mat): 图片
         Returns:
@@ -209,9 +212,9 @@ class Solution:
         res = f"{'0' if err[0] < 0 else '1'}{str(err[0]).rjust(3, '0')}{'0' if err[1] < 0 else '1'}{str(err[1]).rjust(3, '0')}"
         return res
 
-    def circle_detect(self, _img):
+    def detect_circle_colors(self, _img):
         """
-        圆形检测
+        圆环的颜色检测
         ----
         本方法不是顶层需求
         **注意** 本方法会在传入的图像上画出圆环和圆心
@@ -247,9 +250,11 @@ class Solution:
 
     def annulus_detect(self, _img):
         """
-        圆环检测
+        地面圆环颜色和位置检测
         ----
         本方法会在传入的图像上画出圆环和圆心
+
+        - 图片噪声的波动可能会返回none
 
         Args:
             _img (np.ndarray): 图片
@@ -258,7 +263,7 @@ class Solution:
 
             `err`的格式为：以颜色字母开头，下一个01表示正负号，后面的数字表示偏差(补全成3位，FFF表示未检测到)
         """
-        res_dict = self.circle_detect(_img)
+        res_dict = self.detect_circle_colors(_img)
 
         if res_dict is None:
             return None

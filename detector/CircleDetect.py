@@ -87,7 +87,7 @@ class CircleDetector(Detect):
         检测圆形
         ----
         :param img: 需要检测的图片
-        :return: 圆心坐标列表, 半径列表
+        :return: 圆心坐标列表, 半径列表，没识别到圆环返回none
         """
         point_lst = []
         r_lst = []

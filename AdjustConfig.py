@@ -24,7 +24,7 @@ class Ad_Config(Solution):
 
         self.d:dict[str,tuple[CircleDetector|PolygonDetector,Callable]] = {
             "material": (self.material_circle_detector,self.material_detect),
-            "annulus": (self.annulus_circle_detector,self.circle_detect),
+            "annulus": (self.annulus_circle_detector,self.detect_circle_colors),
             "approx": (self.polygon_detector,self.material_detect)
         }
 

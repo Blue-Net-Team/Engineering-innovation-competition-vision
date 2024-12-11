@@ -3,7 +3,7 @@ r"""
 ====
 该模块包含两个类：
 
-`VideoStreaming`: 
+`VideoStreaming`:
 ----
 视频流传输类(服务端)
 
@@ -12,7 +12,7 @@ r"""
     - `connecting(self)`: 连接客户端
     - `start(self)`: 开始传输视频流
     - `send(self, _img: cv2.typing.MatLike) -> bool`: 发送图像数据
-    
+
 `ReceiveImg`:
 ----
 接收视频流类(客户端)
@@ -20,7 +20,7 @@ r"""
 方法:
     - `__init__(self, host, port)`: 初始化，设置主机IP地址和端口号
     - `read(self)`: 读取图像数据
-    
+
 注意:
 ----
 服务端不能主动向客户端发送数据，只能等待客户端连接后发送数据
@@ -76,7 +76,7 @@ class VideoStreaming(object):
         发送图像数据
         ----
         调用之前必须先调用`start`方法
-        
+
         Args:
             _img (cv2.typing.MatLike): 图像数据
         Returns:
@@ -143,7 +143,7 @@ class ReceiveImg(object):
         读取图像数据
         ----
         读取前必须先启动服务端
-        
+
         Returns:
             bool: 读取是否成功
             np.ndarray: 图像数据
@@ -169,6 +169,34 @@ class ReceiveImg(object):
         except:
             print("Error：连接出错！")
         return False, None
+
+
+class LoadWebCam:
+    """读取远程图传的迭代器"""
+    def __init__(self, ip:str, port:int):
+        """
+        初始化
+        ----
+        Args:
+            ip (str): 服务端IP地址
+            port (int): 端口号
+        """
+        self.streaming = ReceiveImg(ip, port)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        ret, img = self.streaming.read()
+        if ret:
+            return img
+        else:
+            raise StopIteration
+
+    def release(self):
+        """释放资源"""
+        self.streaming.connection.close()
+        self.streaming.client_socket.close()
 
 
 if __name__ == "__main__":

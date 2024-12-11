@@ -1,14 +1,8 @@
 # 需求和代办整理
 
 - TODO:解决方案中添加运动监测的算法，检测到转盘开始转动，返回字符物料顺序，红绿蓝用123表示
-- TODO:完成多边形检测
-
-    ```python
-    # 额外的识别器，可能会代替CircleDetector
-    def polygon(self,img,nums)->list[tuple[int]]
-    ```
-
-    输入图片和多边形数，返回几何中心坐标列表
+- TODO:完成多边形的参数调试函数
+- TODO:快速调试功能
 
 ## 外部调节的参数(config.json)
 

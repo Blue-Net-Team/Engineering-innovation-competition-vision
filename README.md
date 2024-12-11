@@ -22,7 +22,7 @@ detector
 utils                       用于存放工具代码的文件夹
     |___ __init__.py        工具代码的初始化文件
     |___ dataset.py         数据集类以及有关数据集的工具代码
-Debug.py                    用于调试的代码,定位ROI识别区（已弃用）
+AdjustConfig.py             用于调整配置的调试代码
 Solution.py                 用于存放解决方案的代码，包括颜色识别，圆环识别，直线识别以及串口等使用的函数
 img_trans.py                用于远程图传的代码，主要用于调试过程方便在电脑上得到图像
 main.py                     主程序，直接在Jetson或者树莓派上运行的代码

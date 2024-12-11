@@ -62,7 +62,7 @@ while True:
     sign = solution.read_serial(head=HEAD, tail=TAIL)  # 读取串口
     # 判断信号是否合法
     if sign in solution_dict:  # 信号合法
-        for img in solution_dict[sign][0]:
+        for img in solution_dict[sign][0]:      # 读取摄像头
             if img is None:
                 continue
 

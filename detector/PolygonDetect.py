@@ -97,7 +97,7 @@ class PolygonDetector(Detect):
         return centers, approxs
 
 
-    def save_config(self, path: str):
+    def save_config(self, path: str, *args):
         """
         保存配置
         ----

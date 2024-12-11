@@ -41,7 +41,7 @@ import numpy as np
 from Solution import Solution
 from detector.ColorDetect import ColorDetector
 from utils.dataset import LoadCap
-from detector import TraditionalColorDetector, LineDetector
+from detector import TraditionalColorDetector, LineDetector, PolygonDetector
 
 
 class Test_solution(Solution):
@@ -330,10 +330,77 @@ class Test_Line_detect:
                 cap.release()
                 break
 
+class Plolygon_Test(PolygonDetector):
+    def __init__(self):
+        super().__init__()
+        self.createTrackbar()
+
+    def test(self):
+        cap = LoadCap(0)
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+
+        for _img in cap:
+            if _img is None:
+                continue
+
+            img = _img.copy()
+
+            centers,approxs = self.get_polygon_centre(img, 4)
+
+            for center, approx in zip(centers, approxs):
+                cv2.circle(img, center, 5, (0, 255, 0), -1)
+                cv2.polylines(img, [approx], True, (0, 255, 0), 2)
+
+            cv2.imshow("img", img)
+
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                # 保存配置
+                self.save_config("config.json")
+                break
+
+    def test_img(self):
+        _img = cv2.imread("test.png")
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+
+        while True:
+            img = _img.copy()
+            centers,approxs = self.get_polygon_centre(img, 4)
+
+            for center, approx in zip(centers, approxs):
+                cv2.circle(img, center, 5, (0, 255, 0), -1)
+                cv2.polylines(img, [approx], True, (0, 255, 0), 2)
+
+            cv2.imshow("img", img)
+
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+
+
+class TraditionalColor_Test(TraditionalColorDetector):
+    def __init__(self):
+        super().__init__()
+        self.createTrackbar()
+
+    def test(self):
+        cap = LoadCap(0)
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+
+        for img in cap:
+            if img is None:
+                continue
+
+            mask = self.binarization(img)
+            bit_and = cv2.bitwise_and(img, img, mask=mask)
+            res = np.vstack((img, cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR), bit_and))
+
+            cv2.imshow("img", res)
+
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
 
 if __name__ == "__main__":
-    test = Test_solution("best_model2024-12-09-12-46-06.pth", "COM5")
-    test.test_func(0, "material")
+    # test = Test_solution("best_model2024-12-09-12-46-06.pth", "COM5")
+    # test.test_func(0, "material")
     # test.test_usart_read("head", "tail")
     # test.test_usart_write("data", "head", "tail")
 
@@ -341,5 +408,11 @@ if __name__ == "__main__":
     # test.test()
 
     # test = Test_Line_detect()
+    # test.test()
+
+    test = Plolygon_Test()
+    test.test_img()
+
+    # test = TraditionalColor_Test()
     # test.test()
 # end main

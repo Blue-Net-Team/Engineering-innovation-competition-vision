@@ -21,7 +21,7 @@ def show(img):
     return cv2.imshow("img", img)
 
 
-def get_centre_point(point1, point2, point3):
+def get_centre_point(point1:tuple[int,int], point2:tuple[int,int], point3:tuple[int,int]):
     """
     获取三点圆的圆心
     ----
@@ -58,7 +58,7 @@ def get_centre_point(point1, point2, point3):
 
     # 求解方程
     x, y = np.linalg.solve(L, R)
-    return x, y
+    return int(x), int(y)
 
 
 class Solution:
@@ -84,9 +84,9 @@ class Solution:
                 # 圆环中心点
                 self.annulus_point: list[int] = config["annulus_point"]
                 # 转盘中心点
-                self.rotator_centre_point = config["rotator_centre_point"]
+                self.rotator_centre_point: list[int] = config["rotator_centre_point"]
                 # 多边形边数
-                self.nums = config["nums"]
+                self.nums: int = config["nums"]
         except Exception as e:
             self.annulus_point = [0, 0]
             self.rotator_centre_point = [0, 0]
@@ -111,7 +111,7 @@ class Solution:
 
         # endregion
 
-    def material_detect(self, _img):
+    def material_detect(self, _img)-> dict[str, tuple[int,int] | None]:
         """
         物料追踪
         ----
@@ -195,6 +195,9 @@ class Solution:
         res_dict = self.material_detect(_img)
         # 获取三个颜色的圆心坐标
         R_point, G_point, B_point = res_dict["R"], res_dict["G"], res_dict["B"]
+
+        if R_point is None or G_point is None or B_point is None:
+            return None
         # 获取转盘中心
         centre_point = get_centre_point(R_point, G_point, B_point)
         # 转换为字符，便于发送
@@ -210,7 +213,8 @@ class Solution:
         """
         圆形检测
         ----
-        本方法会在传入的图像上画出圆环和圆心
+        本方法不是顶层需求
+        **注意** 本方法会在传入的图像上画出圆环和圆心
 
         Args:
             _img (np.ndarray): 图片

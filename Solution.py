@@ -111,9 +111,9 @@ class Solution:
 
         # endregion
 
-    def material_detect(self, _img)-> dict[str, tuple[int,int] | None]:
+    def detect_material_positions(self, _img)-> dict[str, tuple[int,int] | None]:
         """
-        物料追踪
+        物料位置检测
         ----
         本方法不是顶层需求
 
@@ -195,7 +195,7 @@ class Solution:
         Returns:
             tuple: 转盘中心坐标
         """
-        res_dict = self.material_detect(_img)
+        res_dict = self.detect_material_positions(_img)
         # 获取三个颜色的圆心坐标
         R_point, G_point, B_point = res_dict["R"], res_dict["G"], res_dict["B"]
 

@@ -23,9 +23,9 @@ class Ad_Config(Solution):
             self.cap = LoadCap(cap_id)
 
         self.d:dict[str,tuple[CircleDetector|PolygonDetector,Callable]] = {
-            "material": (self.material_circle_detector,self.material_detect),
+            "material": (self.material_circle_detector,self.detect_material_positions),
             "annulus": (self.annulus_circle_detector,self.detect_circle_colors),
-            "approx": (self.polygon_detector,self.material_detect)
+            "approx": (self.polygon_detector,self.detect_material_positions)
         }
 
     def adjust_circle(self, config_name: str):

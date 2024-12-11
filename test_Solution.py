@@ -55,7 +55,7 @@ class Test_solution(Solution):
         """
         super().__init__(pth_path, ser_port)
         self.FUNC_DICT = {
-            "material": self.material_detect,
+            "material": self.detect_material_positions,
             "annulus": self.annulus_detect,
             "right_angle": self.right_angle_detect,
         }

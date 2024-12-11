@@ -1,8 +1,9 @@
 import time
+from typing import Callable
 import cv2
 import numpy as np
 from Solution import Solution
-from detector import ColorDetector, LineDetector, CircleDetector
+from detector import ColorDetector, LineDetector, CircleDetector, PolygonDetector
 from utils.dataset import LoadCap
 from img_trans import LoadWebCam
 
@@ -21,12 +22,13 @@ class Ad_Config(Solution):
         else:
             self.cap = LoadCap(cap_id)
 
-        self.d = {
+        self.d:dict[str,tuple[CircleDetector|PolygonDetector,Callable]] = {
             "material": (self.material_circle_detector,self.material_detect),
             "annulus": (self.annulus_circle_detector,self.circle_detect),
+            "approx": (self.polygon_detector,self.material_detect)
         }
 
-    def adjust(self, config_name: str):
+    def adjust_circle(self, config_name: str):
         """
         调整圆环参数
         ----
@@ -79,8 +81,16 @@ class Ad_Config(Solution):
                 self.cap.release()
                 break
 
+    def adjust_approx(self, nums):
+        """
+        调整多边形参数
+        ----
+        """
+        self.nums = nums
+        self.adjust_circle("approx")
+
 
 if __name__ == "__main__":
     ad_config = Ad_Config("best_model2024-12-09-12-46-06.pth", "COM5", 0)
-    ad_config.adjust("material")
+    ad_config.adjust_circle("material")
 # end main

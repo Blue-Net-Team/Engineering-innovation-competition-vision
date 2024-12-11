@@ -188,18 +188,16 @@ class Solution:
         res = f"{'0' if err[0] < 0 else '1'}{str(err[0]).rjust(3, '0')}{'0' if err[1] < 0 else '1'}{str(err[1]).rjust(3, '0')}"
         return res
 
-    def annulus_detect(self, _img):
+    def circle_detect(self, _img):
         """
-        圆环检测
+        圆形检测
         ----
         本方法会在传入的图像上画出圆环和圆心
 
         Args:
             _img (np.ndarray): 图片
         Returns:
-            err (None|list): 如果检测到圆环则返回None，否则返回颜色和圆心坐标与标准位置的偏差
-
-            `err`的格式为：以颜色字母开头，下一个01表示正负号，后面的数字表示偏差(补全成3位，FFF表示未检测到)
+            res_dict (dict): 结果字典，例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
         """
         res_dict = {color: [] for color in COLOR_DIC.values()}
 
@@ -222,6 +220,26 @@ class Solution:
             res_dict[color] = (
                 np.mean(res_dict[color], axis=0) if res_dict[color] else []
             )
+
+        return res_dict
+
+    def annulus_detect(self, _img):
+        """
+        圆环检测
+        ----
+        本方法会在传入的图像上画出圆环和圆心
+
+        Args:
+            _img (np.ndarray): 图片
+        Returns:
+            err (None|list): 如果检测到圆环则返回None，否则返回颜色和圆心坐标与标准位置的偏差
+
+            `err`的格式为：以颜色字母开头，下一个01表示正负号，后面的数字表示偏差(补全成3位，FFF表示未检测到)
+        """
+        res_dict = self.circle_detect(_img)
+
+        if res_dict is None:
+            return None
 
         # 结果列表
         errs = [

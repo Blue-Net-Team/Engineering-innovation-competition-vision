@@ -24,7 +24,7 @@ LineDetector类
     在图像上画出交点
 - `find_line(self, _img, draw: bool = False):`
     找出图像中的直线，并计算两条直线的夹角和交点坐标
-    
+
     参数:
         - `_img (numpy.ndarray)`: 传入的图像数据
         - `draw (bool)`: 是否在传入的图像中画出直线
@@ -222,12 +222,18 @@ class LineDetector(Detect):
         Args:
             path (str): 文件路径
         """
-        ori_config = super().load_config(path)
-        config = ori_config["LineDetector"]
+        try:
+            ori_config = super().load_config(path)
+            config = ori_config["LineDetector"]
 
-        self.Min_val = config["Min_val"]
-        self.Max_val = config["Max_val"]
-        self.Hough_threshold = config["Hough_threshold"]
-        self.minLineLength = config["minLineLength"]
-        self.maxLineGap = config["maxLineGap"]
-        self.bias = config["bias"]
+            self.Min_val = config["Min_val"]
+            self.Max_val = config["Max_val"]
+            self.Hough_threshold = config["Hough_threshold"]
+            self.minLineLength = config["minLineLength"]
+            self.maxLineGap = config["maxLineGap"]
+            self.bias = config["bias"]
+            res_str = ''
+        except:
+            res_str = f"加载{path}失败"
+            pass
+        return res_str

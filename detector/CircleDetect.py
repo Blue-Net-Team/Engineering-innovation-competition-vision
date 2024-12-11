@@ -151,12 +151,18 @@ class CircleDetector(Detect):
         if circle_type not in ["material", "annulus"]:
             raise ValueError("circle_type must be 'material' or 'annulus'")
 
-        config = super().load_config(jsion_path)
-        config = config[circle_type]
+        try:
+            config = super().load_config(jsion_path)
+            config = config[circle_type]
 
-        self.dp = config["dp"]
-        self.minDist = config["minDist"]
-        self.param1 = config["param1"]
-        self.param2 = config["param2"]
-        self.minRadius = config["minRadius"]
-        self.maxRadius = config["maxRadius"]
+            self.dp = config["dp"]
+            self.minDist = config["minDist"]
+            self.param1 = config["param1"]
+            self.param2 = config["param2"]
+            self.minRadius = config["minRadius"]
+            self.maxRadius = config["maxRadius"]
+            res_str = ""
+        except:
+            res_str = f"配置文件{jsion_path}中没有{circle_type}的配置"
+            pass
+        return res_str

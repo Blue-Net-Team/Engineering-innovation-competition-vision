@@ -84,15 +84,24 @@ class Solution:
                 self.annulus_point: list[int] = config["annulus_point"]
                 # 转盘中心点
                 self.rotator_centre_point = config["rotator_centre_point"]
-
-            # 加载物料识别的圆环参数
-            self.material_circle_detector.load_config("config.json", "material")
-            # 加载圆环识别的圆环参数
-            self.annulus_circle_detector.load_config("config.json", "annulus")
-        except:
+        except Exception as e:
             self.annulus_point = [0, 0]
             self.rotator_centre_point = [0, 0]
-            print(Fore.RED + "配置文件读取失败")
+            print(Fore.RED + "配置文件读取annulus_point,rotator_centre_point失败")
+
+        # 加载物料识别的圆环参数
+        load_err1 = self.material_circle_detector.load_config("config.json", "material")
+        # 加载圆环识别的圆环参数
+        load_err2 = self.annulus_circle_detector.load_config("config.json", "annulus")
+        # 加载直线检测的参数
+        load_err3 = self.line_detector.load_config("config.json")
+
+        err = [load_err1, load_err2, load_err3]
+        if any(err):
+            print(Fore.RED + "加载配置文件失败")
+            for e in err:
+                if e:
+                    print(Fore.RED + e)
 
         # endregion
 

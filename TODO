@@ -1,2 +1,0 @@
-TODO:解决方案中添加运动监测的算法，检测到转盘开始转动，返回字符1，否则None
-TODO:完成多边形检测，def polygon(img,nums)->list[tuple[int]],输入图片，返回几何中心坐标列表

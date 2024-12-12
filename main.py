@@ -73,6 +73,7 @@ while True:
             except:
                 read_img_time = 0
 
+            # 如果res是none，会继续读取下一帧图像，直到res不是none
             res: str | None = solution_dict[sign][1](img)
 
             t1 = time.perf_counter()

@@ -155,3 +155,4 @@ datas/
 
 # cfg
 *.json
+!config.json

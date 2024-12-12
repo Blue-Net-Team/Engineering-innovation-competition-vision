@@ -1,0 +1,27 @@
+{
+    "LineDetector": {
+        "Min_val": 120,
+        "Max_val": 255,
+        "Hough_threshold": 48,
+        "minLineLength": 41,
+        "maxLineGap": 49,
+        "bias": 3
+    },
+    "material": {
+        "dp": 1,
+        "minDist": 52,
+        "param1": 60,
+        "param2": 20,
+        "minRadius": 48,
+        "maxRadius": 52
+    },
+    "annulus_point": [
+        0,
+        0
+    ],
+    "rotator_centre_point": [
+        0,
+        0
+    ],
+    "nums":0
+}

@@ -15,6 +15,7 @@ from colorama import Fore, Style, init
 init(autoreset=True)
 
 COLOR_DIC = {0: "R", 1: "G", 2: "B", 3: "W"}
+COLOR_DIC_INV = {v: k for k, v in COLOR_DIC.items()}
 
 
 def show(img):
@@ -72,6 +73,7 @@ class Solution:
         self.line_detector = detector.LineDetector()
         self.polygon_detector = detector.PolygonDetector()
         self.uart = Usart(ser_port)
+        self.img_stack:list[dict[str,tuple[int,int]]] = []     # 用于存放上一帧图像的物料位置的栈
 
         # region 读取配置文件
         try:
@@ -83,8 +85,13 @@ class Solution:
                 self.rotator_centre_point: list[int] = config["rotator_centre_point"]
                 # 多边形边数
                 self.nums: int = config["nums"]
+<<<<<<< HEAD
                 # 区域一坐标
                 self.area1_points: list[list[int]] = config["area1_point"]
+=======
+                # 物料运动时候的平均欧几里得距离，平均欧几里得距离小于这个值则认为物料没有移动
+                self.moving_distance = config["moving_distance"]
+>>>>>>> 8ac8e62 (添加物料运动检测功能，更新相关配置和文档)
         except Exception as e:
             self.annulus_point = [0, 0]
             self.rotator_centre_point = [0, 0]
@@ -182,6 +189,76 @@ class Solution:
 
             res_dict[color] = point
         return res_dict
+
+    def material_moving_detect(self, _img):
+        """
+        物料运动检测
+        ----
+        图像噪声可能会使其返回None
+
+        Args:
+            _img (np.ndarray): 图片
+        Returns:
+            str|none: 运动顺序，123代表红绿蓝。没看见物料返回None
+
+            返回"231"代表1号位绿，2号位蓝，3号位红。该返回值不是夹取顺序
+        """
+        order_lst = ["G", "R", "B"]
+        res_str = ""
+
+        material_positions = self.detect_material_positions(_img)
+
+        # 判断有没有none
+        if None in material_positions.values():
+            return None
+
+        # region 判断位置栈是否有值，有值进行作差，反之入栈
+        # 上一次的物料位置，如果没有则为当前的物料位置
+        last_positions: dict[str, tuple[int, int]]= self.img_stack.pop() if self.img_stack else material_positions  # type:ignore
+        new_positions: dict[str, tuple[int, int]] = material_positions  # type:ignore
+        # 入栈
+        self.img_stack.append(new_positions)
+        # endregion
+
+        # 欧几里得距离
+        # 颜色:距离
+        distances = {}
+
+        # 坐标变化
+        # 颜色:坐标变化
+        errs = {}
+
+        # 计算欧几里得距离和坐标变化
+        for color in new_positions:
+            # 计算欧几里得距离
+            distance = np.linalg.norm(
+                np.array(new_positions[color]) - np.array(last_positions[color])
+            )
+            # 计算坐标变化
+            err = (
+                new_positions[color][0] - last_positions[color][0],
+                new_positions[color][1] - last_positions[color][1],
+            )
+
+            distances[color] = distance
+            errs[color] = err
+
+        # 平均欧几里得距离
+        avg_distance = np.mean(list(distances.values()))
+
+        if avg_distance < self.moving_distance:
+            return None
+
+        color1:str = self.get_positions(new_positions)
+
+        # 重构顺序列表
+        color1_index = order_lst.index(color1)
+        order_lst = order_lst[color1_index:] + order_lst[:color1_index]
+
+        for i in order_lst:
+            res_str += str(COLOR_DIC_INV[i])
+
+        return res_str
 
     def get_rotator_centre(self, _img):
         """
@@ -337,7 +414,6 @@ class Solution:
         :return: 两直线的角度，交点坐标
         """
         angel1, angel2, cross_point = self.line_detector.find_line(_img, draw=True)
-        # TODO:更改返回值
         return angel1, angel2, cross_point
 
     def get_position1(self, res_dict) -> str:

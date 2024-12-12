@@ -21,7 +21,9 @@ def show(img):
     return cv2.imshow("img", img)
 
 
-def get_centre_point(point1:tuple[int,int], point2:tuple[int,int], point3:tuple[int,int]):
+def get_centre_point(
+    point1: tuple[int, int], point2: tuple[int, int], point3: tuple[int, int]
+):
     """
     获取三点圆的圆心
     ----
@@ -46,15 +48,9 @@ def get_centre_point(point1:tuple[int,int], point2:tuple[int,int], point3:tuple[
     # BC中垂线斜率
     _k_BC = (x3 - x2) / (y2 - y3)
 
-    L = np.array(
-        [[_k_AB, -1],
-                [_k_BC, -1]]
-        )
+    L = np.array([[_k_AB, -1], [_k_BC, -1]])
 
-    R = np.array(
-        [[_k_AB * mid_1[0] - mid_1[1]],
-                [_k_BC * mid_2[0] - mid_2[1]]]
-        )
+    R = np.array([[_k_AB * mid_1[0] - mid_1[1]], [_k_BC * mid_2[0] - mid_2[1]]])
 
     # 求解方程
     x, y = np.linalg.solve(L, R)
@@ -87,6 +83,8 @@ class Solution:
                 self.rotator_centre_point: list[int] = config["rotator_centre_point"]
                 # 多边形边数
                 self.nums: int = config["nums"]
+                # 区域一坐标
+                self.area1_points: list[list[int]] = config["area1_point"]
         except Exception as e:
             self.annulus_point = [0, 0]
             self.rotator_centre_point = [0, 0]
@@ -111,7 +109,7 @@ class Solution:
 
         # endregion
 
-    def detect_material_positions(self, _img)-> dict[str, tuple[int,int] | None]:
+    def detect_material_positions(self, _img) -> dict[str, tuple[int, int] | None]:
         """
         物料位置检测
         ----
@@ -139,7 +137,9 @@ class Solution:
         else:
             # 检测多边形
             # 轮廓approx被抽象为rs
-            points, rs = self.polygon_detector.get_polygon_centre(img_sharpen, self.nums)
+            points, rs = self.polygon_detector.get_polygon_centre(
+                img_sharpen, self.nums
+            )
 
         # 如果检测不到圆形则返回None
         if points is None or rs is None:
@@ -161,9 +161,9 @@ class Solution:
             # 绘制颜色识别区
             cv2.rectangle(_img, pt0, pt1, (0, 255, 0), 1)
 
-            if self.nums == 0:      # 圆形物料
+            if self.nums == 0:  # 圆形物料
                 cv2.circle(_img, point, r, (0, 255, 0), 1)
-            else:       # 多边形物料
+            else:  # 多边形物料
                 cv2.polylines(_img, [r], True, (0, 255, 0), 2)
 
             # 在显示对应的颜色
@@ -206,9 +206,9 @@ class Solution:
         # 转换为字符，便于发送
         # 01代表正负号，后面的三个数字代表坐标
         err = (
-                centre_point[0] - self.rotator_centre_point[0],
-                centre_point[1] - self.rotator_centre_point[1]
-            )
+            centre_point[0] - self.rotator_centre_point[0],
+            centre_point[1] - self.rotator_centre_point[1],
+        )
         res = f"{'0' if err[0] < 0 else '1'}{str(err[0]).rjust(3, '0')}{'0' if err[1] < 0 else '1'}{str(err[1]).rjust(3, '0')}"
         return res
 
@@ -339,6 +339,41 @@ class Solution:
         angel1, angel2, cross_point = self.line_detector.find_line(_img, draw=True)
         # TODO:更改返回值
         return angel1, angel2, cross_point
+
+    def get_position1(self, res_dict) -> str:
+        """
+        区域一颜色判断
+        ----
+        本方法判断区域一是否有颜色点
+        
+        -如果该点不在区域一内,返回None
+        
+        :param res_dict: 传入颜色字典
+        :returns: 颜色名称
+        """
+        Top_left_point=(self.area1_points[0][0],self.area1_points[0][1])
+        Bottom_left_point=(self.area1_points[1][0],self.area1_points[1][1])
+               
+        # 获取三个颜色的圆心坐标
+        R_point, G_point, B_point = res_dict["R"], res_dict["G"], res_dict["B"]
+        if R_point is None or G_point is None or B_point is None:
+            return None
+        points = [R_point, G_point, B_point]
+        # 找到最下面的点
+        point1 = min(points, key=lambda point: point[1])        
+        # 判断该点是否在区域一
+        if (
+            Top_left_point[0] <= point1[0] <= Bottom_left_point[0]
+            and Top_left_point[1] <= point1[1] <= Bottom_left_point[1]
+        ):
+            if point1 == R_point:
+                return "R"
+            elif point1 == G_point:
+                return "G"
+            elif point1 == B_point:
+                return "B"
+        
+        return None
 
     def read_serial(self, head: str, tail: str):
         """

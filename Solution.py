@@ -85,13 +85,10 @@ class Solution:
                 self.rotator_centre_point: list[int] = config["rotator_centre_point"]
                 # 多边形边数
                 self.nums: int = config["nums"]
-<<<<<<< HEAD
                 # 区域一坐标
                 self.area1_points: list[list[int]] = config["area1_point"]
-=======
                 # 物料运动时候的平均欧几里得距离，平均欧几里得距离小于这个值则认为物料没有移动
                 self.moving_distance = config["moving_distance"]
->>>>>>> 8ac8e62 (添加物料运动检测功能，更新相关配置和文档)
         except Exception as e:
             self.annulus_point = [0, 0]
             self.rotator_centre_point = [0, 0]
@@ -194,7 +191,8 @@ class Solution:
         """
         物料运动检测
         ----
-        图像噪声可能会使其返回None
+        - 图像噪声可能会使其返回None
+        - 1号位没有物料可能会返回None
 
         Args:
             _img (np.ndarray): 图片
@@ -249,7 +247,10 @@ class Solution:
         if avg_distance < self.moving_distance:
             return None
 
-        color1:str = self.get_positions(new_positions)
+        # 传入的字典已经排除了None，传出的color也不可能是None
+        color1:str|None = self.get_position1(new_positions)
+        if color1 is None:
+            return None
 
         # 重构顺序列表
         color1_index = order_lst.index(color1)
@@ -416,27 +417,28 @@ class Solution:
         angel1, angel2, cross_point = self.line_detector.find_line(_img, draw=True)
         return angel1, angel2, cross_point
 
-    def get_position1(self, res_dict) -> str:
+    def get_position1(self, res_dict: dict[str, tuple[int, int]]) -> str|None:
         """
         区域一颜色判断
         ----
         本方法判断区域一是否有颜色点
-        
-        -如果该点不在区域一内,返回None
-        
-        :param res_dict: 传入颜色字典
-        :returns: 颜色名称
+
+        - 如果区域一内没有点,返回None
+        - 如果res_dict中有None,返回None
+
+        Args:
+            res_dict (dict): 颜色字典
+        Returns:
+            str|None: 颜色字母或None
         """
         Top_left_point=(self.area1_points[0][0],self.area1_points[0][1])
         Bottom_left_point=(self.area1_points[1][0],self.area1_points[1][1])
-               
+
         # 获取三个颜色的圆心坐标
         R_point, G_point, B_point = res_dict["R"], res_dict["G"], res_dict["B"]
-        if R_point is None or G_point is None or B_point is None:
-            return None
         points = [R_point, G_point, B_point]
         # 找到最下面的点
-        point1 = min(points, key=lambda point: point[1])        
+        point1 = min(points, key=lambda point: point[1])
         # 判断该点是否在区域一
         if (
             Top_left_point[0] <= point1[0] <= Bottom_left_point[0]
@@ -448,7 +450,7 @@ class Solution:
                 return "G"
             elif point1 == B_point:
                 return "B"
-        
+
         return None
 
     def read_serial(self, head: str, tail: str):

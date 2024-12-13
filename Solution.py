@@ -2,6 +2,13 @@
 解决方案
 ====
 与电控对接的顶层需求，包含了所有的检测和串口通信功能
+
+包含的接口
+- 物料运动检测，当物料的位号发生改变，则返回1，否则返回None
+- 获取转盘中心, 返回转盘中心的偏差
+- 获取物料位置，返回物料的位号
+- 圆环检测，返回圆环的颜色和位置
+- 直角检测，返回两直线的角度和交点(正在开发)
 """
 
 import json
@@ -14,7 +21,7 @@ from colorama import Fore, Style, init
 # 初始化 colorama
 init(autoreset=True)
 
-COLOR_DIC = {0: "R", 1: "G", 2: "B", 3: "W"}
+COLOR_DIC = {0: "R", 1: "G", 2: "B"}
 COLOR_DIC_INV = {v: k for k, v in COLOR_DIC.items()}
 
 
@@ -73,7 +80,7 @@ class Solution:
         self.line_detector = detector.LineDetector()
         self.polygon_detector = detector.PolygonDetector()
         self.uart = Usart(ser_port)
-        self.img_stack:list[dict[str,tuple[int,int]]] = []     # 用于存放上一帧图像的物料位置的栈
+        self.position_id_stack:list[dict[str,int]] = []     # 用于存放上一帧图像的物料位号的栈
 
         # region 读取配置文件
         try:
@@ -85,13 +92,16 @@ class Solution:
                 self.rotator_centre_point: list[int] = config["rotator_centre_point"]
                 # 多边形边数
                 self.nums: int = config["nums"]
-                # 区域一坐标
-                self.area1_points: list[list[int]] = config["area1_point"]
-                # 物料运动时候的平均欧几里得距离，平均欧几里得距离小于这个值则认为物料没有移动
-                self.moving_distance = config["moving_distance"]
+                # 位号顶点
+                self.area1_points:list[list[int]] = config["area1_points"]
+                self.area2_points:list[list[int]] = config["area2_points"]
+                self.area3_points:list[list[int]] = config["area3_points"]
         except Exception as e:
             self.annulus_point = [0, 0]
             self.rotator_centre_point = [0, 0]
+            self.area1_points:list[list[int]] = [[0,0],[0,0]]
+            self.area2_points:list[list[int]] = [[0,0],[0,0]]
+            self.area3_points:list[list[int]] = [[0,0],[0,0]]
             self.nums = 0
             print(Fore.RED + "配置文件读取annulus_point,rotator_centre_point,nums失败")
 
@@ -112,6 +122,103 @@ class Solution:
                     print(Fore.RED + e)
 
         # endregion
+
+    # region 物料运动检测
+    def material_moving_detect(self, _img):
+        """
+        物料运动检测
+        ----
+        - 图像噪声可能会使其返回None
+        - 某个位置没有物料会返回None
+        - 物料没有运动会返回None
+
+        Args:
+            _img (Mat): 图片
+        Returns:
+            str|none: 1代表运动，none代表没有运动
+        """
+        color_position_dict:dict[str,tuple[int,int]] = self.detect_material_positions(_img)  # type:ignore
+
+        # 如果有物料没识别到，即color_position_dict有None，返回none
+        if None in color_position_dict.values():
+            return None
+
+        # 将坐标转换成位号，在后面排除了now_color_position_id_dict中有None的情况
+        now_color_position_id_dict: dict[str, int] = self.position2area(color_position_dict)   # type:ignore
+
+        # 如果有某个物料不在规定区域内，认为运动还没停止，返回none
+        if None in now_color_position_id_dict.values():
+            return None
+
+        # 上一次的颜色位号
+        last_color_position_id_dict: dict[str, int] = self.position_id_stack.pop() if self.position_id_stack else now_color_position_id_dict    # type:ignore
+
+        # 将now_color_position_id_dict压入栈
+        self.position_id_stack.append(now_color_position_id_dict)
+
+        # 如果两个字典不相等，说明物料运动了
+        if now_color_position_id_dict != last_color_position_id_dict:
+            return "1"
+        else:
+            return None
+
+    # endregion
+
+    # region 识别转盘圆心
+    def get_rotator_centre(self, _img):
+        """
+        获取转盘中心
+        ----
+        - 图片波动可能会返回none
+        - 没看到物料可能会返回none
+
+        Args:
+            _img (Mat): 图片
+        Returns:
+            tuple: 转盘中心坐标
+        """
+        res_dict = self.detect_material_positions(_img)
+        # 获取三个颜色的圆心坐标
+        R_point, G_point, B_point = res_dict["R"], res_dict["G"], res_dict["B"]
+
+        if R_point is None or G_point is None or B_point is None:
+            return None
+        # 获取转盘中心
+        centre_point = get_centre_point(R_point, G_point, B_point)
+        # 转换为字符，便于发送
+        # 01代表正负号，后面的三个数字代表坐标
+        err = (
+            centre_point[0] - self.rotator_centre_point[0],
+            centre_point[1] - self.rotator_centre_point[1],
+        )
+        res = f"{'0' if err[0] < 0 else '1'}{str(err[0]).rjust(3, '0')}{'0' if err[1] < 0 else '1'}{str(err[1]).rjust(3, '0')}"
+        return res
+    # endregion
+
+    # region 物料位置检测
+    def get_material(self, _img):
+        """
+        获取物料位置，返回字符发送电控
+        ----
+        Args:
+            _img (np.ndarray): 图片
+        Returns:
+            str: 物料位置，例如："R1G2B3"代表红色在1号位，绿色在2号位，蓝色在3号位
+        """
+        color_position_dict = self.detect_material_positions(_img)
+        if None in color_position_dict.values():
+            return None
+        color_position_id_dict = self.position2area(color_position_dict)
+        # 如果有物料不在规定区域内，返回None
+        if None in color_position_id_dict.values():
+            return None
+        res = "".join(
+            [
+                f"{color}{area}"
+                for color, area in color_position_id_dict.items()
+            ]
+        )
+        return res
 
     def detect_material_positions(self, _img) -> dict[str, tuple[int, int] | None]:
         """
@@ -187,109 +294,34 @@ class Solution:
             res_dict[color] = point
         return res_dict
 
-    def material_moving_detect(self, _img):
+    def position2area(self, color_p_dict:dict[str,tuple[int,int]]) -> dict[str,int|None]:
         """
-        物料运动检测
+        将坐标字典转换成位号字典
         ----
-        - 图像噪声可能会使其返回None
-        - 1号位没有物料可能会返回None
+        **注意：** 本方法不是顶层需求
 
         Args:
-            _img (np.ndarray): 图片
+            color_p_dict (dict): 颜色坐标字典, 例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
         Returns:
-            str|none: 运动顺序，123代表红绿蓝。没看见物料返回None
-
-            返回"231"代表1号位绿，2号位蓝，3号位红。该返回值不是夹取顺序
+            dict: 位号字典，例如：{"R":1, "G":2, "B":3}代表红色在1号位，绿色在2号位，蓝色在3号位
         """
-        order_lst = ["G", "R", "B"]
-        res_str = ""
+        color_area_dict:dict[str,int|None] = {}
+        for color in color_p_dict.keys():
+            point = color_p_dict[color]
+            if point is None:
+                continue
+            if self.area1_points[0][0] <= point[0] <= self.area1_points[1][0] and self.area1_points[0][1] <= point[1] <= self.area1_points[1][1]:
+                color_area_dict[color] = 1
+            elif self.area2_points[0][0] <= point[0] <= self.area2_points[1][0] and self.area2_points[0][1] <= point[1] <= self.area2_points[1][1]:
+                color_area_dict[color] = 2
+            elif self.area3_points[0][0] <= point[0] <= self.area3_points[1][0] and self.area3_points[0][1] <= point[1] <= self.area3_points[1][1]:
+                color_area_dict[color] = 3
+            else:
+                color_area_dict[color] = None  # 未知区域
+        return color_area_dict
+    # endregion
 
-        material_positions = self.detect_material_positions(_img)
-
-        # 判断有没有none
-        if None in material_positions.values():
-            return None
-
-        # region 判断位置栈是否有值，有值进行作差，反之入栈
-        # 上一次的物料位置，如果没有则为当前的物料位置
-        last_positions: dict[str, tuple[int, int]]= self.img_stack.pop() if self.img_stack else material_positions  # type:ignore
-        new_positions: dict[str, tuple[int, int]] = material_positions  # type:ignore
-        # 入栈
-        self.img_stack.append(new_positions)
-        # endregion
-
-        # 欧几里得距离
-        # 颜色:距离
-        distances = {}
-
-        # 坐标变化
-        # 颜色:坐标变化
-        errs = {}
-
-        # 计算欧几里得距离和坐标变化
-        for color in new_positions:
-            # 计算欧几里得距离
-            distance = np.linalg.norm(
-                np.array(new_positions[color]) - np.array(last_positions[color])
-            )
-            # 计算坐标变化
-            err = (
-                new_positions[color][0] - last_positions[color][0],
-                new_positions[color][1] - last_positions[color][1],
-            )
-
-            distances[color] = distance
-            errs[color] = err
-
-        # 平均欧几里得距离
-        avg_distance = np.mean(list(distances.values()))
-
-        if avg_distance < self.moving_distance:
-            return None
-
-        # 传入的字典已经排除了None，传出的color也不可能是None
-        color1:str|None = self.get_position1(new_positions)
-        if color1 is None:
-            return None
-
-        # 重构顺序列表
-        color1_index = order_lst.index(color1)
-        order_lst = order_lst[color1_index:] + order_lst[:color1_index]
-
-        for i in order_lst:
-            res_str += str(COLOR_DIC_INV[i])
-
-        return res_str
-
-    def get_rotator_centre(self, _img):
-        """
-        获取转盘中心
-        ----
-        - 图片波动可能会返回none
-        - 没看到物料可能会返回none
-
-        Args:
-            _img (Mat): 图片
-        Returns:
-            tuple: 转盘中心坐标
-        """
-        res_dict = self.detect_material_positions(_img)
-        # 获取三个颜色的圆心坐标
-        R_point, G_point, B_point = res_dict["R"], res_dict["G"], res_dict["B"]
-
-        if R_point is None or G_point is None or B_point is None:
-            return None
-        # 获取转盘中心
-        centre_point = get_centre_point(R_point, G_point, B_point)
-        # 转换为字符，便于发送
-        # 01代表正负号，后面的三个数字代表坐标
-        err = (
-            centre_point[0] - self.rotator_centre_point[0],
-            centre_point[1] - self.rotator_centre_point[1],
-        )
-        res = f"{'0' if err[0] < 0 else '1'}{str(err[0]).rjust(3, '0')}{'0' if err[1] < 0 else '1'}{str(err[1]).rjust(3, '0')}"
-        return res
-
+    # region 圆环检测
     def detect_circle_colors(self, _img):
         """
         圆环的颜色检测
@@ -404,7 +436,9 @@ class Solution:
         color, prob = self.color_detector.detect(square_img)
 
         return color, square_img, ROI
+    # endregion
 
+    # region 直角检测
     def right_angle_detect(self, _img):
         """
         直角检测
@@ -416,43 +450,9 @@ class Solution:
         """
         angel1, angel2, cross_point = self.line_detector.find_line(_img, draw=True)
         return angel1, angel2, cross_point
+    # endregion
 
-    def get_position1(self, res_dict: dict[str, tuple[int, int]]) -> str|None:
-        """
-        区域一颜色判断
-        ----
-        本方法判断区域一是否有颜色点
-
-        - 如果区域一内没有点,返回None
-        - 如果res_dict中有None,返回None
-
-        Args:
-            res_dict (dict): 颜色字典
-        Returns:
-            str|None: 颜色字母或None
-        """
-        Top_left_point=(self.area1_points[0][0],self.area1_points[0][1])
-        Bottom_left_point=(self.area1_points[1][0],self.area1_points[1][1])
-
-        # 获取三个颜色的圆心坐标
-        R_point, G_point, B_point = res_dict["R"], res_dict["G"], res_dict["B"]
-        points = [R_point, G_point, B_point]
-        # 找到最下面的点
-        point1 = min(points, key=lambda point: point[1])
-        # 判断该点是否在区域一
-        if (
-            Top_left_point[0] <= point1[0] <= Bottom_left_point[0]
-            and Top_left_point[1] <= point1[1] <= Bottom_left_point[1]
-        ):
-            if point1 == R_point:
-                return "R"
-            elif point1 == G_point:
-                return "G"
-            elif point1 == B_point:
-                return "B"
-
-        return None
-
+    # region 串口
     def read_serial(self, head: str, tail: str):
         """
         读取串口数据
@@ -473,3 +473,4 @@ class Solution:
         :param data: 数据
         """
         self.uart.write(data, head, tail)
+    # endregion

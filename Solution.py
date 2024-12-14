@@ -132,6 +132,10 @@ class Solution:
         - 某个位置没有物料会返回None
         - 物料没有运动会返回None
 
+        **注意：** 本方法会修改传入的图像
+
+        可以通过这个函数去调整位号参数
+
         Args:
             _img (Mat): 图片
         Returns:
@@ -185,6 +189,9 @@ class Solution:
             return None
         # 获取转盘中心
         centre_point = get_centre_point(R_point, G_point, B_point)
+        # 画出转盘中心
+        cv2.circle(_img, centre_point, 5, (0, 255, 0), 2)
+
         # 转换为字符，便于发送
         # 01代表正负号，后面的三个数字代表坐标
         err = (
@@ -222,7 +229,7 @@ class Solution:
 
     def detect_material_positions(self, _img) -> dict[str, tuple[int, int] | None]:
         """
-        物料位置检测
+        物料位置检测(跟踪)
         ----
         本方法不是顶层需求
 
@@ -327,6 +334,7 @@ class Solution:
         圆环的颜色检测
         ----
         本方法不是顶层需求
+
         **注意** 本方法会在传入的图像上画出圆环和圆心
 
         Args:
@@ -334,7 +342,8 @@ class Solution:
         Returns:
             res_dict (dict): 结果字典，例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
         """
-        res_dict = {color: [] for color in COLOR_DIC.values()}
+        dict1:dict[str,list[tuple[int,int]]] = {color: [] for color in COLOR_DIC.values()}
+        res_dict:dict[str,tuple[int,int]] = {}
 
         img = _img.copy()
         img_sharpen = self.annulus_circle_detector.sharpen(img)
@@ -348,11 +357,11 @@ class Solution:
             cv2.circle(_img, point, 1, (255, 0, 0), 1)
 
             color, _, _ = self.detect_circle_edge_color(_img, point, r)
-            res_dict[color].append(point)
+            dict1[color].append(point)
 
         # 将结果字典的坐标列表进行平均值计算
-        for color in res_dict:
-            res_dict[color] = (
+        for color in dict1:
+            res_dict[color] = (     # type:ignore
                 np.mean(res_dict[color], axis=0) if res_dict[color] else []
             )
 
@@ -369,7 +378,7 @@ class Solution:
         Args:
             _img (np.ndarray): 图片
         Returns:
-            err (None|list): 如果检测到圆环则返回None，否则返回颜色和圆心坐标与标准位置的偏差
+            err (None|str): 如果检测到圆环则返回None，否则返回颜色和圆心坐标与标准位置的偏差
 
             `err`的格式为：以颜色字母开头，下一个01表示正负号，后面的数字表示偏差(补全成3位，FFF表示未检测到)
         """
@@ -407,7 +416,7 @@ class Solution:
         return res
 
     def detect_circle_edge_color(
-        self, _img: cv2.typing.MatLike, point: list[int] | tuple[int], r: int
+        self, _img: cv2.typing.MatLike, point: list[int] | tuple[int, int], r: int
     ):
         """
         识别圆环的颜色

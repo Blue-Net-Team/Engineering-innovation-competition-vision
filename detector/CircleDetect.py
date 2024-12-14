@@ -82,7 +82,7 @@ class CircleDetector(Detect):
         self.minRadius = cv2.getTrackbarPos("minRadius", "Trackbar")
         self.maxRadius = cv2.getTrackbarPos("maxRadius", "Trackbar")
 
-    def detect_circle(self, _img):
+    def detect_circle(self, _img) -> tuple[list[tuple[int,int]]|None,list[int]|None]:
         """
         检测圆形
         ----

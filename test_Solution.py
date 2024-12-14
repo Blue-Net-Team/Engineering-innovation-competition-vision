@@ -56,8 +56,10 @@ class Test_solution(Solution):
         super().__init__(pth_path, ser_port)
         self.FUNC_DICT = {
             "material": self.detect_material_positions,
-            "annulus": self.annulus_detect,
+            "annulus": self.detect_circle_colors,
             "right_angle": self.right_angle_detect,
+            "rotator_center": self.get_rotator_centre,
+            "if_move": self.material_moving_detect,
         }
 
     def test_func(self, cap_id: int, func_name: str):
@@ -141,6 +143,11 @@ class Test_solution(Solution):
         """
         测试圆环边缘的像素重构
         """
+        # 显示图像
+        cv2.namedWindow("ori_img", cv2.WINDOW_NORMAL)
+        cv2.namedWindow("masked_img", cv2.WINDOW_NORMAL)
+        cv2.namedWindow("refacted_img", cv2.WINDOW_NORMAL)
+
         cap = LoadCap(cap_id)
         for _img in cap:
             if _img is None:
@@ -162,6 +169,8 @@ class Test_solution(Solution):
             if points is None or rs is None:
                 continue
 
+            colors = []
+
             for point, r in zip(points, rs):
                 # 绘制掩膜
                 cv2.circle(mask, point, r, (255,), 2)
@@ -173,6 +182,8 @@ class Test_solution(Solution):
                     _img, point, r
                 )
 
+                colors.append(color)
+
                 if refacted_img is None:
                     refacted_img = square_img
                 else:
@@ -181,6 +192,8 @@ class Test_solution(Solution):
                     refacted_img = np.hstack((refacted_img, pad_img, square_img))
 
             masked_img = cv2.bitwise_and(_img, _img, mask=mask)
+
+            print(colors)
 
             t1 = time.perf_counter()
             detect_time = t1 - t0
@@ -199,11 +212,6 @@ class Test_solution(Solution):
 
             if refacted_img is None:  # 防止refacted_img为None
                 refacted_img = np.zeros((20, 20), dtype=np.uint8)
-
-            # 显示图像
-            cv2.namedWindow("ori_img", cv2.WINDOW_NORMAL)
-            cv2.namedWindow("masked_img", cv2.WINDOW_NORMAL)
-            cv2.namedWindow("refacted_img", cv2.WINDOW_NORMAL)
 
             cv2.imshow("ori_img", _img)
             cv2.imshow("masked_img", masked_img)
@@ -330,7 +338,7 @@ class Test_Line_detect:
                 cap.release()
                 break
 
-class Plolygon_Test(PolygonDetector):
+class Polygon_Test(PolygonDetector):
     def __init__(self):
         super().__init__()
         self.createTrackbar()
@@ -410,7 +418,7 @@ if __name__ == "__main__":
     # test = Test_Line_detect()
     # test.test()
 
-    test = Plolygon_Test()
+    test = Polygon_Test()
     test.test_img()
 
     # test = TraditionalColor_Test()

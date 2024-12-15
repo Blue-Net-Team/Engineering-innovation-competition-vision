@@ -470,7 +470,11 @@ class Solution:
             res_img (cv2.typing.MatLike): 按位与的图片
         """
         self.traditional_color_detector.update_range(color_name)
-        res_img = self.traditional_color_detector.binarization(_img, color_name)
+        mask = self.traditional_color_detector.binarization(_img)
+        res_img = cv2.bitwise_and(_img, _img, mask=mask)
+        # 膨胀
+        kernel = np.ones((3, 3), np.uint8)
+        res_img = cv2.dilate(res_img, kernel, iterations=1)
         return res_img
     # endregion
 

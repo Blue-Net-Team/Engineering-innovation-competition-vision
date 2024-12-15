@@ -151,14 +151,13 @@ class TraditionalColorDetector:
     def __init__(self):
         pass
 
-    def binarization(self, _img: cv2.typing.MatLike, color_name: str = "R"):
+    def binarization(self, _img: cv2.typing.MatLike):
         """
         二值化
         ----
         :param img: 图片
         :return: 二值化图片
         """
-        self.update_range(color_name)
         img = _img.copy()
         # 高斯滤波
         img = cv2.GaussianBlur(img, (15, 15), 2)
@@ -195,7 +194,7 @@ class TraditionalColorDetector:
         cv2.createTrackbar("U_S", "Trackbar", self.U_S, 255, self.__callback)
         cv2.createTrackbar("L_V", "Trackbar", self.L_V, 255, self.__callback)
         cv2.createTrackbar("U_V", "Trackbar", self.U_V, 255, self.__callback)
-        cv2.createTrackbar("color", "Trackbar", 0, 2, self.__callback)
+        cv2.createTrackbar("color", "Trackbar", 0, 2, self._color_callback)
 
     def __callback(self, x):
         self.centre = cv2.getTrackbarPos("Centre", "Trackbar")
@@ -205,11 +204,23 @@ class TraditionalColorDetector:
         self.L_V = cv2.getTrackbarPos("L_V", "Trackbar")
         self.U_V = cv2.getTrackbarPos("U_V", "Trackbar")
 
+        self.color_threshold[self.color] = {
+            "centre": self.centre,
+            "error": self.error,
+            "L_S": self.L_S,
+            "U_S": self.U_S,
+            "L_V": self.L_V,
+            "U_V": self.U_V,
+        }
+
+        self.update_range(self.color)
+
+    def _color_callback(self, x):
         self.color_index = cv2.getTrackbarPos("color", "Trackbar")
 
         self.color = COLOR_DICT[self.color_index]
 
-        self.update_range()
+        self.update_range(self.color)
 
     def update_range(self, color_name: str = "R"):
         self.centre = self.color_threshold[color_name]["centre"]
@@ -245,6 +256,16 @@ class TraditionalColorDetector:
             "L_V": self.L_V,
             "U_V": self.U_V,
         }
+
+        # 更新滑块位置
+        cv2.setTrackbarPos("Centre", "Trackbar", self.centre)
+        cv2.setTrackbarPos("Error", "Trackbar", self.error)
+        cv2.setTrackbarPos("L_S", "Trackbar", self.L_S)
+        cv2.setTrackbarPos("U_S", "Trackbar", self.U_S)
+        cv2.setTrackbarPos("L_V", "Trackbar", self.L_V)
+        cv2.setTrackbarPos("U_V", "Trackbar", self.U_V)
+        cv2.setTrackbarPos("color", "Trackbar", self.color_index)
+
 
     def save_params(self, path):
         """

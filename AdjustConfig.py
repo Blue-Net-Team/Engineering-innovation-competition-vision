@@ -112,6 +112,7 @@ class Ad_Config(Solution):
         tcd = TraditionalColorDetector()
         tcd.createTrackbar()
         cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        tcd.update_range()
         for img in self.cap:
             if img is None:
                 continue

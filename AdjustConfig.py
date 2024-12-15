@@ -3,9 +3,16 @@ from typing import Callable
 import cv2
 import numpy as np
 from Solution import Solution
-from detector import ColorDetector, LineDetector, CircleDetector, PolygonDetector
+from detector import (
+    ColorDetector,
+    LineDetector,
+    CircleDetector,
+    PolygonDetector,
+    TraditionalColorDetector,
+)
 from utils.dataset import LoadCap
 from img_trans import LoadWebCam
+
 
 class Ad_Config(Solution):
     """
@@ -14,7 +21,15 @@ class Ad_Config(Solution):
     调整圆环参数，地面和物料
     调整直线参数，canny算子参数
     """
-    def __init__(self, pth_path: str, ser_port: str, cap_id: int, ip:str|None=None, port:int|None=None):
+
+    def __init__(
+        self,
+        pth_path: str,
+        ser_port: str,
+        cap_id: int,
+        ip: str | None = None,
+        port: int | None = None,
+    ):
         super().__init__(pth_path, ser_port)
 
         if ip is not None and port is not None:
@@ -22,10 +37,10 @@ class Ad_Config(Solution):
         else:
             self.cap = LoadCap(cap_id)
 
-        self.d:dict[str,tuple[CircleDetector|PolygonDetector,Callable]] = {
-            "material": (self.material_circle_detector,self.detect_material_positions),
-            "annulus": (self.annulus_circle_detector,self.detect_circle_colors),
-            "approx": (self.polygon_detector,self.detect_material_positions)
+        self.d: dict[str, tuple[CircleDetector | PolygonDetector, Callable]] = {
+            "material": (self.material_circle_detector, self.detect_material_positions),
+            "annulus": (self.annulus_circle_detector, self.detect_circle_colors),
+            "approx": (self.polygon_detector, self.detect_material_positions),
         }
 
     def adjust_circle(self, config_name: str):
@@ -89,8 +104,42 @@ class Ad_Config(Solution):
         self.nums = nums
         self.adjust_circle("approx")
 
+    def adjust_color_threshold(self):
+        """
+        调整颜色阈值
+        ----
+        """
+        tcd = TraditionalColorDetector()
+        tcd.createTrackbar()
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        for img in self.cap:
+            if img is None:
+                continue
+
+            binarization_img = tcd.binarization(img)
+
+            # 按位与的图
+            and_img = cv2.bitwise_and(img, img, mask=binarization_img)
+
+            res_img = np.vstack(
+                (img, cv2.cvtColor(binarization_img, cv2.COLOR_GRAY2BGR), and_img)
+            )
+
+            cv2.imshow("img", res_img)
+
+            key_pressed = cv2.waitKey(1)
+
+            if key_pressed & 0xFF == ord("q"):
+                break
+            elif key_pressed & 0xFF == ord("s"):
+                tcd.save_params("config.json")
+
+        self.cap.release()
+        cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     ad_config = Ad_Config("best_model2024-12-09-12-46-06.pth", "COM5", 0)
-    ad_config.adjust_circle("material")
+    # ad_config.adjust_circle("material")
+    ad_config.adjust_color_threshold()
 # end main

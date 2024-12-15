@@ -145,6 +145,7 @@ class Test_solution(Solution):
         """
         # 显示图像
         cv2.namedWindow("ori_img", cv2.WINDOW_NORMAL)
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         cv2.namedWindow("masked_img", cv2.WINDOW_NORMAL)
         cv2.namedWindow("refacted_img", cv2.WINDOW_NORMAL)
 
@@ -179,7 +180,7 @@ class Test_solution(Solution):
                 cv2.circle(_img, point, r, (0, 255, 0), 1)
 
                 color, square_img, roi_img = self.detect_circle_edge_color(
-                    _img, point, r
+                    img, point, r
                 )
 
                 colors.append(color)
@@ -188,10 +189,10 @@ class Test_solution(Solution):
                     refacted_img = square_img
                 else:
                     # 水平拼接,间隔5像素
-                    pad_img = np.zeros((square_img.shape[0], 5, 3), dtype=np.uint8)
+                    pad_img = np.zeros((square_img.shape[0], 2, 3), dtype=np.uint8)
                     refacted_img = np.hstack((refacted_img, pad_img, square_img))
 
-            masked_img = cv2.bitwise_and(_img, _img, mask=mask)
+            masked_img = cv2.bitwise_and(img, img, mask=mask)
 
             print(colors)
 
@@ -214,6 +215,7 @@ class Test_solution(Solution):
                 refacted_img = np.zeros((20, 20), dtype=np.uint8)
 
             cv2.imshow("ori_img", _img)
+            cv2.imshow("img", img)
             cv2.imshow("masked_img", masked_img)
             cv2.imshow("refacted_img", refacted_img)
 
@@ -407,8 +409,9 @@ class TraditionalColor_Test(TraditionalColorDetector):
                 break
 
 if __name__ == "__main__":
-    # test = Test_solution("best_model2024-12-09-12-46-06.pth", "COM5")
-    # test.test_func(0, "material")
+    test = Test_solution("best_model2024-12-09-12-46-06.pth", "COM6")
+    # test.test_func(0, "annulus")
+    test.test_circle_edge(0)
     # test.test_usart_read("head", "tail")
     # test.test_usart_write("data", "head", "tail")
 
@@ -418,8 +421,8 @@ if __name__ == "__main__":
     # test = Test_Line_detect()
     # test.test()
 
-    test = Polygon_Test()
-    test.test_img()
+    # test = Polygon_Test()
+    # test.test_img()
 
     # test = TraditionalColor_Test()
     # test.test()

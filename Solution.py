@@ -77,6 +77,7 @@ class Solution:
         self.material_circle_detector = detector.CircleDetector()
         self.annulus_circle_detector = detector.CircleDetector()
         self.color_detector = detector.ColorDetector(pth_path)
+        self.traditional_color_detector = detector.TraditionalColorDetector()
         self.line_detector = detector.LineDetector()
         self.polygon_detector = detector.PolygonDetector()
         self.uart = Usart(ser_port)
@@ -113,8 +114,10 @@ class Solution:
         load_err3 = self.line_detector.load_config("config.json")
         # 加载多边形检测的参数
         load_err4 = self.polygon_detector.load_config("config.json")
+        # 加载颜色识别的参数
+        load_err5 = self.traditional_color_detector.load_config("config.json")
 
-        err = [load_err1, load_err2, load_err3, load_err4]
+        err = [load_err1, load_err2, load_err3, load_err4, load_err5]
         if any(err):
             print(Fore.RED + "加载配置文件失败")
             for e in err:
@@ -362,7 +365,7 @@ class Solution:
         # 将结果字典的坐标列表进行平均值计算
         for color in dict1:
             res_dict[color] = (     # type:ignore
-                np.mean(res_dict[color], axis=0) if res_dict[color] else []
+                np.mean(dict1[color], axis=0) if dict1[color] else []
             )
 
         return res_dict
@@ -382,10 +385,20 @@ class Solution:
 
             `err`的格式为：以颜色字母开头，下一个01表示正负号，后面的数字表示偏差(补全成3位，FFF表示未检测到)
         """
-        res_dict = self.detect_circle_colors(_img)
+        annulus_dict:dict[str,tuple[int,int]] = {}
 
-        if res_dict is None:
-            return None
+        for color in COLOR_DIC.values():
+            annulus_img = self.__get_with_and_img(_img, color)
+            points, rs = self.annulus_circle_detector.detect_circle(annulus_img)
+
+            # 坐标平均值
+            avg_point:tuple[int,int]|None = np.mean(points,axis=0) if points else None
+            # 计算平均半径
+            avg_r:int|None = int(np.mean(rs)) if rs else None
+
+            if avg_point is None or avg_r is None: return None
+
+            annulus_dict[color] = avg_point
 
         # 结果列表
         errs = [
@@ -393,14 +406,14 @@ class Solution:
                 [
                     color,
                     [
-                        res_dict[color][0] - self.annulus_point[0],
-                        res_dict[color][1] - self.annulus_point[1],
+                        annulus_dict[color][0] - self.annulus_point[0],
+                        annulus_dict[color][1] - self.annulus_point[1],
                     ],
                 ]
-                if res_dict[color]
+                if annulus_dict[color]
                 else [color, None]
             )
-            for color in res_dict
+            for color in annulus_dict
         ]
 
         # 将结果列表转换成字符串，例如：
@@ -445,6 +458,20 @@ class Solution:
         color, prob = self.color_detector.detect(square_img)
 
         return color, square_img, ROI
+
+    def __get_with_and_img(self, _img:cv2.typing.MatLike ,color_name:str):
+        """
+        获取按位与的图片
+        ----
+        Args:
+            _img (cv2.typing.MatLike): 图片
+            color_name (str): 颜色名称
+        Returns:
+            res_img (cv2.typing.MatLike): 按位与的图片
+        """
+        self.traditional_color_detector.update_range(color_name)
+        res_img = self.traditional_color_detector.binarization(_img, color_name)
+        return res_img
     # endregion
 
     # region 直角检测

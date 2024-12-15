@@ -64,7 +64,6 @@ COLOR_DICT: dict[Union[int, float, bool], str] = {
     0:'R',
     1:'G',
     2:'B',
-    3:'W'
 }
 
 class ColorDetector:
@@ -118,17 +117,48 @@ class TraditionalColorDetector:
     L_V: int = 0
     U_V: int = 255
 
+    color_index: int = 0
+
+    color = COLOR_DICT[color_index]
+
+    color_threshold = {
+        "R":{
+            "centre": 0,
+            "error": 10,
+            "L_S": 55,
+            "U_S": 255,
+            "L_V": 0,
+            "U_V": 255,
+        },
+        "G":{
+            "centre": 65,
+            "error": 10,
+            "L_S": 55,
+            "U_S": 255,
+            "L_V": 0,
+            "U_V": 255,
+        },
+        "B":{
+            "centre": 130,
+            "error": 10,
+            "L_S": 55,
+            "U_S": 255,
+            "L_V": 0,
+            "U_V": 255,
+        },
+    }
+
     def __init__(self):
-        self.update_range()
         pass
 
-    def binarization(self, _img: cv2.typing.MatLike):
+    def binarization(self, _img: cv2.typing.MatLike, color_name: str = "R"):
         """
         二值化
         ----
         :param img: 图片
         :return: 二值化图片
         """
+        self.update_range(color_name)
         img = _img.copy()
         # 高斯滤波
         img = cv2.GaussianBlur(img, (15, 15), 2)
@@ -165,7 +195,7 @@ class TraditionalColorDetector:
         cv2.createTrackbar("U_S", "Trackbar", self.U_S, 255, self.__callback)
         cv2.createTrackbar("L_V", "Trackbar", self.L_V, 255, self.__callback)
         cv2.createTrackbar("U_V", "Trackbar", self.U_V, 255, self.__callback)
-        cv2.createTrackbar("save", "Trackbar", 0, 1, self.__save)
+        cv2.createTrackbar("color", "Trackbar", 0, 2, self.__callback)
 
     def __callback(self, x):
         self.centre = cv2.getTrackbarPos("Centre", "Trackbar")
@@ -175,15 +205,16 @@ class TraditionalColorDetector:
         self.L_V = cv2.getTrackbarPos("L_V", "Trackbar")
         self.U_V = cv2.getTrackbarPos("U_V", "Trackbar")
 
+        self.color_index = cv2.getTrackbarPos("color", "Trackbar")
+
+        self.color = COLOR_DICT[self.color_index]
+
         self.update_range()
 
-    def __save(self, x):
-        if x == 1:
-            self.save_params("./color params.json")
-        else:
-            pass
+    def update_range(self, color_name: str = "R"):
+        self.centre = self.color_threshold[color_name]["centre"]
+        self.error = self.color_threshold[color_name]["error"]
 
-    def update_range(self):
         minH = self.centre - self.error
         maxH = self.centre + self.error
 
@@ -206,6 +237,15 @@ class TraditionalColorDetector:
             self.LOW_H2 = None
             self.UP_H2 = None
 
+        self.color_threshold[self.color] = {
+            "centre": self.centre,
+            "error": self.error,
+            "L_S": self.L_S,
+            "U_S": self.U_S,
+            "L_V": self.L_V,
+            "U_V": self.U_V,
+        }
+
     def save_params(self, path):
         """
         保存参数
@@ -215,19 +255,25 @@ class TraditionalColorDetector:
         with open(path, "r") as f:
             config = json.load(f)
 
-        config["color"] = {"centre": self.centre, "error": self.error}
+        config["color"] = self.color_threshold
 
         with open(path, "w") as f:
             json.dump(config, f, indent=4)
 
-    def load_param(self, path):
+    def load_config(self, path):
         """
         加载参数
         ----
         :param path: 路径
         """
-        with open(path, "r") as f:
-            data = json.load(f)
-            data = data["color"]
-            self.centre = data["centre"]
-            self.error = data["error"]
+        try:
+            with open(path, "r") as f:
+                config = json.load(f)
+                self.color_threshold = config["color"]
+            res_str = ""
+        except FileNotFoundError:
+            res_str = f"文件 {path} 不存在"
+        except KeyError:
+            res_str = f"配置文件 {path} 中没有找到对应的配置项"
+        return res_str
+

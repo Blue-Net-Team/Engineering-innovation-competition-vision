@@ -151,12 +151,14 @@ class TraditionalColorDetector:
     def __init__(self):
         pass
 
-    def binarization(self, _img: cv2.typing.MatLike):
+    def binarization(self, _img: cv2.typing.MatLike) -> cv2.typing.MatLike:
         """
         二值化
         ----
-        :param img: 图片
-        :return: 二值化图片
+        Args:
+            _img(cv2.typing.MatLike): 输入图像
+        Returns:
+            cv2.typing.MatLike: 二值化后的图像
         """
         img = _img.copy()
         # 高斯滤波

@@ -117,6 +117,9 @@ class TraditionalColorDetector:
     L_V: int = 0
     U_V: int = 255
 
+    min_material_area: int = 1000
+    max_material_area: int = 10000
+
     color_index: int = 0
 
     color = COLOR_DICT[color_index]
@@ -184,6 +187,19 @@ class TraditionalColorDetector:
 
         return mask
 
+    def get_color_position(self, binarized_img:cv2.typing.MatLike) -> tuple[int, int]:
+        """
+        获取颜色位置
+        ----
+        通过传入二值化的图像，然后取外接矩形的中心点作为颜色的位置
+
+        Args:
+            binarized_img(cv2.typing.MatLike): 二值化图像
+        Returns:
+            tuple[int, int]: 颜色位置
+        """
+        # TODO:完成此函数
+
     def createTrackbar(self):
         """
         创建调节条
@@ -197,6 +213,8 @@ class TraditionalColorDetector:
         cv2.createTrackbar("L_V", "Trackbar", self.L_V, 255, self.__callback)
         cv2.createTrackbar("U_V", "Trackbar", self.U_V, 255, self.__callback)
         cv2.createTrackbar("color", "Trackbar", 0, 2, self._color_callback)
+        cv2.createTrackbar("min_area", "Trackbar", self.min_material_area, 10000, self.__callback)
+        cv2.createTrackbar("max_area", "Trackbar", self.max_material_area, 10000, self.__callback)
 
     def __callback(self, x):
         self.centre = cv2.getTrackbarPos("Centre", "Trackbar")
@@ -205,6 +223,8 @@ class TraditionalColorDetector:
         self.U_S = cv2.getTrackbarPos("U_S", "Trackbar")
         self.L_V = cv2.getTrackbarPos("L_V", "Trackbar")
         self.U_V = cv2.getTrackbarPos("U_V", "Trackbar")
+        self.min_material_area = cv2.getTrackbarPos("min_area", "Trackbar")
+        self.max_material_area = cv2.getTrackbarPos("max_area", "Trackbar")
 
         self.color_threshold[self.color] = {
             "centre": self.centre,
@@ -267,6 +287,8 @@ class TraditionalColorDetector:
         cv2.setTrackbarPos("L_V", "Trackbar", self.L_V)
         cv2.setTrackbarPos("U_V", "Trackbar", self.U_V)
         cv2.setTrackbarPos("color", "Trackbar", self.color_index)
+        cv2.setTrackbarPos("min_area", "Trackbar", self.min_material_area)
+        cv2.setTrackbarPos("max_area", "Trackbar", self.max_material_area)
 
 
     def save_params(self, path):
@@ -279,6 +301,8 @@ class TraditionalColorDetector:
             config = json.load(f)
 
         config["color"] = self.color_threshold
+        config["min_material_area"] = self.min_material_area
+        config["max_material_area"] = self.max_material_area
 
         with open(path, "w") as f:
             json.dump(config, f, indent=4)
@@ -293,6 +317,8 @@ class TraditionalColorDetector:
             with open(path, "r") as f:
                 config = json.load(f)
                 self.color_threshold = config["color"]
+                self.min_material_area = config["min_material_area"]
+                self.max_material_area = config["max_material_area"]
             res_str = ""
         except FileNotFoundError:
             res_str = f"文件 {path} 不存在"

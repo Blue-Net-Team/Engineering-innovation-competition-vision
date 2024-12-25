@@ -230,6 +230,7 @@ class Solution:
         )
         return res
 
+    # TODO:重构
     def detect_material_positions(self, _img) -> dict[str, tuple[int, int] | None]:
         """
         物料位置检测(跟踪)

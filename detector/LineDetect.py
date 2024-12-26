@@ -22,8 +22,8 @@ LineDetector类
     通过直线参数在图像上画出直线
 - `__draw_point(self, img, point):`
     在图像上画出交点
-- `find_line(self, _img, draw: bool = False):`
-    找出图像中的直线，并计算两条直线的夹角和交点坐标
+- `find_right_angle(self, _img, draw: bool = False):`
+    找出图像中的直角的交线和交点
 
     参数:
         - `_img (numpy.ndarray)`: 传入的图像数据
@@ -106,7 +106,7 @@ class LineDetector(Detect):
         """
         cv2.circle(img, point, 4, (255, 0, 0), 3)
 
-    def find_line(self, _img, draw: bool = False):
+    def find_right_angle(self, _img, draw: bool = False):
         """
         找出直角
         ----

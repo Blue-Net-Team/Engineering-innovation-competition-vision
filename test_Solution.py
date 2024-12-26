@@ -248,7 +248,7 @@ class Test_Line_detect:
             # endregion
 
             img = self.ld.sharpen(img)
-            angel1, angel2, point = self.ld.find_line(img, True)
+            angel1, angel2, point = self.ld.find_right_angle(img, True)
 
             # region 计算帧率部分2
             t1 = time.perf_counter()

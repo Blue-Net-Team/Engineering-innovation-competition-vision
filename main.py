@@ -36,7 +36,7 @@ DEAL_IMG = "show"  # 处理图像的方式,包含"show"、"send"、"hide"
 IP: str = ""  # TODO: 填写主机(jetson)IP地址
 PORT: int = 8000  # 端口号
 
-SERIAL_PORT = "dev/ttyUSB0"  # TODO: 填写串口号
+SERIAL_PORT = "/dev/ttyUSB0"  # TODO: 填写串口号
 
 # region 主代码
 vs = VideoStreaming(IP, PORT)

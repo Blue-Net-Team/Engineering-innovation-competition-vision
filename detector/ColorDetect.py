@@ -55,46 +55,13 @@ TraditionalColorDetector:
 import json
 from typing import Union
 import numpy as np
-import torch
 import cv2
-from detector.model import CNN
-import torch.nn.functional as F
 
 COLOR_DICT: dict[Union[int, float, bool], str] = {
     0:'R',
     1:'G',
     2:'B',
 }
-
-class ColorDetector:
-    def __init__(self, model_path="best_model.pth"):
-        # 加载模型
-        self.cnn = CNN()
-        self.cnn.load_state_dict(torch.load(model_path))
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.cnn.to(self.device)
-        self.cnn.eval()
-
-    def detect(self, img):
-        """
-        识别颜色
-        ----
-        :param img: 图片
-        :return: 颜色，概率
-        """
-        # img = cv2.resize(img, (128, 128))
-        img = torch.from_numpy(img).unsqueeze(0).float().to(self.device)
-
-        with torch.no_grad():
-            output = self.cnn(img)
-            prediction = torch.argmax(output, dim=1)
-            probabilities = F.softmax(output, dim=1)
-
-        return (
-            COLOR_DICT[prediction.item()],
-            probabilities[0][int(prediction.item())].item(),
-        )
-
 
 class TraditionalColorDetector:
     """

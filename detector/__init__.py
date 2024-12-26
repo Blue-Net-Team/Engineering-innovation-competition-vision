@@ -3,10 +3,6 @@
 =====
 提供了一些识别器类，用于识别图像中的各种对象。
 
-CNN网络
---------
-使用卷积神经网络 (CNN) 进行颜色识别。
-
 CircleDetector类
 --------
 继承自 `Detect` 类，实现了圆形检测的功能。
@@ -35,21 +31,6 @@ CircleDetector类
         参数:
             - `jsion_path (str)`: 配置文件路径。
             - `circle_type (str)`: 圆形类型，包含 "material"（物料圆环）和 "annulus"（地面圆环）。
-
-ColorDetector:
---------
-使用卷积神经网络 (CNN) 进行颜色识别。
-
-方法:
-    - `__init__(model_path: str = "best_model.pth")`:
-        初始化 ColorDetector 类，加载预训练的 CNN 模型。
-    - `detect(img: np.ndarray) -> tuple[str, float]`:
-        识别输入图像的颜色。
-
-        参数:
-            - `img`: 输入图像 (numpy 数组)。
-        返回:
-            - 颜色 (str) 和概率 (float)。
 
 TraditionalColorDetector:
 --------
@@ -142,8 +123,6 @@ PolygonDetector类
         - `jsion_path (str)`: 配置文件路径。
 
 """
-from detector.model import CNN
 from detector.CircleDetect import CircleDetector
 from detector.ColorDetect import *
 from detector.LineDetect import LineDetector
-from detector.PolygonDetect import PolygonDetector

@@ -66,7 +66,7 @@ def get_centre_point(
 
 
 class Solution:
-    def __init__(self, pth_path: str, ser_port: str):
+    def __init__(self, ser_port: str):
         """
         解决方案
         ----
@@ -76,7 +76,6 @@ class Solution:
         """
         self.material_circle_detector = detector.CircleDetector()
         self.annulus_circle_detector = detector.CircleDetector()
-        self.color_detector = detector.ColorDetector(pth_path)
         self.traditional_color_detector = detector.TraditionalColorDetector()
         self.line_detector = detector.LineDetector()
         self.polygon_detector = detector.PolygonDetector()
@@ -230,7 +229,7 @@ class Solution:
         )
         return res
 
-    # TODO:重构
+
     def detect_material_positions(self, _img) -> dict[str, tuple[int, int] | None]:
         """
         物料位置检测(跟踪)
@@ -253,56 +252,8 @@ class Solution:
         img = _img.copy()
         img_sharpen = self.material_circle_detector.sharpen(img)  # 锐化
 
-        if self.nums == 0:
-            # 检测圆形
-            points, rs = self.material_circle_detector.detect_circle(img_sharpen)
-        else:
-            # 检测多边形
-            # 轮廓approx被抽象为rs
-            points, rs = self.polygon_detector.get_polygon_centre(
-                img_sharpen, self.nums
-            )
-
-        # 如果检测不到圆形则返回None
-        if points is None or rs is None:
-            return res_dict
-
-        for point, r in zip(points, rs):
-            # 颜色识别区顶点
-            pt0 = (int(point[0] - 10), int(point[1] - 10))
-            pt1 = (int(point[0] + 10), int(point[1] + 10))
-
-            # 颜色识别区
-            ROI_img = img[pt0[1] : pt1[1], pt0[0] : pt1[0]]
-            try:
-                # 颜色识别
-                color, prob = self.color_detector.detect(ROI_img)
-            except:
-                color, prob = "?", 1.0
-
-            # 绘制颜色识别区
-            cv2.rectangle(_img, pt0, pt1, (0, 255, 0), 1)
-
-            if self.nums == 0:  # 圆形物料
-                cv2.circle(_img, point, r, (0, 255, 0), 1)
-            else:  # 多边形物料
-                cv2.polylines(_img, [r], True, (0, 255, 0), 2)
-
-            # 在显示对应的颜色
-            cv2.putText(
-                _img,
-                f"{color}, {prob:.2f}",
-                (point[0], point[1] - 20),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (0, 255, 0),
-                1,
-            )
-
-            # 将point变成整形
-            point = (int(point[0]), int(point[1]))
-
-            res_dict[color] = point
+        # TODO:重构
+        ...
         return res_dict
 
     def position2area(self, color_p_dict:dict[str,tuple[int,int]]) -> dict[str,int|None]:
@@ -428,37 +379,6 @@ class Solution:
         )
 
         return res
-
-    def detect_circle_edge_color(
-        self, _img: cv2.typing.MatLike, point: list[int] | tuple[int, int], r: int
-    ):
-        """
-        识别圆环的颜色
-        ----
-        *此方法不是顶层需求*
-
-        Args:
-            _img (cv2.typing.MatLike): 传入图片
-            point (Iterable[int]): 圆心坐标
-            r (int): 圆半径
-        Returns:
-            tuple: 颜色、重构的图片和ROI
-        """
-        # region 提取圆环区域
-        img = _img.copy()
-        mask = np.zeros(img.shape[:2], dtype=np.uint8)
-        cv2.circle(mask, point, r, (255,), 2)
-        ROI = cv2.bitwise_and(img, img, mask=mask)
-        # 将ROI非零部分取出变成20*20的图片
-        polar_img = cv2.warpPolar(ROI, (2 * r, r), point, r, cv2.WARP_FILL_OUTLIERS)
-        # 将极坐标图像转换为方形图像
-        square_img = cv2.resize(polar_img, (20, 20))
-        # endregion
-
-        # 颜色识别
-        color, prob = self.color_detector.detect(square_img)
-
-        return color, square_img, ROI
 
     def __get_with_and_img(self, _img:cv2.typing.MatLike ,color_name:str):
         """

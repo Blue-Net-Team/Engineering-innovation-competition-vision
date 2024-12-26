@@ -281,11 +281,51 @@ class Solution:
     # endregion
 
     # region 圆环检测
-    def annulus_detect(self, _img):
+    def annulus_detect(self, _img) -> dict[str, tuple[int, int]] | None:
         """
         地面圆环颜色和位置检测
         ----
-        本方法会在传入的图像上画出圆环和圆心
+        本方法不是顶层需求,可以用于测试，本方法会画出圆环和圆心
+
+        Args:
+            _img (np.ndarray): 图片
+        Returns:
+            annulus_dict (dict): 圆环颜色和位置字典，例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
+        """
+        annulus_dict:dict[str,tuple[int,int]] = {}
+
+        for color in COLOR_DIC.values():
+            bit_with_and_img = self.get_with_and_img(_img, color)
+            points, rs = self.annulus_circle_detector.detect_circle(bit_with_and_img)
+
+            # 坐标平均值
+            avg_point:tuple[int,int]|None = np.mean(points,axis=0) if points else None
+            # 计算平均半径
+            avg_r:int|None = int(np.mean(rs)) if rs else None
+
+            if avg_point is None or avg_r is None: return None
+
+            # 画出圆环
+            cv2.circle(
+                _img,
+                (int(avg_point[0]),int(avg_point[1])),
+                int(avg_r),
+                (255, 0, 0),
+                2
+            )
+            # 画出圆心
+            cv2.circle(_img, (int(avg_point[0]), int(avg_point[1])), 5, (0, 0, 255), 2)
+
+            annulus_dict[color] = avg_point
+        return annulus_dict
+
+    def annulus_detect_top(self, _img):
+        """
+        地面圆环颜色和位置检测
+        ----
+        返回三个圆环的颜色和位置
+
+        本方法会画出圆环和圆心
 
         - 图片噪声的波动可能会返回none
 
@@ -296,20 +336,10 @@ class Solution:
 
             `err`的格式为：以颜色字母开头，下一个01表示正负号，后面的数字表示偏差(补全成3位，FFF表示未检测到)
         """
-        annulus_dict:dict[str,tuple[int,int]] = {}
+        annulus_dict = self.annulus_detect(_img)
 
-        for color in COLOR_DIC.values():
-            annulus_img = self.__get_with_and_img(_img, color)
-            points, rs = self.annulus_circle_detector.detect_circle(annulus_img)
-
-            # 坐标平均值
-            avg_point:tuple[int,int]|None = np.mean(points,axis=0) if points else None
-            # 计算平均半径
-            avg_r:int|None = int(np.mean(rs)) if rs else None
-
-            if avg_point is None or avg_r is None: return None
-
-            annulus_dict[color] = avg_point
+        if annulus_dict is None:
+            return None
 
         # 结果列表
         errs = [
@@ -339,7 +369,7 @@ class Solution:
 
         return res
 
-    def __get_with_and_img(self, _img:cv2.typing.MatLike ,color_name:str):
+    def get_with_and_img(self, _img:cv2.typing.MatLike ,color_name:str):
         """
         获取按位与的图片
         ----
@@ -351,10 +381,12 @@ class Solution:
         """
         self.traditional_color_detector.update_range(color_name)
         mask = self.traditional_color_detector.binarization(_img)
-        res_img = cv2.bitwise_and(_img, _img, mask=mask)
+
         # 膨胀
         kernel = np.ones((3, 3), np.uint8)
-        res_img = cv2.dilate(res_img, kernel, iterations=1)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=1)
+
+        res_img = cv2.bitwise_and(_img, _img, mask=mask)
         return res_img
     # endregion
 

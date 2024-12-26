@@ -53,10 +53,10 @@ class Test_solution(Solution):
             pth_path (str): pytorch模型路径
             ser_port (str): 串口号
         """
-        super().__init__(pth_path, ser_port)
+        super().__init__(ser_port)
         self.FUNC_DICT = {
             "material": self.detect_material_positions,
-            "annulus": self.detect_circle_colors,
+            "annulus": self.annulus_detect,
             "right_angle": self.right_angle_detect,
             "rotator_center": self.get_rotator_centre,
             "if_move": self.material_moving_detect,
@@ -68,7 +68,7 @@ class Test_solution(Solution):
 
         Args:
             cap_id (int): 摄像头编号
-            func_name (str): 功能名称,包含"material"(物料)、"annulus"(圆环)、"right_angle"(直角)
+            func_name (str): 功能名称,包含"material"(物料)、"annulus"(圆环)、"right_angle"(直角)、"rotator_center"(转盘中心)、"if_move"(物料移动)
         Returns:
             None
         """
@@ -139,89 +139,23 @@ class Test_solution(Solution):
             )
             time.sleep(0.5)
 
-    def test_circle_edge(self, cap_id):
+    def test_annulus_color(self, cap_id: int, color: str):
         """
-        测试圆环边缘的像素重构
+        测试圆环颜色检测
+        ----
+        Args:
+            cap_id (int): 摄像头编号
+            color (str): 颜色名称
         """
-        # 显示图像
-        cv2.namedWindow("ori_img", cv2.WINDOW_NORMAL)
-        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
-        cv2.namedWindow("masked_img", cv2.WINDOW_NORMAL)
-        cv2.namedWindow("refacted_img", cv2.WINDOW_NORMAL)
-
         cap = LoadCap(cap_id)
-        for _img in cap:
-            if _img is None:
+        for img in cap:
+            if img is None:
                 continue
-
-            mask = np.zeros(_img.shape[:2], dtype=np.uint8)
-            refacted_img = None
-
-            t0 = time.perf_counter()
-
-            try:
-                read_img_time = t0 - t1
-            except:
-                read_img_time = 0
-
-            img = _img.copy()
-            img_sharpen = self.annulus_circle_detector.sharpen(img)
-            points, rs = self.annulus_circle_detector.detect_circle(img_sharpen)
-            if points is None or rs is None:
-                continue
-
-            colors = []
-
-            for point, r in zip(points, rs):
-                # 绘制掩膜
-                cv2.circle(mask, point, r, (255,), 2)
-
-                # 在原图上绘制圆环
-                cv2.circle(_img, point, r, (0, 255, 0), 1)
-
-                color, square_img, roi_img = self.detect_circle_edge_color(
-                    img, point, r
-                )
-
-                colors.append(color)
-
-                if refacted_img is None:
-                    refacted_img = square_img
-                else:
-                    # 水平拼接,间隔5像素
-                    pad_img = np.zeros((square_img.shape[0], 2, 3), dtype=np.uint8)
-                    refacted_img = np.hstack((refacted_img, pad_img, square_img))
-
-            masked_img = cv2.bitwise_and(img, img, mask=mask)
-
-            print(colors)
-
-            t1 = time.perf_counter()
-            detect_time = t1 - t0
-            process_time = read_img_time + detect_time
-            fps = 1 / process_time
-
-            cv2.putText(  # 显示FPS
-                _img,
-                f"FPS: {fps:.2f}",
-                (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (0, 255, 0),
-                2,
-            )
-
-            if refacted_img is None:  # 防止refacted_img为None
-                refacted_img = np.zeros((20, 20), dtype=np.uint8)
-
-            cv2.imshow("ori_img", _img)
+            res = self.get_with_and_img(img, color)
             cv2.imshow("img", img)
-            cv2.imshow("masked_img", masked_img)
-            cv2.imshow("refacted_img", refacted_img)
-
+            print(res)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
-
 
 class Test_CNN_detector:
     """测试CNN检测器的效果"""
@@ -410,8 +344,8 @@ class TraditionalColor_Test(TraditionalColorDetector):
 
 if __name__ == "__main__":
     test = Test_solution("best_model2024-12-09-12-46-06.pth", "COM6")
-    # test.test_func(0, "annulus")
-    test.test_circle_edge(0)
+    test.test_func(0, "annulus")
+    # test.test_circle_edge(0)
     # test.test_usart_read("head", "tail")
     # test.test_usart_write("data", "head", "tail")
 

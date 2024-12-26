@@ -60,6 +60,7 @@ class Test_solution(Solution):
             "right_angle": self.right_angle_detect,
             "rotator_center": self.get_rotator_centre,
             "if_move": self.material_moving_detect,
+            "line_angle": self.get_line_angle_top,
         }
 
     def test_func(self, cap_id: int, func_name: str):
@@ -232,7 +233,7 @@ class Test_Line_detect:
         except:
             print("config.json not found")
 
-    def test(self):
+    def test_right_angle(self):
         self.ld.createTrackbar()
         cap = LoadCap(0)
         for img in cap:
@@ -248,7 +249,7 @@ class Test_Line_detect:
             # endregion
 
             img = self.ld.sharpen(img)
-            angel1, angel2, point = self.ld.find_right_angle(img, True)
+            angel1, angel2, point = self.ld.get_right_angle(img, True)
 
             # region 计算帧率部分2
             t1 = time.perf_counter()
@@ -258,6 +259,51 @@ class Test_Line_detect:
             process_time = read_img_time + detect_time
             fps = 1 / process_time
             # endregion
+
+            cv2.putText(  # 显示FPS
+                img,
+                f"FPS: {fps:.2f}",
+                (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 255, 0),
+                2,
+            )
+            cv2.imshow("img", img)
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                self.ld.save_config("config.json")
+                cap.release()
+                break
+
+    def test_line(self):
+        self.ld.createTrackbar()
+        cap = LoadCap(0)
+        for img in cap:
+            if img is None:
+                continue
+            # region 计算帧率部分1
+            t0 = time.perf_counter()
+
+            try:
+                read_img_time = t0 - t1
+            except:
+                read_img_time = 0
+            # endregion
+
+            img = self.ld.sharpen(img)
+            lines = self.ld.find_line(img)
+
+            # region 计算帧率部分2
+            t1 = time.perf_counter()
+
+            detect_time = t1 - t0
+
+            process_time = read_img_time + detect_time
+            fps = 1 / process_time
+            # endregion
+
+            for line in lines:
+                self.ld.draw_line(img, line)
 
             cv2.putText(  # 显示FPS
                 img,

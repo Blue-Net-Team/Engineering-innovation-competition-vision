@@ -414,6 +414,34 @@ class Solution:
         return angel1, angel2, cross_point
     # endregion
 
+    # region 直线识别
+    def get_line_angle_top(self, _img):
+        """
+        获取直线的角度
+        ----
+        本方法会在传入的图像上画出直线
+
+        Args:
+            _img (np.ndarray): 图片
+        Returns:
+            err (str): 返回直线的角度
+        """
+        lines = self.line_detector.find_line(_img)
+
+        nums = len(lines) if len(lines) < 5 else 5
+        angles = []
+
+        for i in range(nums):
+            # XXX: 是否是lines[i][0]
+            self.line_detector.draw_line(_img, lines[i][0])
+            angle = self.line_detector.get_line_angle(lines[i][0])
+            angles.append(angle)
+        avg_angle = int(np.mean(angles))
+        # 补成3位，正负号用01表示
+        res = f"{'0' if avg_angle < 0 else '1'}{str(abs(avg_angle)).rjust(3, '0')}"
+        return res
+    # endregion
+
     # region 串口
     def read_serial(self, head: str, tail: str):
         """

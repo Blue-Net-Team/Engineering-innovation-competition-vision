@@ -315,6 +315,16 @@ class Solution:
             )
             # 画出圆心
             cv2.circle(_img, (int(avg_point[0]), int(avg_point[1])), 5, (0, 0, 255), 2)
+            # 绘制文字，用于显示颜色
+            cv2.putText(
+                _img,
+                color,
+                (int(avg_point[0]), int(avg_point[1])),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 0, 255),
+                2,
+            )
 
             annulus_dict[color] = avg_point
         return annulus_dict

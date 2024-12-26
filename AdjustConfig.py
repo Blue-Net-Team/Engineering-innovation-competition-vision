@@ -4,10 +4,8 @@ import cv2
 import numpy as np
 from Solution import Solution
 from detector import (
-    ColorDetector,
     LineDetector,
     CircleDetector,
-    PolygonDetector,
     TraditionalColorDetector,
 )
 from utils.dataset import LoadCap
@@ -30,17 +28,16 @@ class Ad_Config(Solution):
         ip: str | None = None,
         port: int | None = None,
     ):
-        super().__init__(pth_path, ser_port)
+        super().__init__(ser_port)
 
         if ip is not None and port is not None:
             self.cap = LoadWebCam(ip, port)
         else:
             self.cap = LoadCap(cap_id)
 
-        self.d: dict[str, tuple[CircleDetector | PolygonDetector, Callable]] = {
+        self.d: dict[str, tuple[CircleDetector, Callable]] = {
             "material": (self.material_circle_detector, self.detect_material_positions),
             "annulus": (self.annulus_circle_detector, self.detect_circle_colors),
-            "approx": (self.polygon_detector, self.detect_material_positions),
         }
 
     def adjust_circle(self, config_name: str):
@@ -96,20 +93,13 @@ class Ad_Config(Solution):
                 self.cap.release()
                 break
 
-    def adjust_approx(self, nums):
-        """
-        调整多边形参数
-        ----
-        """
-        self.nums = nums
-        self.adjust_circle("approx")
-
     def adjust_color_threshold(self):
         """
         调整颜色阈值
         ----
         """
         tcd = TraditionalColorDetector()
+        # tcd.load_config("config.json")
         tcd.createTrackbar()
         cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         tcd.update_range()
@@ -140,7 +130,11 @@ class Ad_Config(Solution):
 
 
 if __name__ == "__main__":
-    ad_config = Ad_Config("best_model2024-12-09-12-46-06.pth", "COM5", 0)
-    # ad_config.adjust_circle("material")
+    ad_config = Ad_Config(
+        "best_model2024-12-09-12-46-06.pth",
+        "COM5",
+        0
+    )
+    # ad_config.adjust_circle("annulus")
     ad_config.adjust_color_threshold()
 # end main

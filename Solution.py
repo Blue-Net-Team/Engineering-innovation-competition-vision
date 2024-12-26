@@ -78,7 +78,6 @@ class Solution:
         self.annulus_circle_detector = detector.CircleDetector()
         self.traditional_color_detector = detector.TraditionalColorDetector()
         self.line_detector = detector.LineDetector()
-        self.polygon_detector = detector.PolygonDetector()
         self.uart = Usart(ser_port)
         self.position_id_stack:list[dict[str,int]] = []     # 用于存放上一帧图像的物料位号的栈
 
@@ -111,12 +110,10 @@ class Solution:
         load_err2 = self.annulus_circle_detector.load_config("config.json", "annulus")
         # 加载直线检测的参数
         load_err3 = self.line_detector.load_config("config.json")
-        # 加载多边形检测的参数
-        load_err4 = self.polygon_detector.load_config("config.json")
         # 加载颜色识别的参数
-        load_err5 = self.traditional_color_detector.load_config("config.json")
+        load_err4 = self.traditional_color_detector.load_config("config.json")
 
-        err = [load_err1, load_err2, load_err3, load_err4, load_err5]
+        err = [load_err1, load_err2, load_err3, load_err4]
         if any(err):
             print(Fore.RED + "加载配置文件失败")
             for e in err:
@@ -284,44 +281,6 @@ class Solution:
     # endregion
 
     # region 圆环检测
-    def detect_circle_colors(self, _img):
-        """
-        圆环的颜色检测
-        ----
-        本方法不是顶层需求
-
-        **注意** 本方法会在传入的图像上画出圆环和圆心
-
-        Args:
-            _img (np.ndarray): 图片
-        Returns:
-            res_dict (dict): 结果字典，例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
-        """
-        dict1:dict[str,list[tuple[int,int]]] = {color: [] for color in COLOR_DIC.values()}
-        res_dict:dict[str,tuple[int,int]] = {}
-
-        img = _img.copy()
-        img_sharpen = self.annulus_circle_detector.sharpen(img)
-        points, rs = self.annulus_circle_detector.detect_circle(img_sharpen)
-        if points is None or rs is None:
-            return None
-
-        for point, r in zip(points, rs):
-            # 在原图上绘制圆环
-            cv2.circle(_img, point, r, (0, 255, 0), 1)
-            cv2.circle(_img, point, 1, (255, 0, 0), 1)
-
-            color, _, _ = self.detect_circle_edge_color(_img, point, r)
-            dict1[color].append(point)
-
-        # 将结果字典的坐标列表进行平均值计算
-        for color in dict1:
-            res_dict[color] = (     # type:ignore
-                np.mean(dict1[color], axis=0) if dict1[color] else []
-            )
-
-        return res_dict
-
     def annulus_detect(self, _img):
         """
         地面圆环颜色和位置检测

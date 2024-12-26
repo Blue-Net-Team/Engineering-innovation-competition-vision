@@ -9,11 +9,11 @@
     },
     "material": {
         "dp": 1,
-        "minDist": 52,
-        "param1": 60,
-        "param2": 20,
-        "minRadius": 48,
-        "maxRadius": 52
+        "minDist": 56,
+        "param1": 66,
+        "param2": 24,
+        "minRadius": 46,
+        "maxRadius": 56
     },
     "annulus_point": [
         0,
@@ -57,27 +57,35 @@
     "color": {
         "R": {
             "centre": 0,
-            "error": 14,
-            "L_S": 21,
+            "error": 12,
+            "L_S": 20,
             "U_S": 255,
             "L_V": 0,
             "U_V": 255
         },
         "G": {
-            "centre": 74,
-            "error": 10,
-            "L_S": 19,
+            "centre": 69,
+            "error": 12,
+            "L_S": 20,
             "U_S": 255,
-            "L_V": 0,
+            "L_V": 30,
             "U_V": 255
         },
         "B": {
-            "centre": 117,
-            "error": 10,
-            "L_S": 14,
+            "centre": 108,
+            "error": 11,
+            "L_S": 100,
             "U_S": 255,
             "L_V": 0,
             "U_V": 255
         }
+    },
+    "annulus": {
+        "dp": 2,
+        "minDist": 100,
+        "param1": 100,
+        "param2": 92,
+        "minRadius": 51,
+        "maxRadius": 68
     }
 }

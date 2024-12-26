@@ -152,7 +152,23 @@ class TraditionalColorDetector:
     }
 
     def __init__(self):
-        pass
+        color_threshold0 = self.color_threshold["R"]
+        self.update_threshold(color_threshold0)
+
+    def update_threshold(self,_color_threshold: dict[str, int]):
+        """
+        更新阈值
+        ----
+        Args:
+            _color_threshold(dict[str, int]): 颜色阈值字典
+        """
+        # 初始化色相范围
+        self.centre = _color_threshold["centre"]
+        self.error = _color_threshold["error"]
+        self.L_S = _color_threshold["L_S"]
+        self.U_S = _color_threshold["U_S"]
+        self.L_V = _color_threshold["L_V"]
+        self.U_V = _color_threshold["U_V"]
 
     def binarization(self, _img: cv2.typing.MatLike) -> cv2.typing.MatLike:
         """
@@ -319,6 +335,7 @@ class TraditionalColorDetector:
                 self.color_threshold = config["color"]
                 self.min_material_area = config["min_material_area"]
                 self.max_material_area = config["max_material_area"]
+            self.update_threshold(self.color_threshold[self.color])
             res_str = ""
         except FileNotFoundError:
             res_str = f"文件 {path} 不存在"

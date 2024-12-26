@@ -410,7 +410,7 @@ class Solution:
         :param _img: 传入的图像
         :return: 两直线的角度，交点坐标
         """
-        angel1, angel2, cross_point = self.line_detector.find_right_angle(_img, draw=True)
+        angel1, angel2, cross_point = self.line_detector.get_right_angle(_img, draw=True)
         return angel1, angel2, cross_point
     # endregion
 

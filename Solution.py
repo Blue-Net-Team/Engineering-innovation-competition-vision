@@ -13,6 +13,7 @@
 
 import json
 import cv2
+from networkx import center
 import numpy as np
 from USART.communicate import Usart
 import detector
@@ -249,8 +250,12 @@ class Solution:
         img = _img.copy()
         img_sharpen = self.material_circle_detector.sharpen(img)  # 锐化
 
-        # TODO:重构
-        ...
+        for color in COLOR_DIC.values():
+            binarization_img=self.traditional_color_detector.binarization(img_sharpen)
+            center_point = self.traditional_color_detector.get_color_position(binarization_img)
+            if center_point is not None:
+                res_dict[color] = center_point
+
         return res_dict
 
     def position2area(self, color_p_dict:dict[str,tuple[int,int]]) -> dict[str,int|None]:

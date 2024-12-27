@@ -181,7 +181,19 @@ class TraditionalColorDetector:
         Returns:
             tuple[int, int]: 颜色位置
         """
-        # TODO:完成此函数
+        contours,_=cv2.findContours(binarized_img,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        if contours:
+            # 获取最大的轮廓
+            largest_contour=max(contours,key=cv2.contourArea)
+            # 获取外接矩形
+            x,y,w,h=cv2.boundingRect(largest_contour)
+            #计算矩形中心点
+            center_x=x+w//2
+            center_y=y+h//2
+
+            return(center_x,center_y)
+        else:
+            return (-1,-1)
 
     def createTrackbar(self):
         """

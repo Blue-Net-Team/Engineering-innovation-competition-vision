@@ -181,9 +181,11 @@ class Test_solution(Solution):
                 res_dict[color] = center_point
 
         # region 用于测试
-        # 将mask按位或
-        mask_total = cv2.bitwise_or(mask_lst[0], mask_lst[1])
-        mask_total = cv2.bitwise_or(mask_total, mask_lst[2])
+        # 将所有mask按位或
+        mask_total = mask_lst[0]
+        for mask in mask_lst[1:]:
+            mask_total = cv2.bitwise_or(mask_total, mask)
+
         # img与mask按位与
         img_and = cv2.bitwise_and(img, img, mask=mask_total)
 

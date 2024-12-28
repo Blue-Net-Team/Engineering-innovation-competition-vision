@@ -155,7 +155,7 @@ class TraditionalColorDetector:
 
         return mask
 
-    def get_color_position(self, binarized_img:cv2.typing.MatLike) -> tuple[int, int]:
+    def get_color_position(self, binarized_img:cv2.typing.MatLike) -> tuple[int, int] | None:
         """
         获取颜色位置
         ----
@@ -166,19 +166,21 @@ class TraditionalColorDetector:
         Returns:
             tuple[int, int]: 颜色位置
         """
-        contours,_=cv2.findContours(binarized_img,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(binarized_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if contours:
-            # 获取最大的轮廓
-            largest_contour=max(contours,key=cv2.contourArea)
-            # 获取外接矩形
-            x,y,w,h=cv2.boundingRect(largest_contour)
-            #计算矩形中心点
-            center_x=x+w//2
-            center_y=y+h//2
+            # 获取符合面积要求的轮廓
+            valid_contours = [cnt for cnt in contours if self.min_material_area <= cv2.contourArea(cnt) <= self.max_material_area]
+            if valid_contours:
+                # 获取最大的符合面积要求的轮廓
+                largest_contour = max(valid_contours, key=cv2.contourArea)
+                # 获取外接矩形
+                x, y, w, h = cv2.boundingRect(largest_contour)
+                # 计算矩形中心点
+                center_x = x + w // 2
+                center_y = y + h // 2
 
-            return(center_x,center_y)
-        else:
-            return (-1,-1)
+                return (center_x, center_y)
+        return None
 
     def createTrackbar(self):
         """

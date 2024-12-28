@@ -257,7 +257,7 @@ class Solution:
 
         return res_dict
 
-    def position2area(self, color_p_dict:dict[str,tuple[int,int]]) -> dict[str,int|None]:
+    def position2area(self, color_p_dict:dict[str,tuple[int,int]|None]) -> dict[str,int|None]:
         """
         将坐标字典转换成位号字典
         ----

@@ -89,8 +89,6 @@ class Solution:
                 self.annulus_point: list[int] = config["annulus_point"]
                 # 转盘中心点
                 self.rotator_centre_point: list[int] = config["rotator_centre_point"]
-                # 多边形边数
-                self.nums: int = config["nums"]
                 # 位号顶点
                 self.area1_points:list[list[int]] = config["area1_points"]
                 self.area2_points:list[list[int]] = config["area2_points"]
@@ -104,16 +102,14 @@ class Solution:
             self.nums = 0
             print(Fore.RED + "配置文件读取annulus_point,rotator_centre_point,nums失败")
 
-        # 加载物料识别的圆环参数
-        load_err1 = self.material_circle_detector.load_config("config.json", "material")
         # 加载圆环识别的圆环参数
-        load_err2 = self.annulus_circle_detector.load_config("config.json", "annulus")
+        load_err1 = self.annulus_circle_detector.load_config("config.json", "annulus")
         # 加载直线检测的参数
-        load_err3 = self.line_detector.load_config("config.json")
+        load_err2 = self.line_detector.load_config("config.json")
         # 加载颜色识别的参数
-        load_err4 = self.traditional_color_detector.load_config("config.json")
+        load_err3 = self.traditional_color_detector.load_config("config.json")
 
-        err = [load_err1, load_err2, load_err3, load_err4]
+        err = [load_err1, load_err2, load_err3]
         if any(err):
             print(Fore.RED + "加载配置文件失败")
             for e in err:
@@ -227,13 +223,11 @@ class Solution:
         return res
 
 
-    def detect_material_positions(self, _img) -> dict[str, tuple[int, int] | None]:
+    def detect_material_positions(self, _img:cv2.typing.MatLike) -> dict[str, tuple[int, int] | None]:
         """
         物料位置检测(跟踪)
         ----
         本方法不是顶层需求
-
-        **注意：** 本方法会修改传入的图像
 
         Args:
             _img (np.ndarray): 图片

@@ -30,8 +30,11 @@ from utils.dataset import LoadCap
 from detector import TraditionalColorDetector, LineDetector
 
 
+COLOR_DIC = {0: "R", 1: "G", 2: "B"}
+
+
 class Test_solution(Solution):
-    def __init__(self, pth_path: str, ser_port: str):
+    def __init__(self, ser_port: str):
         """
         解决方案
         ----
@@ -41,7 +44,6 @@ class Test_solution(Solution):
         """
         super().__init__(ser_port)
         self.FUNC_DICT = {
-            "material": self.detect_material_positions,
             "annulus": self.annulus_detect,
             "right_angle": self.right_angle_detect,
             "rotator_center": self.get_rotator_centre,
@@ -55,7 +57,7 @@ class Test_solution(Solution):
 
         Args:
             cap_id (int): 摄像头编号
-            func_name (str): 功能名称,包含"material"(物料)、"annulus"(圆环)、"right_angle"(直角)、"rotator_center"(转盘中心)、"if_move"(物料移动)
+            func_name (str): 功能名称,包含"annulus"(圆环)、"right_angle"(直角)、"rotator_center"(转盘中心)、"if_move"(物料移动)
         Returns:
             None
         """
@@ -143,6 +145,80 @@ class Test_solution(Solution):
             print(res)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
+
+    def detect_material_positions(self, _img:cv2.typing.MatLike) -> tuple[dict[str, tuple[int, int] | None], cv2.typing.MatLike]:
+        """
+        物料位置检测(跟踪)
+        ----
+        本方法不是顶层需求
+
+        Args:
+            _img (np.ndarray): 图片
+        Returns:
+            res_dict (dict): 结果字典，例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
+        """
+        # 结果字典, 例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
+        # 初始化为{"R":None, "G":None, "B":None}
+        res_dict: dict[str, None | tuple] = {
+            color: None for color in COLOR_DIC.values()
+        }
+
+        img = _img.copy()
+        img_sharpen = self.material_circle_detector.sharpen(img)  # 锐化
+
+        mask_lst = []   # 用于测试
+
+        for color in COLOR_DIC.values():
+            self.traditional_color_detector.update_threshold(color)
+            binarization_img=self.traditional_color_detector.binarization(img_sharpen)
+            center_point = self.traditional_color_detector.get_color_position(binarization_img)
+
+            # region 用于测试
+            mask_lst.append(binarization_img)
+            # endregion
+
+            if center_point is not None:
+                res_dict[color] = center_point
+
+        # region 用于测试
+        # 将mask按位或
+        mask_total = cv2.bitwise_or(mask_lst[0], mask_lst[1])
+        mask_total = cv2.bitwise_or(mask_total, mask_lst[2])
+        # img与mask按位与
+        img_and = cv2.bitwise_and(img, img, mask=mask_total)
+
+        res = np.vstack(
+            (
+                img,
+                cv2.cvtColor(mask_lst[0], cv2.COLOR_GRAY2BGR),
+                cv2.cvtColor(mask_lst[1], cv2.COLOR_GRAY2BGR),
+                cv2.cvtColor(mask_lst[2], cv2.COLOR_GRAY2BGR),
+                img_and,
+            )
+        )
+        # endregion
+
+        return res_dict, res
+    
+    def test_material_positions(self, cap_id: int):
+        """
+        测试物料位置检测
+        ----
+        Args:
+            cap_id (int): 摄像头编号
+        """
+        cap = LoadCap(cap_id)
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        for img in cap:
+            if img is None:
+                continue
+            res_dict, res = self.detect_material_positions(img)
+            cv2.imshow("img", res)
+            print(res_dict)
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+        
+        cap.release()
 
 class Test_Line_detect:
     def __init__(self) -> None:
@@ -263,8 +339,9 @@ class TraditionalColor_Test(TraditionalColorDetector):
                 break
 
 if __name__ == "__main__":
-    test = Test_solution("best_model2024-12-09-12-46-06.pth", "COM6")
-    test.test_func(0, "annulus")
+    test = Test_solution("COM5")
+    # test.test_func(0, "material")
+    test.test_material_positions(0)
     # test.test_circle_edge(0)
     # test.test_usart_read("head", "tail")
     # test.test_usart_write("data", "head", "tail")

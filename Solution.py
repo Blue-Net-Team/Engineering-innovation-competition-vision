@@ -244,6 +244,7 @@ class Solution:
         img_sharpen = self.material_circle_detector.sharpen(img)  # 锐化
 
         for color in COLOR_DIC.values():
+            self.traditional_color_detector.update_threshold(color)
             binarization_img=self.traditional_color_detector.binarization(img_sharpen)
             center_point = self.traditional_color_detector.get_color_position(binarization_img)
             if center_point is not None:

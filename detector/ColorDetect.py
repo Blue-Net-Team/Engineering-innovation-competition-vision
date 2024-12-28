@@ -104,17 +104,17 @@ class TraditionalColorDetector:
     }
 
     def __init__(self):
-        color_threshold0 = self.color_threshold["R"]
-        self.update_threshold(color_threshold0)
+        self.update_threshold("R")
 
-    def update_threshold(self,_color_threshold: dict[str, int]):
+    def update_threshold(self, color:str):
         """
         更新阈值
         ----
         Args:
-            _color_threshold(dict[str, int]): 颜色阈值字典
+            color(str): 颜色
         """
         # 初始化色相范围
+        _color_threshold = self.color_threshold[color]
         self.centre = _color_threshold["centre"]
         self.error = _color_threshold["error"]
         self.L_S = _color_threshold["L_S"]
@@ -122,7 +122,7 @@ class TraditionalColorDetector:
         self.L_V = _color_threshold["L_V"]
         self.U_V = _color_threshold["U_V"]
 
-        self.update_range()
+        self.update_range(color)
 
     def binarization(self, _img: cv2.typing.MatLike) -> cv2.typing.MatLike:
         """
@@ -254,15 +254,6 @@ class TraditionalColorDetector:
             self.LOW_H2 = None
             self.UP_H2 = None
 
-        self.color_threshold[self.color] = {
-            "centre": self.centre,
-            "error": self.error,
-            "L_S": self.L_S,
-            "U_S": self.U_S,
-            "L_V": self.L_V,
-            "U_V": self.U_V,
-        }
-
         try:
             # 更新滑块位置
             cv2.setTrackbarPos("Centre", "Trackbar", self.centre)
@@ -306,7 +297,7 @@ class TraditionalColorDetector:
                 self.color_threshold = config["color"]
                 self.min_material_area = config["min_material_area"]
                 self.max_material_area = config["max_material_area"]
-            self.update_threshold(self.color_threshold[self.color])
+            self.update_threshold("R")
             res_str = ""
         except FileNotFoundError:
             res_str = f"TriditionalColorDetector 文件 {path} 不存在"

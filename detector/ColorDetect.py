@@ -122,6 +122,8 @@ class TraditionalColorDetector:
         self.L_V = _color_threshold["L_V"]
         self.U_V = _color_threshold["U_V"]
 
+        self.update_range()
+
     def binarization(self, _img: cv2.typing.MatLike) -> cv2.typing.MatLike:
         """
         二值化
@@ -261,16 +263,19 @@ class TraditionalColorDetector:
             "U_V": self.U_V,
         }
 
-        # 更新滑块位置
-        cv2.setTrackbarPos("Centre", "Trackbar", self.centre)
-        cv2.setTrackbarPos("Error", "Trackbar", self.error)
-        cv2.setTrackbarPos("L_S", "Trackbar", self.L_S)
-        cv2.setTrackbarPos("U_S", "Trackbar", self.U_S)
-        cv2.setTrackbarPos("L_V", "Trackbar", self.L_V)
-        cv2.setTrackbarPos("U_V", "Trackbar", self.U_V)
-        cv2.setTrackbarPos("color", "Trackbar", self.color_index)
-        cv2.setTrackbarPos("min_area", "Trackbar", self.min_material_area)
-        cv2.setTrackbarPos("max_area", "Trackbar", self.max_material_area)
+        try:
+            # 更新滑块位置
+            cv2.setTrackbarPos("Centre", "Trackbar", self.centre)
+            cv2.setTrackbarPos("Error", "Trackbar", self.error)
+            cv2.setTrackbarPos("L_S", "Trackbar", self.L_S)
+            cv2.setTrackbarPos("U_S", "Trackbar", self.U_S)
+            cv2.setTrackbarPos("L_V", "Trackbar", self.L_V)
+            cv2.setTrackbarPos("U_V", "Trackbar", self.U_V)
+            cv2.setTrackbarPos("color", "Trackbar", self.color_index)
+            cv2.setTrackbarPos("min_area", "Trackbar", self.min_material_area)
+            cv2.setTrackbarPos("max_area", "Trackbar", self.max_material_area)
+        except:
+            pass
 
 
     def save_params(self, path):
@@ -304,8 +309,8 @@ class TraditionalColorDetector:
             self.update_threshold(self.color_threshold[self.color])
             res_str = ""
         except FileNotFoundError:
-            res_str = f"文件 {path} 不存在"
+            res_str = f"TriditionalColorDetector 文件 {path} 不存在"
         except KeyError:
-            res_str = f"配置文件 {path} 中没有找到对应的配置项"
+            res_str = f"TriditionalColorDetector 配置文件 {path} 中没有找到对应的配置项"
         return res_str
 

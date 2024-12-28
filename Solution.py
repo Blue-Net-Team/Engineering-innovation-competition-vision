@@ -13,7 +13,6 @@
 
 import json
 import cv2
-from networkx import center
 import numpy as np
 from USART.communicate import Usart
 import detector

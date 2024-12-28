@@ -1,22 +1,7 @@
 r"""
 颜色检测模块
 ====
-该模块包含两个类：ColorDetector 和 TraditionalColorDetector，用于颜色识别。
-
-ColorDetector:
-----
-使用卷积神经网络 (CNN) 进行颜色识别。
-
-方法:
-    - `__init__(model_path: str = "best_model.pth")`:
-        初始化 ColorDetector 类，加载预训练的 CNN 模型。
-    - `detect(img: np.ndarray) -> tuple[str, float]`:
-        识别输入图像的颜色。
-
-        参数:
-            - `img`: 输入图像 (numpy 数组)。
-        返回:
-            - 颜色 (str) 和概率 (float)。
+该模块包含两个类：TraditionalColorDetector，用于颜色识别。
 
 TraditionalColorDetector:
 ---

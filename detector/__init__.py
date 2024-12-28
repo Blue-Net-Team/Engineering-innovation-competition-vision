@@ -94,34 +94,6 @@ LineDetector类
         - `draw (bool)`: 是否在传入的图像中画出直线
     返回:
         - `tuple`: 两个直线的角度，两直线的交点坐标
-
-PolygonDetector类
---------
-继承自 Detect 类，用于检测图像中的多边形。
-
-方法:
-- `detect(self, _img: np.ndarray) -> list[list[int]]:`
-    检测图像中的多边形。
-
-    参数:
-        - `_img (np.ndarray)`: 需要检测的图像。
-    返回:
-        - 多边形的几何中心坐标列表。
-- `createTrackbar(self):`
-    创建用于调整多边形检测参数的滑动条窗口。
-- `__callback(self, x):`
-    滑动条回调函数，用于更新多边形检测参数。
-- `save_config(self, jsion_path: str, polygon_type: str):`
-    保存当前配置到指定的 JSON 文件中。
-
-    参数:
-        - `jsion_path (str)`: 配置文件路径。
-- `load_config(self, jsion_path: str, polygon_type: str):`
-    从指定的 JSON 文件中加载配置。
-
-    参数:
-        - `jsion_path (str)`: 配置文件路径。
-
 """
 from detector.CircleDetect import CircleDetector
 from detector.ColorDetect import *

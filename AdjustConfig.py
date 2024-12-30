@@ -22,7 +22,6 @@ class Ad_Config(Solution):
 
     def __init__(
         self,
-        pth_path: str,
         ser_port: str,
         cap_id: int,
         ip: str | None = None,
@@ -35,11 +34,6 @@ class Ad_Config(Solution):
         else:
             self.cap = LoadCap(cap_id)
 
-        self.d: dict[str, tuple[CircleDetector, Callable]] = {
-            "material": (self.material_circle_detector, self.detect_material_positions),
-            "annulus": (self.annulus_circle_detector, self.detect_circle_colors),
-        }
-
     def adjust_circle(self, config_name: str):
         """
         调整圆环参数
@@ -47,8 +41,8 @@ class Ad_Config(Solution):
         Args:
             config_name (str): 配置名称,包含"material"(物料)、"annulus"(圆环)
         """
-        detector = self.d[config_name][0]
-        detect_func = self.d[config_name][1]
+        detector = self.annulus_circle_detector
+        detect_func = self.annulus_circle_detector.detect_circle
 
         # 加载配置
         # detector.load_config("config.json", config_name)
@@ -131,7 +125,6 @@ class Ad_Config(Solution):
 
 if __name__ == "__main__":
     ad_config = Ad_Config(
-        "best_model2024-12-09-12-46-06.pth",
         "COM5",
         0
     )

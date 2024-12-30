@@ -223,7 +223,7 @@ class Solution:
         return res
 
 
-    def detect_material_positions(self, _img:cv2.typing.MatLike) -> dict[str, tuple[int, int] | None]:
+    def detect_material_positions(self, _img:cv2.typing.MatLike) -> dict[str, tuple[int, int, int, int] | None]:
         """
         物料位置检测(跟踪)
         ----
@@ -232,9 +232,9 @@ class Solution:
         Args:
             _img (np.ndarray): 图片
         Returns:
-            res_dict (dict): 结果字典，例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
+            res_dict (dict): 结果字典，例如：{"R":(x,y,w,h), "G":(x,y,w,h), "B":(x,y,w,h)}
         """
-        # 结果字典, 例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
+        # 结果字典, 例如：{"R":(x,y,w,h), "G":(x,y,w,h), "B":(x,y,w,h)}
         # 初始化为{"R":None, "G":None, "B":None}
         res_dict: dict[str, None | tuple] = {
             color: None for color in COLOR_DIC.values()
@@ -248,11 +248,11 @@ class Solution:
             binarization_img=self.traditional_color_detector.binarization(img_sharpen)
             res = self.traditional_color_detector.get_color_position(binarization_img)
             if res is not None:
-                res_dict[color] = res[:2]
+                res_dict[color] = res
 
         return res_dict
 
-    def position2area(self, color_p_dict:dict[str,tuple[int,int]|None]) -> dict[str,int|None]:
+    def position2area(self, color_p_dict:dict[str,tuple[int,int,int,int]]) -> dict[str,int|None]:
         """
         将坐标字典转换成位号字典
         ----
@@ -265,7 +265,7 @@ class Solution:
         """
         color_area_dict:dict[str,int|None] = {}
         for color in color_p_dict.keys():
-            point = color_p_dict[color]
+            point = color_p_dict[color][:2]
             if point is None:
                 continue
             if self.area1_points[0][0] <= point[0] <= self.area1_points[1][0] and self.area1_points[0][1] <= point[1] <= self.area1_points[1][1]:

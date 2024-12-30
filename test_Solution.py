@@ -164,6 +164,7 @@ class Test_solution(Solution):
         }
 
         img = _img.copy()
+        img2 = _img.copy()
         img_sharpen = self.material_circle_detector.sharpen(img)  # 锐化
 
         mask_lst = []   # 用于测试
@@ -178,7 +179,30 @@ class Test_solution(Solution):
             # endregion
 
             if center_point is not None:
-                res_dict[color] = center_point
+                res_dict[color] = center_point[:2]
+
+                # region 用于测试
+                # 画矩形
+                cv2.rectangle(
+                    img2,
+                    (center_point[0] - center_point[2] // 2, center_point[1] - center_point[3] // 2),
+                    (center_point[0] + center_point[2] // 2, center_point[1] + center_point[3] // 2),
+                    (0, 255, 0),
+                    2,
+                )
+                # 画出中心点
+                cv2.circle(img2, (center_point[0], center_point[1]), 5, (0, 0, 255), -1)
+                # 写出颜色
+                cv2.putText(
+                    img2,
+                    color,
+                    (center_point[0] - center_point[2] // 2, center_point[1] - center_point[3] // 2),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    2,
+                    (0, 255, 0),
+                    2,
+                )
+                # endregion
 
         # region 用于测试
         # 将所有mask按位或
@@ -191,7 +215,7 @@ class Test_solution(Solution):
 
         res = np.vstack(
             (
-                img,
+                img2,
                 cv2.cvtColor(mask_lst[0], cv2.COLOR_GRAY2BGR),
                 cv2.cvtColor(mask_lst[1], cv2.COLOR_GRAY2BGR),
                 cv2.cvtColor(mask_lst[2], cv2.COLOR_GRAY2BGR),
@@ -201,7 +225,7 @@ class Test_solution(Solution):
         # endregion
 
         return res_dict, res
-    
+
     def test_material_positions(self, cap_id: int):
         """
         测试物料位置检测
@@ -219,7 +243,7 @@ class Test_solution(Solution):
             print(res_dict)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
-        
+
         cap.release()
 
 class Test_Line_detect:

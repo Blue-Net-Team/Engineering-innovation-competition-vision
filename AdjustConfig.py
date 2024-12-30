@@ -92,7 +92,7 @@ class Ad_Config(Solution):
                 self.cap.release()
                 break
 
-    def adjust_color_threshold(self):
+    def adjust_color_threshold(self, color_name: str="R"):
         """
         调整颜色阈值
         ----
@@ -101,7 +101,7 @@ class Ad_Config(Solution):
         tcd.load_config("config.json")
         tcd.createTrackbar()
         cv2.namedWindow("img", cv2.WINDOW_NORMAL)
-        tcd.update_range('R')
+        tcd.update_range(color_name)
         for img in self.cap:
             if img is None:
                 continue

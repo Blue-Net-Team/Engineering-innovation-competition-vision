@@ -1,3 +1,4 @@
+import json
 import time
 from typing import Callable
 import cv2
@@ -146,11 +147,102 @@ class Ad_Config(Solution):
         cv2.destroyAllWindows()
 
 
+class Ad_Area_config:
+    """
+    调整位号的点位参数
+    ----
+    * 鼠标左键点击位号的左上角点
+    * 鼠标右键点击位号的右下角点
+    * 滑动条选择位号
+    """
+    area_dict: dict[int, list[tuple[int, int]]]
+    x:int
+
+    def __init__(self) -> None:
+        self.load_config()
+        self.x = 0
+
+    def load_config(self):
+        """
+        加载配置
+        """
+        with open("config.json", "r") as f:
+            self.config = json.load(f)
+        self.area_dict = {
+            1: self.config["area1_points"],
+            2: self.config["area2_points"],
+            3: self.config["area3_points"],
+        }
+
+    def save_config(self):
+        """
+        保存配置
+        """
+        with open("config.json", "r") as f:
+            self.config = json.load(f)
+
+        self.config["area1_points"] = self.area_dict[1]
+        self.config["area2_points"] = self.area_dict[2]
+        self.config["area3_points"] = self.area_dict[3]
+
+        with open("config.json", "w") as f:
+            json.dump(self.config, f, indent=4)
+
+    def createTrackbar(self):
+        cv2.namedWindow("trackbar", cv2.WINDOW_NORMAL)
+        cv2.createTrackbar("id", "trackbar", 0, 2, self.__callback)
+
+    def __callback(self, x: int):
+        self.x = x
+
+    def __mouse_callback(self, event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            self.area_dict[self.x + 1][0] = (x, y)
+        elif event == cv2.EVENT_RBUTTONDOWN:
+            self.area_dict[self.x + 1][1] = (x, y)
+
+    def main(self):
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        cv2.setMouseCallback("img", self.__mouse_callback)
+        self.createTrackbar()
+        cap = cv2.VideoCapture(0)
+        while True:
+            ret, img = cap.read()
+            if not ret:
+                continue
+            for key, value in self.area_dict.items():
+                cv2.rectangle(
+                    img,
+                    value[0],
+                    value[1],
+                    (0, 255, 0),
+                    2
+                )
+                cv2.putText(
+                    img,
+                    f"area{key}",
+                    value[0],
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 255, 0),
+                    2
+                )
+            cv2.imshow("img", img)
+            key = cv2.waitKey(1)
+            if key & 0xFF == ord("q"):
+                break
+            elif key & 0xFF == ord("s"):
+                self.save_config()
+                print(Fore.GREEN + "保存配置")
+
+
 if __name__ == "__main__":
-    ad_config = Ad_Config(
-        "COM5",
-        0
-    )
+    # ad_config = Ad_Config(
+    #     "COM5",
+    #     0
+    # )
     # ad_config.adjust_circle("annulus")
-    ad_config.adjust_color_threshold()
+    # ad_config.adjust_color_threshold()
+    ad_area_config = Ad_Area_config()
+    ad_area_config.main()
 # end main

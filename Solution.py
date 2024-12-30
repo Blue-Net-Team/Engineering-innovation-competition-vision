@@ -246,9 +246,9 @@ class Solution:
         for color in COLOR_DIC.values():
             self.traditional_color_detector.update_threshold(color)
             binarization_img=self.traditional_color_detector.binarization(img_sharpen)
-            center_point = self.traditional_color_detector.get_color_position(binarization_img)
-            if center_point is not None:
-                res_dict[color] = center_point
+            res = self.traditional_color_detector.get_color_position(binarization_img)
+            if res is not None:
+                res_dict[color] = res[:2]
 
         return res_dict
 

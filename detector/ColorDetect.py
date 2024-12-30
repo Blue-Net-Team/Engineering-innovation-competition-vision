@@ -69,8 +69,8 @@ class TraditionalColorDetector:
     L_V: int = 0
     U_V: int = 255
 
-    min_material_area: int = 1000
-    max_material_area: int = 10000
+    min_material_area: int = 100000
+    max_material_area: int = 300000
 
     color_index: int = 0
 
@@ -157,7 +157,7 @@ class TraditionalColorDetector:
 
         return mask
 
-    def get_color_position(self, binarized_img:cv2.typing.MatLike) -> tuple[int, int] | None:
+    def get_color_position(self, binarized_img:cv2.typing.MatLike) -> tuple[int, int, int, int] | None:
         """
         获取颜色位置
         ----
@@ -166,7 +166,7 @@ class TraditionalColorDetector:
         Args:
             binarized_img(cv2.typing.MatLike): 二值化图像
         Returns:
-            tuple[int, int]: 颜色位置
+            res(tuple[int, int, int, int]): 颜色中心点位置x,y和外接矩形的宽和高
         """
         contours, _ = cv2.findContours(binarized_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if contours:
@@ -181,7 +181,7 @@ class TraditionalColorDetector:
                 center_x = x + w // 2
                 center_y = y + h // 2
 
-                return (center_x, center_y)
+                return (center_x, center_y, w, h)
         return None
 
     def createTrackbar(self):
@@ -189,7 +189,7 @@ class TraditionalColorDetector:
         创建调节条
         ----
         """
-        cv2.namedWindow("Trackbar")
+        cv2.namedWindow("Trackbar", cv2.WINDOW_NORMAL)
         cv2.createTrackbar("Centre", "Trackbar", self.centre, 180, self.__callback)
         cv2.createTrackbar("Error", "Trackbar", self.error, 40, self.__callback)
         cv2.createTrackbar("L_S", "Trackbar", self.L_S, 255, self.__callback)
@@ -197,8 +197,8 @@ class TraditionalColorDetector:
         cv2.createTrackbar("L_V", "Trackbar", self.L_V, 255, self.__callback)
         cv2.createTrackbar("U_V", "Trackbar", self.U_V, 255, self.__callback)
         cv2.createTrackbar("color", "Trackbar", 0, 2, self._color_callback)
-        cv2.createTrackbar("min_area", "Trackbar", self.min_material_area, 10000, self.__callback)
-        cv2.createTrackbar("max_area", "Trackbar", self.max_material_area, 10000, self.__callback)
+        cv2.createTrackbar("min_area", "Trackbar", self.min_material_area, 300000, self.__callback)
+        cv2.createTrackbar("max_area", "Trackbar", self.max_material_area, 300000, self.__callback)
 
     def __callback(self, x):
         self.centre = cv2.getTrackbarPos("Centre", "Trackbar")

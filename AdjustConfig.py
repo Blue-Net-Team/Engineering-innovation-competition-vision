@@ -10,7 +10,10 @@ from detector import (
 )
 from utils.dataset import LoadCap
 from img_trans import LoadWebCam
+from colorama import Fore, Style, init
 
+# 初始化 colorama
+init(autoreset=True)
 
 class Ad_Config(Solution):
     """
@@ -93,21 +96,39 @@ class Ad_Config(Solution):
         ----
         """
         tcd = TraditionalColorDetector()
-        # tcd.load_config("config.json")
+        tcd.load_config("config.json")
         tcd.createTrackbar()
         cv2.namedWindow("img", cv2.WINDOW_NORMAL)
-        tcd.update_range()
+        tcd.update_range('R')
         for img in self.cap:
             if img is None:
                 continue
 
+            new_img = img.copy()
+
             binarization_img = tcd.binarization(img)
+
+            position = tcd.get_color_position(binarization_img)
+            if position:
+                point = position[:2]
+                w, h = position[2:]
+
+                # 画矩形
+                cv2.rectangle(
+                    new_img,
+                    (point[0] - w // 2, point[1] - h // 2),
+                    (point[0] + w // 2, point[1] + h // 2),
+                    (0, 255, 0),
+                    2,
+                )
+                # 画出中心点
+                cv2.circle(new_img, (point[0], point[1]), 5, (0, 0, 255), -1)
 
             # 按位与的图
             and_img = cv2.bitwise_and(img, img, mask=binarization_img)
 
             res_img = np.vstack(
-                (img, cv2.cvtColor(binarization_img, cv2.COLOR_GRAY2BGR), and_img)
+                (new_img, cv2.cvtColor(binarization_img, cv2.COLOR_GRAY2BGR), and_img)
             )
 
             cv2.imshow("img", res_img)
@@ -118,6 +139,7 @@ class Ad_Config(Solution):
                 break
             elif key_pressed & 0xFF == ord("s"):
                 tcd.save_params("config.json")
+                print(Fore.GREEN + "保存配置")
 
         self.cap.release()
         cv2.destroyAllWindows()

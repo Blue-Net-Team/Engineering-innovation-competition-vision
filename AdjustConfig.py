@@ -236,6 +236,55 @@ class Ad_Area_config:
                 print(Fore.GREEN + "保存配置")
 
 
+class Ad_Line_config(LineDetector):
+    def __init__(self) -> None:
+        super().__init__()
+        print(self.load_config("config.json"))
+
+    def ad_line(self):
+        self.createTrackbar()
+        cap = cv2.VideoCapture(0)
+        while True:
+            ret, img = cap.read()
+            if not ret:
+                continue
+
+            lines = self.find_line(img)
+
+            nums = len(lines) if len(lines) < 5 else 5
+
+            for i in range(nums):
+                self.draw_line(img, lines[i])
+
+            cv2.imshow("img", img)
+            key = cv2.waitKey(1)
+            if key & 0xFF == ord("q"):
+                break
+            elif key & 0xFF == ord("s"):
+                self.save_config("config.json")
+                print(Fore.GREEN + "保存配置")
+
+    def ad_right_angle(self):
+        self.createTrackbar()
+        cap = cv2.VideoCapture(0)
+        while True:
+            ret, img = cap.read()
+            if not ret:
+                continue
+
+            img = self.sharpen(img)
+            angel1, angel2, point = self.get_right_angle(img, True)
+
+            cv2.imshow("img", img)
+            key = cv2.waitKey(1)
+            if key & 0xFF == ord("q"):
+                break
+            elif key & 0xFF == ord("s"):
+                self.save_config("config.json")
+                print(Fore.GREEN + "保存配置")
+
+
+
 if __name__ == "__main__":
     # ad_config = Ad_Config(
     #     "COM5",
@@ -243,6 +292,10 @@ if __name__ == "__main__":
     # )
     # ad_config.adjust_circle("annulus")
     # ad_config.adjust_color_threshold()
-    ad_area_config = Ad_Area_config()
-    ad_area_config.main()
+    # ad_area_config = Ad_Area_config()
+    # ad_area_config.main()
+
+    ad_line_config = Ad_Line_config()
+    # ad_line_config.ad_line()
+    ad_line_config.ad_right_angle()
 # end main

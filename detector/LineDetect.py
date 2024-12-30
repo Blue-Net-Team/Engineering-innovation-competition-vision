@@ -22,8 +22,8 @@ LineDetector类
     通过直线参数在图像上画出直线
 - `__draw_point(self, img, point):`
     在图像上画出交点
-- `find_line(self, _img, draw: bool = False):`
-    找出图像中的直线，并计算两条直线的夹角和交点坐标
+- `find_right_angle(self, _img, draw: bool = False):`
+    找出图像中的直角的交线和交点
 
     参数:
         - `_img (numpy.ndarray)`: 传入的图像数据
@@ -86,12 +86,14 @@ class LineDetector(Detect):
         self.maxLineGap = cv2.getTrackbarPos("maxLineGap", "Trackbar")
         self.bias = cv2.getTrackbarPos("bias", "Trackbar")
 
-    def __draw_line(self, img, line, _color=(0, 0, 255)):
+    def draw_line(self, img, line, _color=(0, 0, 255)):
         """
         通过直线参数画出直线
         ----
-        :param img: 传入的图像数据
-        :param line: 直线参数
+        Args:
+            img: 传入的图像数据
+            line: 直线参数
+            _color: 画线的颜色
         """
         x1, y1, x2, y2 = line
 
@@ -101,12 +103,15 @@ class LineDetector(Detect):
         """
         画出交点
         ----
-        :param img: 传入的图像数据
-        :param point: 交点坐标
+        用蓝色的圆圈画出交点
+
+        Args:
+            img: 传入的图像数据
+            point: 交点坐标
         """
         cv2.circle(img, point, 4, (255, 0, 0), 3)
 
-    def find_line(self, _img, draw: bool = False):
+    def get_right_angle(self, _img, draw: bool = True):
         """
         找出直角
         ----
@@ -116,33 +121,7 @@ class LineDetector(Detect):
         Returns:
             tuple:两个直线的角度，两直线的交点坐标
         """
-        img = _img.copy()
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # 转为灰度图
-        self.sharpen(img)  # 锐化
-
-        # canny边缘检测
-        img = cv2.Canny(img, self.Min_val, self.Max_val)
-
-        # 锐化
-        img = self.sharpen(img)
-
-        img = cv2.inRange(img, np.array([50]), np.array([255]))
-
-        cv2.imshow("canny", img)
-
-        # 霍夫直线检测
-        # lines是形状为(n,1,4)的数组
-        # n是检测到的直线数量
-        # 1是固定值
-        # 4是直线的参数，(x1,y1,x2,y2)
-        lines = cv2.HoughLinesP(
-            img,
-            1,
-            np.pi / 180,
-            self.Hough_threshold,
-            minLineLength=self.minLineLength,
-            maxLineGap=self.maxLineGap,
-        )
+        lines = self.find_line(_img)
 
         if lines is None:  # 未检测到直线,直接返回
             return None, None, None
@@ -186,13 +165,65 @@ class LineDetector(Detect):
                         return None, None, None
 
                     if draw:  # 画出直线
-                        self.__draw_line(_img, line[0])
-                        self.__draw_line(_img, target_line)
+                        self.draw_line(_img, line[0])
+                        self.draw_line(_img, target_line)
                         self.__draw_point(_img, cross_point)
 
                     return degree, target_degree, cross_point
 
         return None, None, None
+
+    def find_line(self, _img):
+        """
+        找出直线
+        ----
+        Args:
+            _img(Mat): 传入的图像数据
+        Returns:
+            直线参数
+        """
+        img = _img.copy()
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # 转为灰度图
+        self.sharpen(img)  # 锐化
+
+        # canny边缘检测
+        img = cv2.Canny(img, self.Min_val, self.Max_val)
+
+        # 锐化
+        img = self.sharpen(img)
+
+        img = cv2.inRange(img, np.array([50]), np.array([255]))
+
+        cv2.imshow("canny", img)
+
+        # 霍夫直线检测
+        # lines是形状为(n,1,4)的数组
+        # n是检测到的直线数量
+        # 1是固定值
+        # 4是直线的参数，(x1,y1,x2,y2)
+        lines = cv2.HoughLinesP(
+            img,
+            1,
+            np.pi / 180,
+            self.Hough_threshold,
+            minLineLength=self.minLineLength,
+            maxLineGap=self.maxLineGap,
+        )
+
+        return lines
+
+    def get_line_angle(self, line):
+        """
+        获取直线角度
+        ----
+        Args:
+            line: 直线参数,由find_line得到
+        Returns:
+            直线角度
+        """
+        x1, y1, x2, y2 = line
+        return int(np.degrees(np.arctan2(y2 - y1, x2 - x1)))
+
 
     def save_config(self, path: str):
         """

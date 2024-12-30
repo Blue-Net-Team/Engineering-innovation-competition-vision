@@ -66,7 +66,7 @@ def get_centre_point(
 
 
 class Solution:
-    def __init__(self, pth_path: str, ser_port: str):
+    def __init__(self, ser_port: str):
         """
         解决方案
         ----
@@ -76,10 +76,8 @@ class Solution:
         """
         self.material_circle_detector = detector.CircleDetector()
         self.annulus_circle_detector = detector.CircleDetector()
-        self.color_detector = detector.ColorDetector(pth_path)
         self.traditional_color_detector = detector.TraditionalColorDetector()
         self.line_detector = detector.LineDetector()
-        self.polygon_detector = detector.PolygonDetector()
         self.uart = Usart(ser_port)
         self.position_id_stack:list[dict[str,int]] = []     # 用于存放上一帧图像的物料位号的栈
 
@@ -91,8 +89,6 @@ class Solution:
                 self.annulus_point: list[int] = config["annulus_point"]
                 # 转盘中心点
                 self.rotator_centre_point: list[int] = config["rotator_centre_point"]
-                # 多边形边数
-                self.nums: int = config["nums"]
                 # 位号顶点
                 self.area1_points:list[list[int]] = config["area1_points"]
                 self.area2_points:list[list[int]] = config["area2_points"]
@@ -106,18 +102,14 @@ class Solution:
             self.nums = 0
             print(Fore.RED + "配置文件读取annulus_point,rotator_centre_point,nums失败")
 
-        # 加载物料识别的圆环参数
-        load_err1 = self.material_circle_detector.load_config("config.json", "material")
         # 加载圆环识别的圆环参数
-        load_err2 = self.annulus_circle_detector.load_config("config.json", "annulus")
+        load_err1 = self.annulus_circle_detector.load_config("config.json", "annulus")
         # 加载直线检测的参数
-        load_err3 = self.line_detector.load_config("config.json")
-        # 加载多边形检测的参数
-        load_err4 = self.polygon_detector.load_config("config.json")
+        load_err2 = self.line_detector.load_config("config.json")
         # 加载颜色识别的参数
-        load_err5 = self.traditional_color_detector.load_config("config.json")
+        load_err3 = self.traditional_color_detector.load_config("config.json")
 
-        err = [load_err1, load_err2, load_err3, load_err4, load_err5]
+        err = [load_err1, load_err2, load_err3]
         if any(err):
             print(Fore.RED + "加载配置文件失败")
             for e in err:
@@ -230,20 +222,19 @@ class Solution:
         )
         return res
 
-    def detect_material_positions(self, _img) -> dict[str, tuple[int, int] | None]:
+
+    def detect_material_positions(self, _img:cv2.typing.MatLike) -> dict[str, tuple[int, int, int, int] | None]:
         """
         物料位置检测(跟踪)
         ----
         本方法不是顶层需求
 
-        **注意：** 本方法会修改传入的图像
-
         Args:
             _img (np.ndarray): 图片
         Returns:
-            res_dict (dict): 结果字典，例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
+            res_dict (dict): 结果字典，例如：{"R":(x,y,w,h), "G":(x,y,w,h), "B":(x,y,w,h)}
         """
-        # 结果字典, 例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
+        # 结果字典, 例如：{"R":(x,y,w,h), "G":(x,y,w,h), "B":(x,y,w,h)}
         # 初始化为{"R":None, "G":None, "B":None}
         res_dict: dict[str, None | tuple] = {
             color: None for color in COLOR_DIC.values()
@@ -252,59 +243,16 @@ class Solution:
         img = _img.copy()
         img_sharpen = self.material_circle_detector.sharpen(img)  # 锐化
 
-        if self.nums == 0:
-            # 检测圆形
-            points, rs = self.material_circle_detector.detect_circle(img_sharpen)
-        else:
-            # 检测多边形
-            # 轮廓approx被抽象为rs
-            points, rs = self.polygon_detector.get_polygon_centre(
-                img_sharpen, self.nums
-            )
+        for color in COLOR_DIC.values():
+            self.traditional_color_detector.update_threshold(color)
+            binarization_img=self.traditional_color_detector.binarization(img_sharpen)
+            res = self.traditional_color_detector.get_color_position(binarization_img)
+            if res is not None:
+                res_dict[color] = res
 
-        # 如果检测不到圆形则返回None
-        if points is None or rs is None:
-            return res_dict
-
-        for point, r in zip(points, rs):
-            # 颜色识别区顶点
-            pt0 = (int(point[0] - 10), int(point[1] - 10))
-            pt1 = (int(point[0] + 10), int(point[1] + 10))
-
-            # 颜色识别区
-            ROI_img = img[pt0[1] : pt1[1], pt0[0] : pt1[0]]
-            try:
-                # 颜色识别
-                color, prob = self.color_detector.detect(ROI_img)
-            except:
-                color, prob = "?", 1.0
-
-            # 绘制颜色识别区
-            cv2.rectangle(_img, pt0, pt1, (0, 255, 0), 1)
-
-            if self.nums == 0:  # 圆形物料
-                cv2.circle(_img, point, r, (0, 255, 0), 1)
-            else:  # 多边形物料
-                cv2.polylines(_img, [r], True, (0, 255, 0), 2)
-
-            # 在显示对应的颜色
-            cv2.putText(
-                _img,
-                f"{color}, {prob:.2f}",
-                (point[0], point[1] - 20),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (0, 255, 0),
-                1,
-            )
-
-            # 将point变成整形
-            point = (int(point[0]), int(point[1]))
-
-            res_dict[color] = point
         return res_dict
 
-    def position2area(self, color_p_dict:dict[str,tuple[int,int]]) -> dict[str,int|None]:
+    def position2area(self, color_p_dict:dict[str,tuple[int,int,int,int]]) -> dict[str,int|None]:
         """
         将坐标字典转换成位号字典
         ----
@@ -317,7 +265,7 @@ class Solution:
         """
         color_area_dict:dict[str,int|None] = {}
         for color in color_p_dict.keys():
-            point = color_p_dict[color]
+            point = color_p_dict[color][:2]
             if point is None:
                 continue
             if self.area1_points[0][0] <= point[0] <= self.area1_points[1][0] and self.area1_points[0][1] <= point[1] <= self.area1_points[1][1]:
@@ -332,49 +280,61 @@ class Solution:
     # endregion
 
     # region 圆环检测
-    def detect_circle_colors(self, _img):
+    def annulus_detect(self, _img) -> dict[str, tuple[int, int]] | None:
         """
-        圆环的颜色检测
+        地面圆环颜色和位置检测
         ----
-        本方法不是顶层需求
-
-        **注意** 本方法会在传入的图像上画出圆环和圆心
+        本方法不是顶层需求,可以用于测试，本方法会画出圆环和圆心
 
         Args:
             _img (np.ndarray): 图片
         Returns:
-            res_dict (dict): 结果字典，例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
+            annulus_dict (dict): 圆环颜色和位置字典，例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
         """
-        dict1:dict[str,list[tuple[int,int]]] = {color: [] for color in COLOR_DIC.values()}
-        res_dict:dict[str,tuple[int,int]] = {}
+        annulus_dict:dict[str,tuple[int,int]] = {}
 
-        img = _img.copy()
-        img_sharpen = self.annulus_circle_detector.sharpen(img)
-        points, rs = self.annulus_circle_detector.detect_circle(img_sharpen)
-        if points is None or rs is None:
-            return None
+        for color in COLOR_DIC.values():
+            bit_with_and_img = self.get_with_and_img(_img, color)
+            points, rs = self.annulus_circle_detector.detect_circle(bit_with_and_img)
 
-        for point, r in zip(points, rs):
-            # 在原图上绘制圆环
-            cv2.circle(_img, point, r, (0, 255, 0), 1)
-            cv2.circle(_img, point, 1, (255, 0, 0), 1)
+            # 坐标平均值
+            avg_point:tuple[int,int]|None = np.mean(points,axis=0) if points else None
+            # 计算平均半径
+            avg_r:int|None = int(np.mean(rs)) if rs else None
 
-            color, _, _ = self.detect_circle_edge_color(_img, point, r)
-            dict1[color].append(point)
+            if avg_point is None or avg_r is None: return None
 
-        # 将结果字典的坐标列表进行平均值计算
-        for color in dict1:
-            res_dict[color] = (     # type:ignore
-                np.mean(dict1[color], axis=0) if dict1[color] else []
+            # 画出圆环
+            cv2.circle(
+                _img,
+                (int(avg_point[0]),int(avg_point[1])),
+                int(avg_r),
+                (255, 0, 0),
+                2
+            )
+            # 画出圆心
+            cv2.circle(_img, (int(avg_point[0]), int(avg_point[1])), 5, (0, 0, 255), 2)
+            # 绘制文字，用于显示颜色
+            cv2.putText(
+                _img,
+                color,
+                (int(avg_point[0]), int(avg_point[1])),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 0, 255),
+                2,
             )
 
-        return res_dict
+            annulus_dict[color] = avg_point
+        return annulus_dict
 
-    def annulus_detect(self, _img):
+    def annulus_detect_top(self, _img):
         """
         地面圆环颜色和位置检测
         ----
-        本方法会在传入的图像上画出圆环和圆心
+        返回三个圆环的颜色和位置
+
+        本方法会画出圆环和圆心
 
         - 图片噪声的波动可能会返回none
 
@@ -385,20 +345,10 @@ class Solution:
 
             `err`的格式为：以颜色字母开头，下一个01表示正负号，后面的数字表示偏差(补全成3位，FFF表示未检测到)
         """
-        annulus_dict:dict[str,tuple[int,int]] = {}
+        annulus_dict = self.annulus_detect(_img)
 
-        for color in COLOR_DIC.values():
-            annulus_img = self.__get_with_and_img(_img, color)
-            points, rs = self.annulus_circle_detector.detect_circle(annulus_img)
-
-            # 坐标平均值
-            avg_point:tuple[int,int]|None = np.mean(points,axis=0) if points else None
-            # 计算平均半径
-            avg_r:int|None = int(np.mean(rs)) if rs else None
-
-            if avg_point is None or avg_r is None: return None
-
-            annulus_dict[color] = avg_point
+        if annulus_dict is None:
+            return None
 
         # 结果列表
         errs = [
@@ -428,38 +378,7 @@ class Solution:
 
         return res
 
-    def detect_circle_edge_color(
-        self, _img: cv2.typing.MatLike, point: list[int] | tuple[int, int], r: int
-    ):
-        """
-        识别圆环的颜色
-        ----
-        *此方法不是顶层需求*
-
-        Args:
-            _img (cv2.typing.MatLike): 传入图片
-            point (Iterable[int]): 圆心坐标
-            r (int): 圆半径
-        Returns:
-            tuple: 颜色、重构的图片和ROI
-        """
-        # region 提取圆环区域
-        img = _img.copy()
-        mask = np.zeros(img.shape[:2], dtype=np.uint8)
-        cv2.circle(mask, point, r, (255,), 2)
-        ROI = cv2.bitwise_and(img, img, mask=mask)
-        # 将ROI非零部分取出变成20*20的图片
-        polar_img = cv2.warpPolar(ROI, (2 * r, r), point, r, cv2.WARP_FILL_OUTLIERS)
-        # 将极坐标图像转换为方形图像
-        square_img = cv2.resize(polar_img, (20, 20))
-        # endregion
-
-        # 颜色识别
-        color, prob = self.color_detector.detect(square_img)
-
-        return color, square_img, ROI
-
-    def __get_with_and_img(self, _img:cv2.typing.MatLike ,color_name:str):
+    def get_with_and_img(self, _img:cv2.typing.MatLike ,color_name:str):
         """
         获取按位与的图片
         ----
@@ -471,10 +390,12 @@ class Solution:
         """
         self.traditional_color_detector.update_range(color_name)
         mask = self.traditional_color_detector.binarization(_img)
-        res_img = cv2.bitwise_and(_img, _img, mask=mask)
+
         # 膨胀
         kernel = np.ones((3, 3), np.uint8)
-        res_img = cv2.dilate(res_img, kernel, iterations=1)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=1)
+
+        res_img = cv2.bitwise_and(_img, _img, mask=mask)
         return res_img
     # endregion
 
@@ -488,8 +409,36 @@ class Solution:
         :param _img: 传入的图像
         :return: 两直线的角度，交点坐标
         """
-        angel1, angel2, cross_point = self.line_detector.find_line(_img, draw=True)
+        angel1, angel2, cross_point = self.line_detector.get_right_angle(_img, draw=True)
         return angel1, angel2, cross_point
+    # endregion
+
+    # region 直线识别
+    def get_line_angle_top(self, _img):
+        """
+        获取直线的角度
+        ----
+        本方法会在传入的图像上画出直线
+
+        Args:
+            _img (np.ndarray): 图片
+        Returns:
+            err (str): 返回直线的角度
+        """
+        lines = self.line_detector.find_line(_img)
+
+        nums = len(lines) if len(lines) < 5 else 5
+        angles = []
+
+        for i in range(nums):
+            # XXX: 是否是lines[i][0]
+            self.line_detector.draw_line(_img, lines[i][0])
+            angle = self.line_detector.get_line_angle(lines[i][0])
+            angles.append(angle)
+        avg_angle = int(np.mean(angles))
+        # 补成3位，正负号用01表示
+        res = f"{'0' if avg_angle < 0 else '1'}{str(abs(avg_angle)).rjust(3, '0')}"
+        return res
     # endregion
 
     # region 串口

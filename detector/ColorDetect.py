@@ -1,22 +1,7 @@
 r"""
 颜色检测模块
 ====
-该模块包含两个类：ColorDetector 和 TraditionalColorDetector，用于颜色识别。
-
-ColorDetector:
-----
-使用卷积神经网络 (CNN) 进行颜色识别。
-
-方法:
-    - `__init__(model_path: str = "best_model.pth")`:
-        初始化 ColorDetector 类，加载预训练的 CNN 模型。
-    - `detect(img: np.ndarray) -> tuple[str, float]`:
-        识别输入图像的颜色。
-
-        参数:
-            - `img`: 输入图像 (numpy 数组)。
-        返回:
-            - 颜色 (str) 和概率 (float)。
+该模块包含两个类：TraditionalColorDetector，用于颜色识别。
 
 TraditionalColorDetector:
 ---
@@ -55,46 +40,13 @@ TraditionalColorDetector:
 import json
 from typing import Union
 import numpy as np
-import torch
 import cv2
-from detector.model import CNN
-import torch.nn.functional as F
 
 COLOR_DICT: dict[Union[int, float, bool], str] = {
     0:'R',
     1:'G',
     2:'B',
 }
-
-class ColorDetector:
-    def __init__(self, model_path="best_model.pth"):
-        # 加载模型
-        self.cnn = CNN()
-        self.cnn.load_state_dict(torch.load(model_path))
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.cnn.to(self.device)
-        self.cnn.eval()
-
-    def detect(self, img):
-        """
-        识别颜色
-        ----
-        :param img: 图片
-        :return: 颜色，概率
-        """
-        # img = cv2.resize(img, (128, 128))
-        img = torch.from_numpy(img).unsqueeze(0).float().to(self.device)
-
-        with torch.no_grad():
-            output = self.cnn(img)
-            prediction = torch.argmax(output, dim=1)
-            probabilities = F.softmax(output, dim=1)
-
-        return (
-            COLOR_DICT[prediction.item()],
-            probabilities[0][int(prediction.item())].item(),
-        )
-
 
 class TraditionalColorDetector:
     """
@@ -116,6 +68,9 @@ class TraditionalColorDetector:
     U_S: int = 255
     L_V: int = 0
     U_V: int = 255
+
+    min_material_area: int = 100000
+    max_material_area: int = 300000
 
     color_index: int = 0
 
@@ -149,7 +104,25 @@ class TraditionalColorDetector:
     }
 
     def __init__(self):
-        pass
+        self.update_threshold("R")
+
+    def update_threshold(self, color:str):
+        """
+        更新阈值
+        ----
+        Args:
+            color(str): 颜色
+        """
+        # 初始化色相范围
+        _color_threshold = self.color_threshold[color]
+        self.centre = _color_threshold["centre"]
+        self.error = _color_threshold["error"]
+        self.L_S = _color_threshold["L_S"]
+        self.U_S = _color_threshold["U_S"]
+        self.L_V = _color_threshold["L_V"]
+        self.U_V = _color_threshold["U_V"]
+
+        self.update_range(color)
 
     def binarization(self, _img: cv2.typing.MatLike) -> cv2.typing.MatLike:
         """
@@ -184,12 +157,39 @@ class TraditionalColorDetector:
 
         return mask
 
+    def get_color_position(self, binarized_img:cv2.typing.MatLike) -> tuple[int, int, int, int] | None:
+        """
+        获取颜色位置
+        ----
+        通过传入二值化的图像，然后取外接矩形的中心点作为颜色的位置
+
+        Args:
+            binarized_img(cv2.typing.MatLike): 二值化图像
+        Returns:
+            res(tuple[int, int, int, int]): 颜色中心点位置x,y和外接矩形的宽和高
+        """
+        contours, _ = cv2.findContours(binarized_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if contours:
+            # 获取符合面积要求的轮廓
+            valid_contours = [cnt for cnt in contours if self.min_material_area <= cv2.contourArea(cnt) <= self.max_material_area]
+            if valid_contours:
+                # 获取最大的符合面积要求的轮廓
+                largest_contour = max(valid_contours, key=cv2.contourArea)
+                # 获取外接矩形
+                x, y, w, h = cv2.boundingRect(largest_contour)
+                # 计算矩形中心点
+                center_x = x + w // 2
+                center_y = y + h // 2
+
+                return (center_x, center_y, w, h)
+        return None
+
     def createTrackbar(self):
         """
         创建调节条
         ----
         """
-        cv2.namedWindow("Trackbar")
+        cv2.namedWindow("Trackbar", cv2.WINDOW_NORMAL)
         cv2.createTrackbar("Centre", "Trackbar", self.centre, 180, self.__callback)
         cv2.createTrackbar("Error", "Trackbar", self.error, 40, self.__callback)
         cv2.createTrackbar("L_S", "Trackbar", self.L_S, 255, self.__callback)
@@ -197,6 +197,8 @@ class TraditionalColorDetector:
         cv2.createTrackbar("L_V", "Trackbar", self.L_V, 255, self.__callback)
         cv2.createTrackbar("U_V", "Trackbar", self.U_V, 255, self.__callback)
         cv2.createTrackbar("color", "Trackbar", 0, 2, self._color_callback)
+        cv2.createTrackbar("min_area", "Trackbar", self.min_material_area, 300000, self.__callback)
+        cv2.createTrackbar("max_area", "Trackbar", self.max_material_area, 300000, self.__callback)
 
     def __callback(self, x):
         self.centre = cv2.getTrackbarPos("Centre", "Trackbar")
@@ -205,6 +207,8 @@ class TraditionalColorDetector:
         self.U_S = cv2.getTrackbarPos("U_S", "Trackbar")
         self.L_V = cv2.getTrackbarPos("L_V", "Trackbar")
         self.U_V = cv2.getTrackbarPos("U_V", "Trackbar")
+        self.min_material_area = cv2.getTrackbarPos("min_area", "Trackbar")
+        self.max_material_area = cv2.getTrackbarPos("max_area", "Trackbar")
 
         self.color_threshold[self.color] = {
             "centre": self.centre,
@@ -250,23 +254,19 @@ class TraditionalColorDetector:
             self.LOW_H2 = None
             self.UP_H2 = None
 
-        self.color_threshold[self.color] = {
-            "centre": self.centre,
-            "error": self.error,
-            "L_S": self.L_S,
-            "U_S": self.U_S,
-            "L_V": self.L_V,
-            "U_V": self.U_V,
-        }
-
-        # 更新滑块位置
-        cv2.setTrackbarPos("Centre", "Trackbar", self.centre)
-        cv2.setTrackbarPos("Error", "Trackbar", self.error)
-        cv2.setTrackbarPos("L_S", "Trackbar", self.L_S)
-        cv2.setTrackbarPos("U_S", "Trackbar", self.U_S)
-        cv2.setTrackbarPos("L_V", "Trackbar", self.L_V)
-        cv2.setTrackbarPos("U_V", "Trackbar", self.U_V)
-        cv2.setTrackbarPos("color", "Trackbar", self.color_index)
+        try:
+            # 更新滑块位置
+            cv2.setTrackbarPos("Centre", "Trackbar", self.centre)
+            cv2.setTrackbarPos("Error", "Trackbar", self.error)
+            cv2.setTrackbarPos("L_S", "Trackbar", self.L_S)
+            cv2.setTrackbarPos("U_S", "Trackbar", self.U_S)
+            cv2.setTrackbarPos("L_V", "Trackbar", self.L_V)
+            cv2.setTrackbarPos("U_V", "Trackbar", self.U_V)
+            cv2.setTrackbarPos("color", "Trackbar", self.color_index)
+            cv2.setTrackbarPos("min_area", "Trackbar", self.min_material_area)
+            cv2.setTrackbarPos("max_area", "Trackbar", self.max_material_area)
+        except:
+            pass
 
 
     def save_params(self, path):
@@ -279,6 +279,8 @@ class TraditionalColorDetector:
             config = json.load(f)
 
         config["color"] = self.color_threshold
+        config["min_material_area"] = self.min_material_area
+        config["max_material_area"] = self.max_material_area
 
         with open(path, "w") as f:
             json.dump(config, f, indent=4)
@@ -293,10 +295,13 @@ class TraditionalColorDetector:
             with open(path, "r") as f:
                 config = json.load(f)
                 self.color_threshold = config["color"]
+                self.min_material_area = config["min_material_area"]
+                self.max_material_area = config["max_material_area"]
+            self.update_threshold("R")
             res_str = ""
         except FileNotFoundError:
-            res_str = f"文件 {path} 不存在"
+            res_str = f"TriditionalColorDetector 文件 {path} 不存在"
         except KeyError:
-            res_str = f"配置文件 {path} 中没有找到对应的配置项"
+            res_str = f"TriditionalColorDetector 配置文件 {path} 中没有找到对应的配置项"
         return res_str
 

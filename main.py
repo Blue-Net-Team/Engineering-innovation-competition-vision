@@ -50,6 +50,7 @@ solution_dict = {  # TODO: 可能要更改对应任务的串口信号
     "1": solution.annulus_detect_top,  # 圆环检测
     "2": solution.right_angle_detect,  # 直角检测
     "3": solution.material_moving_detect,  # 物料运动检测
+    "4": solution.get_material,  # 获取物料位号
 }
 
 

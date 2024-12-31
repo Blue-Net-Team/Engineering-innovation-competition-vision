@@ -329,7 +329,7 @@ class Solution:
             annulus_dict[color] = avg_point
         return annulus_dict
 
-    def annulus_detect_top2(self,img:cv2.typing.MatLike) -> str|None
+    def annulus_detect_top2(self,img:cv2.typing.MatLike) -> str|None:
         """
         圆环与直线识别
         ----

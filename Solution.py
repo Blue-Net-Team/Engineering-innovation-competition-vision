@@ -329,7 +329,60 @@ class Solution:
             annulus_dict[color] = avg_point
         return annulus_dict
 
-    def annulus_detect_top2(self,img:cv2.typing.MatLike) -> str|None:
+    def annulus_detect_top2(self, _img:cv2.typing.MatLike) -> str|None:
+        """
+        地面圆环颜色和位置检测
+        ----
+        返回三个圆环的颜色和位置
+
+        本方法会画出圆环和圆心
+
+        - 图片噪声的波动可能会返回none
+
+        Args:
+            _img (np.ndarray): 图片
+        Returns:
+            err (None|str): 如果检测到圆环则返回None，否则返回颜色和圆心坐标与标准位置的偏差
+
+            `err`的格式为：RHXXXYYYGHXXXYYYBHXXXYYY
+            * RGB代表颜色
+            * H代表正负号，未检测到为F
+            * XXX代表x坐标，YYY代表y坐标，如果没检测到这个颜色，则对应返回FFF
+        """
+        annulus_dict = self.annulus_detect(_img)
+
+        if annulus_dict is None:
+            return None
+
+        # 结果列表
+        errs = [
+            (
+                [
+                    color,
+                    [
+                        annulus_dict[color][0] - self.annulus_point[0],
+                        annulus_dict[color][1] - self.annulus_point[1],
+                    ],
+                ]
+                if annulus_dict[color]
+                else [color, None]
+            )
+            for color in annulus_dict
+        ]
+
+        # 将结果列表转换成字符串，例如：
+        # "RFFFFFFFFG00421432B13450002"代表红色未检测到，绿色偏差-42,432，蓝色偏差345,2
+        # 以颜色字母开头，下一个01表示正负号，后面的数字表示偏差(补全成3位，FFF表示未检测到)
+        res = "".join(
+            [
+                f"{color}{'0' if err[1][0] < 0 else '1'}{str(err[1][0]).rjust(3, '0')}{'0' if err[1][1] < 0 else '1'}{str(err[1][1]).rjust(3, '0')}"
+                for color, err in errs
+            ]
+        )
+
+        return res
+
+    def annulus_detect_top(self,img:cv2.typing.MatLike) -> str|None:
         """
         圆环与直线识别
         ----

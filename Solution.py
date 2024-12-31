@@ -17,6 +17,7 @@ import numpy as np
 from USART.communicate import Usart
 import detector
 from colorama import Fore, Style, init
+import math
 
 # 初始化 colorama
 init(autoreset=True)
@@ -328,54 +329,46 @@ class Solution:
             annulus_dict[color] = avg_point
         return annulus_dict
 
-    def annulus_detect_top(self, _img):
+    def annulus_detect_top2(self,img:cv2.typing.MatLike) -> str|None
         """
-        地面圆环颜色和位置检测
+        圆环与直线识别
         ----
-        返回三个圆环的颜色和位置
-
-        本方法会画出圆环和圆心
-
-        - 图片噪声的波动可能会返回none
-
         Args:
-            _img (np.ndarray): 图片
+            img(cv2.typing.MatLike): 图像
         Returns:
-            err (None|str): 如果检测到圆环则返回None，否则返回颜色和圆心坐标与标准位置的偏差
+            str: 识别结果
 
-            `err`的格式为：以颜色字母开头，下一个01表示正负号，后面的数字表示偏差(补全成3位，FFF表示未检测到)
+        识别结果的格式为:"GHXXXYYYLHAA",其中:
+        * G是固定字母,代表绿色圆环
+        * H是正负标记位
+        * XXX是绿色圆环圆心的x坐标
+        * YYY是绿色圆环圆心的y坐标
+        * L是固定字母,代表红蓝圆环的连线
+        * H是正负标记位
+        * AA是红蓝圆环的连线角度
+
+        "G01251056L013"代表绿色圆环位置在(-125,+056)，红蓝圆环的连线角度为13度
         """
-        annulus_dict = self.annulus_detect(_img)
+        annulus_dict = self.annulus_detect(img)
 
         if annulus_dict is None:
             return None
+        R_point, G_point, B_point = annulus_dict["R"], annulus_dict["G"], annulus_dict["B"]
 
-        # 结果列表
-        errs = [
-            (
-                [
-                    color,
-                    [
-                        annulus_dict[color][0] - self.annulus_point[0],
-                        annulus_dict[color][1] - self.annulus_point[1],
-                    ],
-                ]
-                if annulus_dict[color]
-                else [color, None]
-            )
-            for color in annulus_dict
-        ]
-
-        # 将结果列表转换成字符串，例如：
-        # "RFFFFFFFFG00421432B13450002"代表红色未检测到，绿色偏差-42,432，蓝色偏差345,2
-        # 以颜色字母开头，下一个01表示正负号，后面的数字表示偏差(补全成3位，FFF表示未检测到)
-        res = "".join(
-            [
-                f"{color}{'0' if err[1][0] < 0 else '1'}{str(err[1][0]).rjust(3, '0')}{'0' if err[1][1] < 0 else '1'}{str(err[1][1]).rjust(3, '0')}"
-                for color, err in errs
-            ]
+        # 计算红蓝中点
+        mid_point = (
+            int((R_point[0] + B_point[0]) / 2),
+            int((R_point[1] + B_point[1]) / 2),
         )
+        # 计算绿色圆环平均坐标
+        G_avg_point=(
+            int((G_point[0] + mid_point[0]) / 2),
+            int((G_point[1] + mid_point[1]) / 2),
+        )
+        # 计算红蓝圆环连线的角度
+        angle = int(math.degrees(math.atan2(B_point[1] - R_point[1], B_point[0] - R_point[0])))
 
+        res=f"G{'0' if G_avg_point[0] <0 else '1'}{abs(G_avg_point[0]):03}{'0' if G_avg_point[1] <0 else '1'}{abs(G_avg_point[1]):03}L{'O' if angle <0 else '1'}{abs(angle):02}"
         return res
 
     def get_with_and_img(self, _img:cv2.typing.MatLike ,color_name:str):

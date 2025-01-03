@@ -54,8 +54,12 @@ def get_centre_point(
     mid_2 = ((x2 + x3) / 2, (y2 + y3) / 2)
 
     # AB中垂线斜率
+    if y2 - y1 == 0:
+        y2 += 1
     _k_AB = (x1 - x2) / (y2 - y1)
     # BC中垂线斜率
+    if y3 - y2 == 0:
+        y3 += 1
     _k_BC = (x3 - x2) / (y2 - y3)
 
     L = np.array([[_k_AB, -1], [_k_BC, -1]])
@@ -188,7 +192,7 @@ class Solution:
         """
         res_img = _img.copy()
 
-        color_position_dict:dict[str,tuple[int,int,int,int]] = self.detect_material_positions(_img)   # type:ignore
+        color_position_dict:dict[str,tuple[int,int,int,int]] = self.__detect_material_positions(_img)   # type:ignore
 
         # 如果有物料没识别到，即color_position_dict有None，返回none
         if None in color_position_dict.values():
@@ -248,7 +252,7 @@ class Solution:
             tuple: 转盘中心坐标
         """
         res_img = _img.copy()
-        res_dict = self.detect_material_positions(_img)
+        res_dict = self.__detect_material_positions(_img)
         # 获取三个颜色的圆心坐标
         R_point, G_point, B_point = res_dict["R"], res_dict["G"], res_dict["B"]
 
@@ -296,7 +300,7 @@ class Solution:
         """
         res_img = _img.copy()
 
-        color_position_dict:dict[str,tuple[int,int,int,int]] = self.detect_material_positions(_img)
+        color_position_dict:dict[str,tuple[int,int,int,int]] = self.__detect_material_positions(_img)
         # 判断是否有物料没识别到，如果有物料没识别到，则返回None
         if None in color_position_dict.values():
             return None, res_img
@@ -329,7 +333,7 @@ class Solution:
         return res, res_img
 
 
-    def detect_material_positions(self, _img:cv2.typing.MatLike) -> dict[str, tuple[int, int, int, int] | None]:
+    def __detect_material_positions(self, _img:cv2.typing.MatLike) -> dict[str, tuple[int, int, int, int] | None]:
         """
         物料位置检测(跟踪)
         ----

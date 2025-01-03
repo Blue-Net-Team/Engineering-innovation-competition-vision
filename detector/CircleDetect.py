@@ -93,7 +93,6 @@ class CircleDetector(Detect):
         r_lst = []
         img = _img.copy()
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        edges = cv2.Canny(img, self.param1, self.param1 / 2)
         circles = cv2.HoughCircles(
             img,
             cv2.HOUGH_GRADIENT,

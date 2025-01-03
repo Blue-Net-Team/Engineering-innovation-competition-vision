@@ -223,7 +223,7 @@ class Test_solution(Solution):
         for img in cap:
             if img is None:
                 continue
-            res_dict, res = self.__detect_material_positions(img)
+            res_dict, res = self.detect_material_positions(img)
             cv2.imshow("img", res)
             print(res_dict)
             if cv2.waitKey(1) & 0xFF == ord("q"):
@@ -351,7 +351,7 @@ class TraditionalColor_Test(TraditionalColorDetector):
 
 if __name__ == "__main__":
     test = Test_solution("COM8")
-    test.test_func(0, "0")
+    test.test_func(0, "4")
     # test.test_material_positions(0)
     # test.test_annulus_color(0, "G")
 # end main

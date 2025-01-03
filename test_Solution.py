@@ -44,20 +44,20 @@ class Test_solution(Solution):
         """
         super().__init__(ser_port)
         self.FUNC_DICT = {
-            "annulus": self.annulus_detect,
-            "right_angle": self.right_angle_detect,
-            "rotator_center": self.get_rotator_centre,
-            "if_move": self.material_moving_detect,
-            "line_angle": self.get_line_angle_top,
+            "0": self.get_rotator_centre,  # 获取转盘中心点
+            "1": self.annulus_detect_top,  # 圆环检测
+            "2": self.right_angle_detect,  # 直角检测
+            "3": self.material_moving_detect,  # 物料运动检测
+            "4": self.get_material,  # 获取物料位号
         }
 
-    def test_func(self, cap_id: int, func_name: str):
+    def test_func(self, cap_id: int, sign: str):
         """
         测试Solution功能
 
         Args:
             cap_id (int): 摄像头编号
-            func_name (str): 功能名称,包含"annulus"(圆环)、"right_angle"(直角)、"rotator_center"(转盘中心)、"if_move"(物料移动)
+            sign (str): 串口信号(功能编号)
         Returns:
             None
         """
@@ -67,31 +67,13 @@ class Test_solution(Solution):
                 continue
             t0 = time.perf_counter()
 
-            try:
-                read_img_time = t0 - t1
-            except:
-                read_img_time = 0
-
-            res = self.FUNC_DICT[func_name](img)
+            res, res_img = self.FUNC_DICT[sign](img)
             t1 = time.perf_counter()
 
             detect_time = t1 - t0
 
-            process_time = read_img_time + detect_time
-            fps = 1 / process_time
-
-            cv2.putText(  # 显示FPS
-                img,
-                f"FPS: {fps:.2f}",
-                (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (0, 255, 0),
-                2,
-            )
-
-            cv2.imshow("img", img)
-            print(res)
+            cv2.imshow("img", res_img)
+            print(f"res:{res} \t detect time(ms):{detect_time * 1000:.2f}")
 
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
@@ -146,7 +128,7 @@ class Test_solution(Solution):
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
 
-    def detect_material_positions(self, _img:cv2.typing.MatLike) -> tuple[dict[str, tuple[int, int] | None], cv2.typing.MatLike]:
+    def __detect_material_positions(self, _img:cv2.typing.MatLike) -> tuple[dict[str, tuple[int, int] | None], cv2.typing.MatLike]:
         """
         物料位置检测(跟踪)
         ----
@@ -238,7 +220,7 @@ class Test_solution(Solution):
         for img in cap:
             if img is None:
                 continue
-            res_dict, res = self.detect_material_positions(img)
+            res_dict, res = self.__detect_material_positions(img)
             cv2.imshow("img", res)
             print(res_dict)
             if cv2.waitKey(1) & 0xFF == ord("q"):

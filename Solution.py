@@ -8,6 +8,7 @@
 - 获取转盘中心, 返回转盘中心的偏差
 - 获取物料位置，返回物料的位号
 - 圆环检测，返回圆环的颜色和位置
+- 圆环检测，返回绿色圆环的位置和红蓝圆环的连线角度
 - 直角检测，返回两直线的角度和交点(正在开发)
 """
 
@@ -65,6 +66,54 @@ def get_centre_point(
     x, y = np.linalg.solve(L, R)
     return int(x), int(y)
 
+def draw_material(
+        point_wh:tuple[int,int,int,int],
+        _img:cv2.typing.MatLike,
+        color:str|None
+):
+    """
+    画出物料
+    ----
+    Args:
+        point_wh (tuple): 物料的坐标和宽高
+        img (np.ndarray): 图片
+        color (str): 颜色
+    Returns:
+        img (cv2.typing.MatLike): 画出物料的图片
+    """
+    img = _img.copy()
+    x,y,w,h = point_wh
+    cv2.rectangle(
+        img,
+        (x - w // 2, y - h // 2),
+        (x + w // 2, y + h // 2),
+        (0, 255, 0),
+        2,
+    )
+    cv2.circle(img, (x, y), 5, (0, 0, 255), -1)
+    if color:
+        cv2.putText(
+            img,
+            color,
+            (x, y),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.5,
+            (0, 0, 255),
+            2,
+        )
+    return img
+
+def get_point_distance(point1:tuple[int,int],point2:tuple[int,int]):
+    """
+    获取两点之间的距离
+    ----
+    Args:
+        point1 (tuple): 第一个点
+        point2 (tuple): 第二个点
+    Returns:
+        res (int): 两点之间的距离
+    """
+    return int(math.sqrt((point1[0]-point2[0])**2+(point1[1]-point2[1])**2))
 
 class Solution:
     def __init__(self, ser_port: str):
@@ -120,7 +169,7 @@ class Solution:
         # endregion
 
     # region 物料运动检测
-    def material_moving_detect(self, _img):
+    def material_moving_detect(self, _img:cv2.typing.MatLike) -> tuple[str|None, cv2.typing.MatLike]:
         """
         物料运动检测
         ----
@@ -135,37 +184,58 @@ class Solution:
         Args:
             _img (Mat): 图片
         Returns:
-            str|none: 1代表运动，none代表没有运动
+            res(str|None,Mat): 返回1代表物料运动了，返回None代表物料没有运动,Mat是画出了物料和位号的图片
         """
-        color_position_dict:dict[str,tuple[int,int,int,int]] = self.detect_material_positions(_img)   # type:ignore
+        res_img = _img.copy()
+
+        color_position_dict:dict[str,tuple[int,int,int,int]] = self.__detect_material_positions(_img)   # type:ignore
 
         # 如果有物料没识别到，即color_position_dict有None，返回none
         if None in color_position_dict.values():
-            return None
+            return None, res_img
+
+        for (color, position), area_point in zip(
+            color_position_dict.items(),
+            [self.area1_points, self.area2_points, self.area3_points],
+        ):
+            # 画出物料
+            draw_material(position, res_img, color)
+            # 画出位号
+            cv2.rectangle(
+                res_img,
+                (area_point[0][0], area_point[0][1]),
+                (area_point[1][0], area_point[1][1]),
+                (255, 0, 200),
+                2,
+            )
 
         # 将坐标转换成位号，在后面排除了now_color_position_id_dict中有None的情况
         now_color_position_id_dict: dict[str, int|None] = self.position2area(color_position_dict)     # type:ignore
 
         # 如果有某个物料不在规定区域内，认为运动还没停止，返回none
         if None in now_color_position_id_dict.values():
-            return None
+            return None, res_img
 
         # 上一次的颜色位号
-        last_color_position_id_dict: dict[str, int] = self.position_id_stack.pop() if self.position_id_stack else now_color_position_id_dict    # type:ignore
+        last_color_position_id_dict: dict[str, int] = (
+            self.position_id_stack.pop()
+            if self.position_id_stack
+            else now_color_position_id_dict
+        )  # type:ignore
 
         # 将now_color_position_id_dict压入栈
         self.position_id_stack.append(now_color_position_id_dict)
 
         # 如果两个字典不相等，说明物料运动了
         if now_color_position_id_dict != last_color_position_id_dict:
-            return "1"
+            return "1", res_img
         else:
-            return None
+            return None, res_img
 
     # endregion
 
     # region 识别转盘圆心
-    def get_rotator_centre(self, _img):
+    def get_rotator_centre(self, _img:cv2.typing.MatLike) -> tuple[str|None, cv2.typing.MatLike]:
         """
         获取转盘中心
         ----
@@ -177,12 +247,13 @@ class Solution:
         Returns:
             tuple: 转盘中心坐标
         """
-        res_dict = self.detect_material_positions(_img)
+        res_img = _img.copy()
+        res_dict = self.__detect_material_positions(_img)
         # 获取三个颜色的圆心坐标
         R_point, G_point, B_point = res_dict["R"], res_dict["G"], res_dict["B"]
 
         if R_point is None or G_point is None or B_point is None:
-            return None
+            return None, res_img
         # 获取转盘中心
         centre_point = get_centre_point(
             R_point[:2],
@@ -190,7 +261,16 @@ class Solution:
             B_point[:2],
         )
         # 画出转盘中心
-        cv2.circle(_img, centre_point, 5, (0, 255, 0), 2)
+        cv2.circle(res_img, centre_point, 5, (0, 255, 0), 2)
+
+        distances = []
+
+        for index, point in enumerate([R_point, G_point, B_point]):
+            draw_material(point, res_img, COLOR_DIC[index])
+            distances.append(get_point_distance(centre_point, point[:2]))
+
+        avg_distance = int(np.mean(distances))
+        cv2.circle(res_img, centre_point, avg_distance, (0, 255, 0), 2)
 
         # 转换为字符，便于发送
         # 01代表正负号，后面的三个数字代表坐标
@@ -199,36 +279,57 @@ class Solution:
             centre_point[1] - self.rotator_centre_point[1],
         )
         res = f"{'0' if err[0] < 0 else '1'}{str(err[0]).rjust(3, '0')}{'0' if err[1] < 0 else '1'}{str(err[1]).rjust(3, '0')}"
-        return res
+        return res, res_img
     # endregion
 
     # region 物料位置检测
-    def get_material(self, _img):
+    def get_material(self, _img:cv2.typing.MatLike) -> tuple[str|None, cv2.typing.MatLike]:
         """
         获取物料位置，返回字符发送电控
         ----
         Args:
             _img (np.ndarray): 图片
         Returns:
-            str: 物料位置，例如："R1G2B3"代表红色在1号位，绿色在2号位，蓝色在3号位
+            res (str,cv2.Mat): 物料位置和画出物料和位号的图片
+
+            例如："R1G2B3"代表红色在1号位，绿色在2号位，蓝色在3号位
         """
-        color_position_dict = self.detect_material_positions(_img)
+        res_img = _img.copy()
+
+        color_position_dict:dict[str,tuple[int,int,int,int]] = self.__detect_material_positions(_img)
+        # 判断是否有物料没识别到，如果有物料没识别到，则返回None
         if None in color_position_dict.values():
-            return None
+            return None, res_img
+
+        for (color, position), area_point in zip(
+            color_position_dict.items(),
+            [self.area1_points, self.area2_points, self.area3_points],
+        ):
+            # 画出物料
+            draw_material(position, res_img, color)
+            # 画出位号
+            cv2.rectangle(
+                res_img,
+                (area_point[0][0], area_point[0][1]),
+                (area_point[1][0], area_point[1][1]),
+                (255, 0, 200),
+                2,
+            )
+
         color_position_id_dict = self.position2area(color_position_dict)
         # 如果有物料不在规定区域内，返回None
         if None in color_position_id_dict.values():
-            return None
+            return None, res_img
         res = "".join(
             [
                 f"{color}{area}"
                 for color, area in color_position_id_dict.items()
             ]
         )
-        return res
+        return res, res_img
 
 
-    def detect_material_positions(self, _img:cv2.typing.MatLike) -> dict[str, tuple[int, int, int, int] | None]:
+    def __detect_material_positions(self, _img:cv2.typing.MatLike) -> dict[str, tuple[int, int, int, int] | None]:
         """
         物料位置检测(跟踪)
         ----
@@ -264,7 +365,7 @@ class Solution:
         **注意：** 本方法不是顶层需求
 
         Args:
-            color_p_dict (dict): 颜色坐标字典, 例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
+            color_p_dict (dict): 颜色坐标字典, 例如：{"R":(x,y,w,h), "G":(x,y,w,h), "B":(x,y,w,h)}
         Returns:
             dict: 位号字典，例如：{"R":1, "G":2, "B":3}代表红色在1号位，绿色在2号位，蓝色在3号位
         """
@@ -285,7 +386,7 @@ class Solution:
     # endregion
 
     # region 圆环检测
-    def annulus_detect(self, _img) -> dict[str, tuple[int, int]] | None:
+    def annulus_detect(self, _img) -> tuple[dict[str, tuple[int, int]] | None, cv2.typing.MatLike]:
         """
         地面圆环颜色和位置检测
         ----
@@ -296,6 +397,7 @@ class Solution:
         Returns:
             annulus_dict (dict): 圆环颜色和位置字典，例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
         """
+        res_img = _img.copy()
         annulus_dict:dict[str,tuple[int,int]] = {}
 
         for color in COLOR_DIC.values():
@@ -307,21 +409,21 @@ class Solution:
             # 计算平均半径
             avg_r:int|None = int(np.mean(rs)) if rs else None
 
-            if avg_point is None or avg_r is None: return None
+            if avg_point is None or avg_r is None: return None, res_img
 
             # 画出圆环
             cv2.circle(
-                _img,
+                res_img,
                 (int(avg_point[0]),int(avg_point[1])),
                 int(avg_r),
                 (255, 0, 0),
                 2
             )
             # 画出圆心
-            cv2.circle(_img, (int(avg_point[0]), int(avg_point[1])), 5, (0, 0, 255), 2)
+            cv2.circle(res_img, (int(avg_point[0]), int(avg_point[1])), 5, (0, 0, 255), 2)
             # 绘制文字，用于显示颜色
             cv2.putText(
-                _img,
+                res_img,
                 color,
                 (int(avg_point[0]), int(avg_point[1])),
                 cv2.FONT_HERSHEY_SIMPLEX,
@@ -331,9 +433,9 @@ class Solution:
             )
 
             annulus_dict[color] = avg_point
-        return annulus_dict
+        return annulus_dict, res_img
 
-    def annulus_detect_top2(self, _img:cv2.typing.MatLike) -> str|None:
+    def annulus_detect_top2(self, _img:cv2.typing.MatLike) -> tuple[str|None,cv2.typing.MatLike]:
         """
         地面圆环颜色和位置检测
         ----
@@ -353,10 +455,10 @@ class Solution:
             * H代表正负号，未检测到为F
             * XXX代表x坐标，YYY代表y坐标，如果没检测到这个颜色，则对应返回FFF
         """
-        annulus_dict = self.annulus_detect(_img)
+        annulus_dict, res_img = self.annulus_detect(_img)
 
         if annulus_dict is None:
-            return None
+            return None, res_img
 
         # 结果列表
         errs = [
@@ -384,9 +486,9 @@ class Solution:
             ]
         )
 
-        return res
+        return res, res_img
 
-    def annulus_detect_top(self,img:cv2.typing.MatLike) -> str|None:
+    def annulus_detect_top(self,img:cv2.typing.MatLike) -> tuple[str|None, cv2.typing.MatLike]:
         """
         圆环与直线识别
         ----
@@ -406,10 +508,10 @@ class Solution:
 
         "G01251056L013"代表绿色圆环位置在(-125,+056)，红蓝圆环的连线角度为13度
         """
-        annulus_dict = self.annulus_detect(img)
+        annulus_dict, res_img = self.annulus_detect(img)
 
         if annulus_dict is None:
-            return None
+            return None, res_img
         R_point, G_point, B_point = annulus_dict["R"], annulus_dict["G"], annulus_dict["B"]
 
         # 计算红蓝中点
@@ -426,7 +528,7 @@ class Solution:
         angle = int(math.degrees(math.atan2(B_point[1] - R_point[1], B_point[0] - R_point[0])))
 
         res=f"G{'0' if G_avg_point[0] <0 else '1'}{abs(G_avg_point[0]):03}{'0' if G_avg_point[1] <0 else '1'}{abs(G_avg_point[1]):03}L{'O' if angle <0 else '1'}{abs(angle):02}"
-        return res
+        return res, res_img
 
     def get_with_and_img(self, _img:cv2.typing.MatLike ,color_name:str):
         """
@@ -450,21 +552,38 @@ class Solution:
     # endregion
 
     # region 直角检测
-    def right_angle_detect(self, _img):
+    def right_angle_detect(self, _img:cv2.typing.MatLike) -> tuple[str|None, cv2.typing.MatLike]:
         """
         直角检测
         ----
-        本方法会在传入的图像上画出直线和交点
+        Args:
+            _img (cv2.typing.MatLike): 图片
+        Returns:
+            res (str, cv2.typing.MatLike): 直角的角度和画出直角的图片
 
-        :param _img: 传入的图像
-        :return: 两直线的角度，交点坐标
+        * str的结果会表示为
+        'AHXXXaHXXXPHxxxHyyy'，
+        其中：A和a代表第一个和第二个直线的角度，P代表交点，H代表正负号（0和1），XXX代表角度，
+        xxx和yyy代表交点的坐标
         """
-        angel1, angel2, cross_point = self.line_detector.get_right_angle(_img, draw=True)
-        return angel1, angel2, cross_point
+        # XXX:第一条线和第二条线是否会发生跳变
+        res_img = _img.copy()
+        angel1, angel2, cross_point = self.line_detector.get_right_angle(res_img, draw=True)
+
+        if angel1 is None or angel2 is None or cross_point is None:
+            return None, res_img
+
+        res1 = f"A{'0' if angel1 < 0 else '1'}{str(abs(angel1)).rjust(3, '0')}"
+        res2 = f"a{'0' if angel2 < 0 else '1'}{str(abs(angel2)).rjust(3, '0')}"
+        res3 = f"P{'0' if cross_point[0] < 0 else '1'}{str(abs(cross_point[0])).rjust(3, '0')}{'0' if cross_point[1] < 0 else '1'}{str(abs(cross_point[1])).rjust(3, '0')}"
+
+        str_res = res1 + res2 + res3
+        return str_res, res_img
+
     # endregion
 
     # region 直线识别
-    def get_line_angle_top(self, _img):
+    def get_line_angle_top(self, _img:cv2.typing.MatLike) -> tuple[str, cv2.typing.MatLike]:
         """
         获取直线的角度
         ----
@@ -473,8 +592,11 @@ class Solution:
         Args:
             _img (np.ndarray): 图片
         Returns:
-            err (str): 返回直线的角度
+            res (str, cv2.typing.MatLike): 直线的角度和画出直线的图片
+
+        * 角度会补全成3位，此外，还会有一位用来表示正负号，例如：-90度会表示为0090
         """
+        res_img = _img.copy()
         lines = self.line_detector.find_line(_img)
 
         nums = len(lines) if len(lines) < 5 else 5
@@ -482,13 +604,24 @@ class Solution:
 
         for i in range(nums):
             # XXX: 是否是lines[i][0]
-            self.line_detector.draw_line(_img, lines[i][0])
+            self.line_detector.draw_line(res_img, lines[i][0])
             angle = self.line_detector.get_line_angle(lines[i][0])
             angles.append(angle)
         avg_angle = int(np.mean(angles))
+
+        # 画出平均角度的直线
+        height, width = res_img.shape[:2]
+        center = (width // 2, height // 2)
+        length = min(width, height) // 2
+        x1 = int(center[0] + length * np.cos(np.deg2rad(avg_angle)))
+        y1 = int(center[1] + length * np.sin(np.deg2rad(avg_angle)))
+        x2 = int(center[0] - length * np.cos(np.deg2rad(avg_angle)))
+        y2 = int(center[1] - length * np.sin(np.deg2rad(avg_angle)))
+        cv2.line(res_img, (x1, y1), (x2, y2), (255, 0, 255), 2)
+
         # 补成3位，正负号用01表示
         res = f"{'0' if avg_angle < 0 else '1'}{str(abs(avg_angle)).rjust(3, '0')}"
-        return res
+        return res, res_img
     # endregion
 
     # region 串口

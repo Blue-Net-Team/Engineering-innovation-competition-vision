@@ -63,11 +63,11 @@
             "U_V": 255
         },
         "G": {
-            "centre": 65,
+            "centre": 68,
             "error": 10,
             "L_S": 55,
             "U_S": 255,
-            "L_V": 0,
+            "L_V": 10,
             "U_V": 255
         },
         "B": {
@@ -79,6 +79,6 @@
             "U_V": 255
         }
     },
-    "min_material_area": 1000,
-    "max_material_area": 10000
+    "min_material_area": 0,
+    "max_material_area": 340000
 }

@@ -212,10 +212,14 @@ class Ad_Area_config:
             self.area_dict[self.x + 1][1] = (x, y)
 
     def main(self):
-        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        cv2.namedWindow("img", cv2.WINDOW_AUTOSIZE)
         cv2.setMouseCallback("img", self.__mouse_callback)
         self.createTrackbar()
         cap = cv2.VideoCapture(0)
+        cap.set(3, 1280)
+        cap.set(4, 720)
+        cap.set(5, 60)
+        cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
         while True:
             ret, img = cap.read()
             if not ret:
@@ -296,14 +300,14 @@ class Ad_Line_config(LineDetector):
 
 
 if __name__ == "__main__":
-    ad_config = Ad_Config(
-        "COM8",
-        0
-    )
+    # ad_config = Ad_Config(
+    #     "COM8",
+    #     0
+    # )
     # ad_config.adjust_circle("annulus")
-    ad_config.adjust_color_threshold()
-    # ad_area_config = Ad_Area_config()
-    # ad_area_config.main()
+    # ad_config.adjust_color_threshold()
+    ad_area_config = Ad_Area_config()
+    ad_area_config.main()
 
     # ad_line_config = Ad_Line_config()
     # ad_line_config.ad_line()

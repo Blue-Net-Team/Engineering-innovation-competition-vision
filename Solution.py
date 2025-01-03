@@ -17,6 +17,7 @@ import numpy as np
 from USART.communicate import Usart
 import detector
 from colorama import Fore, Style, init
+import math
 
 # 初始化 colorama
 init(autoreset=True)
@@ -136,14 +137,14 @@ class Solution:
         Returns:
             str|none: 1代表运动，none代表没有运动
         """
-        color_position_dict:dict[str,tuple[int,int]] = self.detect_material_positions(_img)  # type:ignore
+        color_position_dict:dict[str,tuple[int,int,int,int]] = self.detect_material_positions(_img)   # type:ignore
 
         # 如果有物料没识别到，即color_position_dict有None，返回none
         if None in color_position_dict.values():
             return None
 
         # 将坐标转换成位号，在后面排除了now_color_position_id_dict中有None的情况
-        now_color_position_id_dict: dict[str, int] = self.position2area(color_position_dict)   # type:ignore
+        now_color_position_id_dict: dict[str, int|None] = self.position2area(color_position_dict)     # type:ignore
 
         # 如果有某个物料不在规定区域内，认为运动还没停止，返回none
         if None in now_color_position_id_dict.values():
@@ -183,7 +184,11 @@ class Solution:
         if R_point is None or G_point is None or B_point is None:
             return None
         # 获取转盘中心
-        centre_point = get_centre_point(R_point, G_point, B_point)
+        centre_point = get_centre_point(
+            R_point[:2],
+            G_point[:2],
+            B_point[:2],
+        )
         # 画出转盘中心
         cv2.circle(_img, centre_point, 5, (0, 255, 0), 2)
 
@@ -328,7 +333,7 @@ class Solution:
             annulus_dict[color] = avg_point
         return annulus_dict
 
-    def annulus_detect_top(self, _img):
+    def annulus_detect_top2(self, _img:cv2.typing.MatLike) -> str|None:
         """
         地面圆环颜色和位置检测
         ----
@@ -343,7 +348,10 @@ class Solution:
         Returns:
             err (None|str): 如果检测到圆环则返回None，否则返回颜色和圆心坐标与标准位置的偏差
 
-            `err`的格式为：以颜色字母开头，下一个01表示正负号，后面的数字表示偏差(补全成3位，FFF表示未检测到)
+            `err`的格式为：RHXXXYYYGHXXXYYYBHXXXYYY
+            * RGB代表颜色
+            * H代表正负号，未检测到为F
+            * XXX代表x坐标，YYY代表y坐标，如果没检测到这个颜色，则对应返回FFF
         """
         annulus_dict = self.annulus_detect(_img)
 
@@ -376,6 +384,48 @@ class Solution:
             ]
         )
 
+        return res
+
+    def annulus_detect_top(self,img:cv2.typing.MatLike) -> str|None:
+        """
+        圆环与直线识别
+        ----
+        Args:
+            img(cv2.typing.MatLike): 图像
+        Returns:
+            str: 识别结果
+
+        识别结果的格式为:"GHXXXYYYLHAA",其中:
+        * G是固定字母,代表绿色圆环
+        * H是正负标记位
+        * XXX是绿色圆环圆心的x坐标
+        * YYY是绿色圆环圆心的y坐标
+        * L是固定字母,代表红蓝圆环的连线
+        * H是正负标记位
+        * AA是红蓝圆环的连线角度
+
+        "G01251056L013"代表绿色圆环位置在(-125,+056)，红蓝圆环的连线角度为13度
+        """
+        annulus_dict = self.annulus_detect(img)
+
+        if annulus_dict is None:
+            return None
+        R_point, G_point, B_point = annulus_dict["R"], annulus_dict["G"], annulus_dict["B"]
+
+        # 计算红蓝中点
+        mid_point = (
+            int((R_point[0] + B_point[0]) / 2),
+            int((R_point[1] + B_point[1]) / 2),
+        )
+        # 计算绿色圆环平均坐标
+        G_avg_point=(
+            int((G_point[0] + mid_point[0]) / 2),
+            int((G_point[1] + mid_point[1]) / 2),
+        )
+        # 计算红蓝圆环连线的角度
+        angle = int(math.degrees(math.atan2(B_point[1] - R_point[1], B_point[0] - R_point[0])))
+
+        res=f"G{'0' if G_avg_point[0] <0 else '1'}{abs(G_avg_point[0]):03}{'0' if G_avg_point[1] <0 else '1'}{abs(G_avg_point[1]):03}L{'O' if angle <0 else '1'}{abs(angle):02}"
         return res
 
     def get_with_and_img(self, _img:cv2.typing.MatLike ,color_name:str):

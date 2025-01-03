@@ -46,8 +46,8 @@ class Ad_Config(Solution):
         Args:
             config_name (str): 配置名称,包含"material"(物料)、"annulus"(圆环)
         """
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         detector = self.annulus_circle_detector
-        detect_func = self.annulus_circle_detector.detect_circle
 
         # 加载配置
         # detector.load_config("config.json", config_name)
@@ -64,8 +64,18 @@ class Ad_Config(Solution):
             except:
                 read_img_time = 0
 
-            res = detect_func(img)
+            res = self.annulus_circle_detector.detect_circle(img)
             t1 = time.perf_counter()
+
+            points = res[0]
+            radius = res[1]
+
+            if points is None or radius is None:
+                continue
+
+            for point, r in zip(points, radius):
+                cv2.circle(img, point, r, (0, 255, 0), 2)
+
 
             detect_time = t1 - t0
 
@@ -202,10 +212,14 @@ class Ad_Area_config:
             self.area_dict[self.x + 1][1] = (x, y)
 
     def main(self):
-        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        cv2.namedWindow("img", cv2.WINDOW_AUTOSIZE)
         cv2.setMouseCallback("img", self.__mouse_callback)
         self.createTrackbar()
         cap = cv2.VideoCapture(0)
+        cap.set(3, 1280)
+        cap.set(4, 720)
+        cap.set(5, 60)
+        cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
         while True:
             ret, img = cap.read()
             if not ret:
@@ -287,15 +301,15 @@ class Ad_Line_config(LineDetector):
 
 if __name__ == "__main__":
     # ad_config = Ad_Config(
-    #     "COM5",
+    #     "COM8",
     #     0
     # )
     # ad_config.adjust_circle("annulus")
     # ad_config.adjust_color_threshold()
-    # ad_area_config = Ad_Area_config()
-    # ad_area_config.main()
+    ad_area_config = Ad_Area_config()
+    ad_area_config.main()
 
-    ad_line_config = Ad_Line_config()
+    # ad_line_config = Ad_Line_config()
     # ad_line_config.ad_line()
-    ad_line_config.ad_right_angle()
+    # ad_line_config.ad_right_angle()
 # end main

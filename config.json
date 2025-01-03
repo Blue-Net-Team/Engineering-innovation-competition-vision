@@ -7,14 +7,6 @@
         "maxLineGap": 49,
         "bias": 3
     },
-    "material": {
-        "dp": 1,
-        "minDist": 56,
-        "param1": 66,
-        "param2": 24,
-        "minRadius": 46,
-        "maxRadius": 56
-    },
     "annulus_point": [
         0,
         0
@@ -25,68 +17,68 @@
     ],
     "area1_points": [
         [
-            0,
-            0
+            327,
+            50
         ],
         [
-            0,
-            0
+            614,
+            272
         ]
     ],
     "area2_points": [
         [
-            0,
-            0
+            760,
+            65
         ],
         [
-            0,
-            0
+            1000,
+            290
         ]
     ],
     "area3_points": [
         [
-            0,
-            0
+            561,
+            441
         ],
         [
-            0,
-            0
+            749,
+            638
         ]
     ],
     "color": {
         "R": {
             "centre": 0,
-            "error": 10,
-            "L_S": 55,
+            "error": 12,
+            "L_S": 40,
             "U_S": 255,
             "L_V": 0,
             "U_V": 255
         },
         "G": {
             "centre": 68,
-            "error": 10,
-            "L_S": 55,
+            "error": 26,
+            "L_S": 45,
             "U_S": 255,
-            "L_V": 10,
+            "L_V": 15,
             "U_V": 255
         },
         "B": {
             "centre": 109,
-            "error": 12,
-            "L_S": 65,
+            "error": 19,
+            "L_S": 30,
             "U_S": 255,
-            "L_V": 30,
+            "L_V": 0,
             "U_V": 255
         }
     },
-    "min_material_area": 0,
+    "min_material_area": 8000,
     "max_material_area": 340000,
     "annulus": {
         "dp": 2,
-        "minDist": 100,
+        "minDist": 84,
         "param1": 100,
-        "param2": 92,
-        "minRadius": 51,
-        "maxRadius": 68
+        "param2": 100,
+        "minRadius": 44,
+        "maxRadius": 71
     }
 }

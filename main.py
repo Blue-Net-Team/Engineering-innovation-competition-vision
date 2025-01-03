@@ -68,33 +68,17 @@ while True:
 
             t0 = time.perf_counter()
 
-            try:
-                read_img_time = t0 - t1
-            except:
-                read_img_time = 0
-
             # 如果res是none，会继续读取下一帧图像，直到res不是none
-            res: str | None = solution_dict[sign](img)
+            res, res_img = solution_dict[sign](img)
 
             t1 = time.perf_counter()
             detect_time = t1 - t0
-            process_time = read_img_time + detect_time
-            fps = 1 / process_time
 
-            cv2.putText(
-                img,
-                f"FPS: {fps:.2f}",
-                (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (0, 255, 0),
-                1,
-            )
-
-            DEAL_IMG_DICT[DEAL_IMG](img)
+            DEAL_IMG_DICT[DEAL_IMG](res_img)
 
             if res:
                 solution.write_serial(res, head=HEAD, tail=TAIL)
+                print(f"Detect time(ms): {detect_time * 1000:.2f}")
                 break
     else:  # 信号非法
         print("Invalid sign")

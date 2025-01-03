@@ -25,7 +25,7 @@ Test_Line_detect
 import time
 import cv2
 import numpy as np
-from Solution import Solution
+from Solution import Solution, draw_material
 from utils.dataset import LoadCap
 from detector import TraditionalColorDetector, LineDetector
 
@@ -44,54 +44,37 @@ class Test_solution(Solution):
         """
         super().__init__(ser_port)
         self.FUNC_DICT = {
-            "annulus": self.annulus_detect,
-            "right_angle": self.right_angle_detect,
-            "rotator_center": self.get_rotator_centre,
-            "if_move": self.material_moving_detect,
-            "line_angle": self.get_line_angle_top,
+            "0": self.get_rotator_centre,  # 获取转盘中心点
+            "1": self.annulus_detect_top,  # 圆环检测
+            "2": self.right_angle_detect,  # 直角检测
+            "3": self.material_moving_detect,  # 物料运动检测
+            "4": self.get_material,  # 获取物料位号
         }
 
-    def test_func(self, cap_id: int, func_name: str):
+    def test_func(self, cap_id: int, sign: str):
         """
         测试Solution功能
 
         Args:
             cap_id (int): 摄像头编号
-            func_name (str): 功能名称,包含"annulus"(圆环)、"right_angle"(直角)、"rotator_center"(转盘中心)、"if_move"(物料移动)
+            sign (str): 串口信号(功能编号)
         Returns:
             None
         """
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         cap = LoadCap(cap_id)
         for img in cap:
             if img is None:
                 continue
             t0 = time.perf_counter()
 
-            try:
-                read_img_time = t0 - t1
-            except:
-                read_img_time = 0
-
-            res = self.FUNC_DICT[func_name](img)
+            res, res_img = self.FUNC_DICT[sign](img)
             t1 = time.perf_counter()
 
             detect_time = t1 - t0
 
-            process_time = read_img_time + detect_time
-            fps = 1 / process_time
-
-            cv2.putText(  # 显示FPS
-                img,
-                f"FPS: {fps:.2f}",
-                (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (0, 255, 0),
-                2,
-            )
-
-            cv2.imshow("img", img)
-            print(res)
+            cv2.imshow("img", res_img)
+            print(f"res:{res} \t detect time(ms):{detect_time * 1000:.2f}")
 
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
@@ -137,14 +120,16 @@ class Test_solution(Solution):
             color (str): 颜色名称
         """
         cap = LoadCap(cap_id)
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         for img in cap:
             if img is None:
                 continue
             res = self.get_with_and_img(img, color)
-            cv2.imshow("img", img)
-            print(res)
+            res_img = np.vstack((img, res))
+            cv2.imshow("img", res_img)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
+
 
     def detect_material_positions(self, _img:cv2.typing.MatLike) -> tuple[dict[str, tuple[int, int] | None], cv2.typing.MatLike]:
         """
@@ -365,22 +350,8 @@ class TraditionalColor_Test(TraditionalColorDetector):
                 break
 
 if __name__ == "__main__":
-    test = Test_solution("COM5")
-    # test.test_func(0, "material")
-    test.test_material_positions(0)
-    # test.test_circle_edge(0)
-    # test.test_usart_read("head", "tail")
-    # test.test_usart_write("data", "head", "tail")
-
-    # test = Test_CNN_detector("best_model2024-12-09-12-46-06.pth", 0)
-    # test.test()
-
-    # test = Test_Line_detect()
-    # test.test()
-
-    # test = Polygon_Test()
-    # test.test_img()
-
-    # test = TraditionalColor_Test()
-    # test.test()
+    test = Test_solution("COM8")
+    test.test_func(0, "4")
+    # test.test_material_positions(0)
+    # test.test_annulus_color(0, "G")
 # end main

@@ -46,6 +46,7 @@ class Ad_Config(Solution):
         Args:
             config_name (str): 配置名称,包含"material"(物料)、"annulus"(圆环)
         """
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         detector = self.annulus_circle_detector
         detect_func = self.annulus_circle_detector.detect_circle
 

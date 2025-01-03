@@ -425,7 +425,7 @@ class Solution:
             cv2.putText(
                 res_img,
                 color,
-                (int(avg_point[0]), int(avg_point[1])),
+                (int(avg_point[0])+10, int(avg_point[1])+10),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.5,
                 (0, 0, 255),
@@ -544,8 +544,8 @@ class Solution:
         mask = self.traditional_color_detector.binarization(_img)
 
         # 膨胀
-        kernel = np.ones((3, 3), np.uint8)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=1)
+        kernel = np.ones((5, 5), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=6)
 
         res_img = cv2.bitwise_and(_img, _img, mask=mask)
         return res_img

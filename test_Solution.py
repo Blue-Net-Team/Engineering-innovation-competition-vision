@@ -25,7 +25,7 @@ Test_Line_detect
 import time
 import cv2
 import numpy as np
-from Solution import Solution
+from Solution import Solution, draw_material
 from utils.dataset import LoadCap
 from detector import TraditionalColorDetector, LineDetector
 
@@ -61,6 +61,7 @@ class Test_solution(Solution):
         Returns:
             None
         """
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         cap = LoadCap(cap_id)
         for img in cap:
             if img is None:
@@ -119,16 +120,18 @@ class Test_solution(Solution):
             color (str): 颜色名称
         """
         cap = LoadCap(cap_id)
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         for img in cap:
             if img is None:
                 continue
             res = self.get_with_and_img(img, color)
-            cv2.imshow("img", img)
-            print(res)
+            res_img = np.vstack((img, res))
+            cv2.imshow("img", res_img)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
 
-    def __detect_material_positions(self, _img:cv2.typing.MatLike) -> tuple[dict[str, tuple[int, int] | None], cv2.typing.MatLike]:
+
+    def detect_material_positions(self, _img:cv2.typing.MatLike) -> tuple[dict[str, tuple[int, int] | None], cv2.typing.MatLike]:
         """
         物料位置检测(跟踪)
         ----
@@ -220,7 +223,7 @@ class Test_solution(Solution):
         for img in cap:
             if img is None:
                 continue
-            res_dict, res = self.__detect_material_positions(img)
+            res_dict, res = self.detect_material_positions(img)
             cv2.imshow("img", res)
             print(res_dict)
             if cv2.waitKey(1) & 0xFF == ord("q"):
@@ -350,19 +353,5 @@ if __name__ == "__main__":
     test = Test_solution("COM5")
     # test.test_func(0, "material")
     test.test_material_positions(0)
-    # test.test_circle_edge(0)
-    # test.test_usart_read("head", "tail")
-    # test.test_usart_write("data", "head", "tail")
-
-    # test = Test_CNN_detector("best_model2024-12-09-12-46-06.pth", 0)
-    # test.test()
-
-    # test = Test_Line_detect()
-    # test.test()
-
-    # test = Polygon_Test()
-    # test.test_img()
-
-    # test = TraditionalColor_Test()
-    # test.test()
+    # test.test_annulus_color(0, "G")
 # end main

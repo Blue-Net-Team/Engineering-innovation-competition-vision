@@ -137,14 +137,14 @@ class Solution:
         Returns:
             str|none: 1代表运动，none代表没有运动
         """
-        color_position_dict:dict[str,tuple[int,int]] = self.detect_material_positions(_img)  # type:ignore
+        color_position_dict:dict[str,tuple[int,int,int,int]] = self.detect_material_positions(_img)   # type:ignore
 
         # 如果有物料没识别到，即color_position_dict有None，返回none
         if None in color_position_dict.values():
             return None
 
         # 将坐标转换成位号，在后面排除了now_color_position_id_dict中有None的情况
-        now_color_position_id_dict: dict[str, int] = self.position2area(color_position_dict)   # type:ignore
+        now_color_position_id_dict: dict[str, int|None] = self.position2area(color_position_dict)     # type:ignore
 
         # 如果有某个物料不在规定区域内，认为运动还没停止，返回none
         if None in now_color_position_id_dict.values():
@@ -184,7 +184,11 @@ class Solution:
         if R_point is None or G_point is None or B_point is None:
             return None
         # 获取转盘中心
-        centre_point = get_centre_point(R_point, G_point, B_point)
+        centre_point = get_centre_point(
+            R_point[:2],
+            G_point[:2],
+            B_point[:2],
+        )
         # 画出转盘中心
         cv2.circle(_img, centre_point, 5, (0, 255, 0), 2)
 

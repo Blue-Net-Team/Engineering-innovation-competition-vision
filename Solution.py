@@ -290,8 +290,8 @@ class Solution:
             res (str, cv2.typing.MatLike): 直角的角度和画出直角的图片
 
         * str的结果会表示为
-        'AHXXXaHXXXPHxxxHyyy'，
-        其中：A和a代表第一个和第二个直线的角度，P代表交点，H代表正负号（0和1），XXX代表角度，
+        'AHXXPHxxxHyyy'，
+        其中：A和a代表第一个和第二个直线的角度，P代表交点，H代表正负号（0和1），XX代表角度，
         xxx和yyy代表交点的坐标
         """
         res_img = _img.copy()
@@ -300,7 +300,7 @@ class Solution:
         if angel1 is None or angel2 is None or cross_point is None:
             return None, res_img
 
-        # 取出接近0度且大于0的角度
+        # 取出大于0的角度
         angel = angel1 if 0 < angel1 < 90 else angel2
 
         point2 = (cross_point[0] + 100 * math.cos(math.radians(angel)), cross_point[1] + 100 * math.sin(math.radians(angel)))

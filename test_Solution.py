@@ -126,26 +126,6 @@ class Test_solution(Solution):
             )
             time.sleep(0.5)
 
-    def test_annulus_color(self, cap_id: int, color: str):
-        """
-        测试圆环颜色检测
-        ----
-        Args:
-            cap_id (int): 摄像头编号
-            color (str): 颜色名称
-        """
-        cap = LoadCap(cap_id)
-        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
-        for img in cap:
-            if img is None:
-                continue
-            res = self.get_with_and_img(img, color)
-            res_img = np.vstack((img, res))
-            cv2.imshow("img", res_img)
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
-
-
     def detect_material_positions(self, _img:cv2.typing.MatLike) -> tuple[dict[str, tuple[int, int] | None], cv2.typing.MatLike]:
         """
         物料位置检测(跟踪)
@@ -165,7 +145,7 @@ class Test_solution(Solution):
 
         img = _img.copy()
         img2 = _img.copy()
-        img_sharpen = self.material_circle_detector.sharpen(img)  # 锐化
+        img_sharpen = self.annulus_circle_detector.sharpen(img)  # 锐化
 
         mask_lst = []   # 用于测试
 
@@ -246,127 +226,9 @@ class Test_solution(Solution):
 
         cap.release()
 
-class Test_Line_detect:
-    def __init__(self) -> None:
-        self.ld = LineDetector()
-
-        try:
-            self.ld.load_config("config.json")
-        except:
-            print("config.json not found")
-
-    def test_right_angle(self):
-        self.ld.createTrackbar()
-        cap = LoadCap(0)
-        for img in cap:
-            if img is None:
-                continue
-            # region 计算帧率部分1
-            t0 = time.perf_counter()
-
-            try:
-                read_img_time = t0 - t1
-            except:
-                read_img_time = 0
-            # endregion
-
-            img = self.ld.sharpen(img)
-            angel1, angel2, point = self.ld.get_right_angle(img, True)
-
-            # region 计算帧率部分2
-            t1 = time.perf_counter()
-
-            detect_time = t1 - t0
-
-            process_time = read_img_time + detect_time
-            fps = 1 / process_time
-            # endregion
-
-            cv2.putText(  # 显示FPS
-                img,
-                f"FPS: {fps:.2f}",
-                (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (0, 255, 0),
-                2,
-            )
-            cv2.imshow("img", img)
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                self.ld.save_config("config.json")
-                cap.release()
-                break
-
-    def test_line(self):
-        self.ld.createTrackbar()
-        cap = LoadCap(0)
-        for img in cap:
-            if img is None:
-                continue
-            # region 计算帧率部分1
-            t0 = time.perf_counter()
-
-            try:
-                read_img_time = t0 - t1
-            except:
-                read_img_time = 0
-            # endregion
-
-            img = self.ld.sharpen(img)
-            lines = self.ld.find_line(img)
-
-            # region 计算帧率部分2
-            t1 = time.perf_counter()
-
-            detect_time = t1 - t0
-
-            process_time = read_img_time + detect_time
-            fps = 1 / process_time
-            # endregion
-
-            for line in lines:
-                self.ld.draw_line(img, line)
-
-            cv2.putText(  # 显示FPS
-                img,
-                f"FPS: {fps:.2f}",
-                (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (0, 255, 0),
-                2,
-            )
-            cv2.imshow("img", img)
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                self.ld.save_config("config.json")
-                cap.release()
-                break
-
-class TraditionalColor_Test(TraditionalColorDetector):
-    def __init__(self):
-        super().__init__()
-        self.createTrackbar()
-
-    def test(self):
-        cap = LoadCap(0)
-        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
-
-        for img in cap:
-            if img is None:
-                continue
-
-            mask = self.binarization(img)
-            bit_and = cv2.bitwise_and(img, img, mask=mask)
-            res = np.vstack((img, cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR), bit_and))
-
-            cv2.imshow("img", res)
-
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
-
 if __name__ == "__main__":
-    test = Test_solution("COM8")
-    test.test_func(0, "4")
+    test = Test_solution()
+    test.test_func(0, "2")
     # test.test_material_positions(0)
     # test.test_annulus_color(0, "G")
 # end main

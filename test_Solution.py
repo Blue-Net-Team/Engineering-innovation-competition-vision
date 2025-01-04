@@ -28,13 +28,14 @@ import numpy as np
 from Solution import Solution, draw_material
 from utils.dataset import LoadCap
 from detector import TraditionalColorDetector, LineDetector
+from img_trans import VideoStreaming
 
 
 COLOR_DIC = {0: "R", 1: "G", 2: "B"}
 
 
 class Test_solution(Solution):
-    def __init__(self, ser_port: str):
+    def __init__(self, ser_port: str, sender:VideoStreaming|None=None) -> None:
         """
         解决方案
         ----
@@ -43,7 +44,8 @@ class Test_solution(Solution):
             ser_port (str): 串口号
         """
         super().__init__(ser_port)
-        self.FUNC_DICT = {
+        # 顶层方法字典
+        self.TOP_FUNC_DICT = {
             "0": self.get_rotator_centre,  # 获取转盘中心点
             "1": self.annulus_detect_top,  # 圆环检测
             "2": self.right_angle_detect,  # 直角检测
@@ -51,9 +53,16 @@ class Test_solution(Solution):
             "4": self.get_material,  # 获取物料位号
         }
 
+        if sender is not None:
+            self.sender = sender
+            self.sender.connecting()
+            self.sender.start()
+        else:
+            self.sender = None
+
     def test_func(self, cap_id: int, sign: str):
         """
-        测试Solution功能
+        测试Solution顶层功能
 
         Args:
             cap_id (int): 摄像头编号
@@ -66,18 +75,24 @@ class Test_solution(Solution):
         for img in cap:
             if img is None:
                 continue
-            t0 = time.perf_counter()
 
-            res, res_img = self.FUNC_DICT[sign](img)
+            t0 = time.perf_counter()
+            res, res_img = self.TOP_FUNC_DICT[sign](img)
             t1 = time.perf_counter()
 
             detect_time = t1 - t0
 
-            cv2.imshow("img", res_img)
-            print(f"res:{res} \t detect time(ms):{detect_time * 1000:.2f}")
+            if self.sender is not None:
+                self.sender.send(res_img)
+            else:
+                cv2.imshow("img", res_img)
 
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
+            now_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            print(f"[{now_time}] res:{res} \t detect time(ms):{detect_time * 1000:.2f}")
+
+            if self.sender is None:
+                if cv2.waitKey(1) & 0xFF == ord("q"):
+                    break
 
     def test_usart_read(self, head: str, tail: str):
         """

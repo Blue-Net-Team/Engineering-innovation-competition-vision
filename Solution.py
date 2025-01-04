@@ -190,17 +190,15 @@ class Solution:
         """
         res_img = _img.copy()
 
-        color_position_dict:dict[str,tuple[int,int,int,int]] = self.__detect_material_positions(_img)
-        # 判断是否有物料没识别到，如果有物料没识别到，则返回None
-        if None in color_position_dict.values():
-            return None, res_img
+        color_position_dict:dict[str,tuple[int,int,int,int]|None] = self.__detect_material_positions(_img)
 
         for (color, position), area_point in zip(
             color_position_dict.items(),
             [self.area1_points, self.area2_points, self.area3_points],
         ):
-            # 画出物料
-            draw_material(position, res_img, color)
+            if position is not None:
+                # 画出物料
+                res_img = draw_material(position, res_img, color)
             # 画出位号
             cv2.rectangle(
                 res_img,
@@ -211,12 +209,10 @@ class Solution:
             )
 
         color_position_id_dict = self.position2area(color_position_dict)
-        # 如果有物料不在规定区域内，返回None
-        if None in color_position_id_dict.values():
-            return None, res_img
+
         res = "".join(
             [
-                f"{color}{area}"
+                f"{color}{area if area else 'F'}"
                 for color, area in color_position_id_dict.items()
             ]
         )
@@ -252,7 +248,7 @@ class Solution:
 
         return res_dict
 
-    def position2area(self, color_p_dict:dict[str,tuple[int,int,int,int]]) -> dict[str,int|None]:
+    def position2area(self, color_p_dict:dict[str,tuple[int,int,int,int]|None]) -> dict[str,int|None]:
         """
         将坐标字典转换成位号字典
         ----
@@ -265,9 +261,13 @@ class Solution:
         """
         color_area_dict:dict[str,int|None] = {}
         for color in color_p_dict.keys():
-            point = color_p_dict[color][:2]
-            if point is None:
+            # 如果有物料没识别到，字典中对应的值为None
+            point_wh = color_p_dict[color]
+            if point_wh is None:
+                color_area_dict[color] = None
                 continue
+
+            point = point_wh[:2]
             if self.area1_points[0][0] <= point[0] <= self.area1_points[1][0] and self.area1_points[0][1] <= point[1] <= self.area1_points[1][1]:
                 color_area_dict[color] = 1
             elif self.area2_points[0][0] <= point[0] <= self.area2_points[1][0] and self.area2_points[0][1] <= point[1] <= self.area2_points[1][1]:

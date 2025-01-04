@@ -300,16 +300,25 @@ class Solution:
         其中：A和a代表第一个和第二个直线的角度，P代表交点，H代表正负号（0和1），XXX代表角度，
         xxx和yyy代表交点的坐标
         """
-        # XXX:第一条线和第二条线是否会发生跳变
         res_img = _img.copy()
         angel1, angel2, cross_point = self.line_detector.get_right_angle(res_img, draw=True)
 
         if angel1 is None or angel2 is None or cross_point is None:
             return None, res_img
 
-        angel = int(np.mean([angel1, angel2]))
+        # 取出接近0度且大于0的角度
+        angel = angel1 if 0 < angel1 < 90 else angel2
 
-        res1 = f"A{'0' if angel1 < 0 else '1'}{str(abs(angel)).rjust(3, '0')}"
+        point2 = (cross_point[0] + 100 * math.cos(math.radians(angel)), cross_point[1] + 100 * math.sin(math.radians(angel)))
+        cv2.line(
+            res_img,
+            (cross_point[0], cross_point[1]),
+            (int(point2[0]), int(point2[1])),
+            (0, 255, 255),
+            2,
+        )
+
+        res1 = f"A{'0' if angel < 0 else '1'}{str(abs(angel)).rjust(2, '0')}"
         res3 = f"P{'0' if cross_point[0] < 0 else '1'}{str(abs(cross_point[0])).rjust(3, '0')}{'0' if cross_point[1] < 0 else '1'}{str(abs(cross_point[1])).rjust(3, '0')}"
 
         str_res = res1 + res3

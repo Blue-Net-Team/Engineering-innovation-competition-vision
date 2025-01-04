@@ -216,8 +216,8 @@ class Ad_Area_config:
         cv2.setMouseCallback("img", self.__mouse_callback)
         self.createTrackbar()
         cap = cv2.VideoCapture(0)
-        cap.set(3, 1280)
-        cap.set(4, 720)
+        cap.set(3, 640)
+        cap.set(4, 480)
         cap.set(5, 60)
         cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
         while True:

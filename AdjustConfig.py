@@ -27,8 +27,8 @@ class Ad_Config(Solution):
 
     def __init__(
         self,
-        ser_port: str,
-        cap_id: int,
+        cap_id: int = 0,
+        ser_port: str|None = None,
         ip: str | None = None,
         port: int | None = None,
     ):
@@ -216,8 +216,8 @@ class Ad_Area_config:
         cv2.setMouseCallback("img", self.__mouse_callback)
         self.createTrackbar()
         cap = cv2.VideoCapture(0)
-        cap.set(3, 1280)
-        cap.set(4, 720)
+        cap.set(3, 640)
+        cap.set(4, 480)
         cap.set(5, 60)
         cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
         while True:
@@ -265,10 +265,11 @@ class Ad_Line_config(LineDetector):
 
             lines = self.find_line(img)
 
-            nums = len(lines) if len(lines) < 5 else 5
+            if lines is not None:
+                nums = len(lines) if len(lines) < 5 else 5
 
-            for i in range(nums):
-                self.draw_line(img, lines[i])
+                for i in range(nums):
+                    self.draw_line(img, lines[i])
 
             cv2.imshow("img", img)
             key = cv2.waitKey(1)

@@ -17,68 +17,68 @@
     ],
     "area1_points": [
         [
-            327,
-            50
+            47,
+            13
         ],
         [
-            614,
-            272
+            289,
+            234
         ]
     ],
     "area2_points": [
         [
-            760,
-            65
+            322,
+            19
         ],
         [
-            1000,
-            290
+            582,
+            240
         ]
     ],
     "area3_points": [
         [
-            561,
-            441
+            183,
+            258
         ],
         [
-            749,
-            638
+            465,
+            473
         ]
     ],
     "color": {
         "R": {
             "centre": 0,
-            "error": 12,
-            "L_S": 40,
+            "error": 17,
+            "L_S": 60,
             "U_S": 255,
-            "L_V": 0,
+            "L_V": 30,
             "U_V": 255
         },
         "G": {
-            "centre": 68,
-            "error": 26,
-            "L_S": 45,
+            "centre": 65,
+            "error": 21,
+            "L_S": 25,
             "U_S": 255,
-            "L_V": 15,
+            "L_V": 31,
             "U_V": 255
         },
         "B": {
             "centre": 109,
-            "error": 19,
-            "L_S": 30,
+            "error": 17,
+            "L_S": 60,
             "U_S": 255,
-            "L_V": 0,
+            "L_V": 30,
             "U_V": 255
         }
     },
-    "min_material_area": 8000,
-    "max_material_area": 340000,
+    "min_material_area": 2000,
+    "max_material_area": 40000,
     "annulus": {
-        "dp": 2,
-        "minDist": 84,
+        "dp": 1,
+        "minDist": 100,
         "param1": 100,
         "param2": 100,
-        "minRadius": 44,
-        "maxRadius": 71
+        "minRadius": 40,
+        "maxRadius": 97
     }
 }

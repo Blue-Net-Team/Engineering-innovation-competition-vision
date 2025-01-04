@@ -95,7 +95,7 @@ class LineDetector(Detect):
             line: 直线参数
             _color: 画线的颜色
         """
-        x1, y1, x2, y2 = line
+        x1, y1, x2, y2 = line[0]
 
         cv2.line(img, (x1, y1), (x2, y2), _color, 1)
 
@@ -148,6 +148,7 @@ class LineDetector(Detect):
                     # 计算交点
                     x1, y1, x2, y2 = line[0]
                     x3, y3, x4, y4 = target_line
+                    target_line = [target_line]
                     try:
                         cross_point = (
                             int(
@@ -165,7 +166,7 @@ class LineDetector(Detect):
                         return None, None, None
 
                     if draw:  # 画出直线
-                        self.draw_line(_img, line[0])
+                        self.draw_line(_img, line)
                         self.draw_line(_img, target_line)
                         self.__draw_point(_img, cross_point)
 

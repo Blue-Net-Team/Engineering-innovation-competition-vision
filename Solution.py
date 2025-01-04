@@ -77,7 +77,7 @@ class Solution:
         self.traditional_color_detector = detector.TraditionalColorDetector()
         self.line_detector = detector.LineDetector()
         self.uart = Usart(ser_port)
-        self.position_id_stack:list[dict[str,int]] = []     # 用于存放上一帧图像的物料位号的栈
+        self.position_id_stack:list[dict[str,int|None]] = []     # 用于存放上一帧图像的物料位号的栈
 
         # region 读取配置文件
         try:

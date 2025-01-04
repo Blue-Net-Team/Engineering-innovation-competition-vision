@@ -60,7 +60,7 @@ class LoadCap:
         cv2.destroyAllWindows()
 
 
-class InterpolationCap(cv2.VideoCapture):
+class Cap(cv2.VideoCapture):
     def __init__(self, _id:int=0) -> None:
         super().__init__(_id)
         self.set(3, 640)
@@ -68,68 +68,51 @@ class InterpolationCap(cv2.VideoCapture):
         self.set(5, 60)
         self.set(6, cv2.VideoWriter.fourcc('M', 'J', 'P', 'G'))
 
-        self.img = None
-        self.flag = True
+        self.prev_frame = None
+        self.alpha = 0.5  # 插值系数
+        self.prev_tick = cv2.getTickCount()
+        self.frame_count = 0
+        self.fps_deque = deque(maxlen=30)  # 用于存储最近30帧的FPS值
+        self.avg_fps = 0
 
-    def get_img(self):
-        while self.flag:
-            ret, frame = self.read()
-            if ret:
-                self.img = frame
-
-    def release(self):
-        self.flag = False
-        super().release()
-        cv2.destroyAllWindows()
-
-    def open_camera(self, camera_id=0):
-        self.open(camera_id)
-        if not self.isOpened():
-            print(f"not open")
-            return
-
-        prev_frame = None
-        # 插值系数
-        alpha = 0.5
-
-        prev_tick = cv2.getTickCount()
-        frame_count = 0
-        # 用于存储最近30帧的FPS值
-        fps_deque = deque(maxlen=30)
-
-        avg_fps = 0
-        while True:
-            ret, frame = self.read()
-            if not ret:
-                break
-
-            if prev_frame is not None:
+    def read(self):
+        ret, frame = super().read()
+        if ret:
+            if self.prev_frame is not None:
                 # 使用插值方法生成新帧
-                interpolated_frame = cv2.addWeighted(frame, alpha, prev_frame, 1 - alpha, 0)
-                cv2.putText(interpolated_frame, f"FPS: {avg_fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                interpolated_frame = cv2.addWeighted(frame, self.alpha, self.prev_frame, 1 - self.alpha, 0)
+                cv2.putText(interpolated_frame, f"FPS: {self.avg_fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
                 cv2.imshow('Interpolated Camera', interpolated_frame)
 
             cv2.imshow('Original Camera', frame)
-            prev_frame = frame
+            self.prev_frame = frame
 
             # 计算并显示FPS
-            frame_count += 1
-            if frame_count >= 10:
+            self.frame_count += 1
+            if self.frame_count >= 10:
                 tick = cv2.getTickCount()
-                time_diff = (tick - prev_tick) / cv2.getTickFrequency()
-                fps = frame_count / time_diff
-                fps_deque.append(fps)
-                avg_fps = sum(fps_deque) / len(fps_deque)
-                prev_tick = tick
-                frame_count = 0
+                time_diff = (tick - self.prev_tick) / cv2.getTickFrequency()
+                fps = self.frame_count / time_diff
+                self.fps_deque.append(fps)
+                self.avg_fps = sum(self.fps_deque) / len(self.fps_deque)
+                self.prev_tick = tick
+                self.frame_count = 0
+        return ret, frame
 
-            if cv2.waitKey(1) == 27:
-                break
-
-        self.release()
+    def release(self):
+        super().release()
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    camera_id = 0  # 可以根据需要更改摄像头索引
-    cap = InterpolationCap()
-    cap.open_camera(camera_id)
+    cap = Cap()
+    cap.open(0)
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        if cv2.waitKey(1) == 27:
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()

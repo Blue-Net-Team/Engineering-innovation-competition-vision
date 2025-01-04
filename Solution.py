@@ -83,17 +83,11 @@ class Solution:
         try:
             with open("config.json", "r") as f:
                 config = json.load(f)
-                # 圆环中心点
-                self.annulus_point: list[int] = config["annulus_point"]
-                # 转盘中心点
-                self.rotator_centre_point: list[int] = config["rotator_centre_point"]
                 # 位号顶点
                 self.area1_points:list[list[int]] = config["area1_points"]
                 self.area2_points:list[list[int]] = config["area2_points"]
                 self.area3_points:list[list[int]] = config["area3_points"]
         except Exception as e:
-            self.annulus_point = [0, 0]
-            self.rotator_centre_point = [0, 0]
             self.area1_points:list[list[int]] = [[0,0],[0,0]]
             self.area2_points:list[list[int]] = [[0,0],[0,0]]
             self.area3_points:list[list[int]] = [[0,0],[0,0]]

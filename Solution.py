@@ -25,6 +25,7 @@ init(autoreset=True)
 
 COLOR_DIC = {0: "R", 1: "G", 2: "B"}
 COLOR_DIC_INV = {v: k for k, v in COLOR_DIC.items()}
+COLOR_DIC_CV = {"R": (0, 0, 255), "G": (0, 255, 0), "B": (255, 0, 0)}
 
 
 def show(img):
@@ -120,7 +121,7 @@ def get_point_distance(point1:tuple[int,int],point2:tuple[int,int]):
     return int(math.sqrt((point1[0]-point2[0])**2+(point1[1]-point2[1])**2))
 
 class Solution:
-    def __init__(self, ser_port: str):
+    def __init__(self, ser_port: str|None):
         """
         解决方案
         ----
@@ -203,7 +204,7 @@ class Solution:
             [self.area1_points, self.area2_points, self.area3_points],
         ):
             # 画出物料
-            draw_material(position, res_img, color)
+            res_img = draw_material(position, res_img, color)
             # 画出位号
             cv2.rectangle(
                 res_img,
@@ -390,7 +391,7 @@ class Solution:
     # endregion
 
     # region 圆环检测
-    def annulus_detect(self, _img) -> tuple[dict[str, tuple[int, int]] | None, cv2.typing.MatLike]:
+    def annulus_detect(self, _img:cv2.typing.MatLike) -> tuple[dict[str, tuple[int, int]] | None, cv2.typing.MatLike]:
         """
         地面圆环颜色和位置检测
         ----
@@ -413,30 +414,22 @@ class Solution:
             # 计算平均半径
             avg_r:int|None = int(np.mean(rs)) if rs else None
 
-            if avg_point is None or avg_r is None: return None, res_img
+                # 如果检测到圆环
+            if not (avg_point is None or avg_r is None):
+                # 画出圆心
+                cv2.circle(
+                    res_img,
+                    (int(avg_point[0]), int(avg_point[1])),
+                    2,
+                    COLOR_DIC_CV[color],
+                    2
+                )
 
-            # 画出圆环
-            cv2.circle(
-                res_img,
-                (int(avg_point[0]),int(avg_point[1])),
-                int(avg_r),
-                (255, 0, 0),
-                2
-            )
-            # 画出圆心
-            cv2.circle(res_img, (int(avg_point[0]), int(avg_point[1])), 5, (0, 0, 255), 2)
-            # 绘制文字，用于显示颜色
-            cv2.putText(
-                res_img,
-                color,
-                (int(avg_point[0])+10, int(avg_point[1])+10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (0, 0, 255),
-                2,
-            )
+                avg_point = (int(avg_point[0]), int(avg_point[1]))
 
-            annulus_dict[color] = avg_point
+                annulus_dict[color] = avg_point
+            else:
+                annulus_dict[color] = None
         return annulus_dict, res_img
 
     def annulus_detect_top2(self, _img:cv2.typing.MatLike) -> tuple[str|None,cv2.typing.MatLike]:
@@ -514,7 +507,7 @@ class Solution:
         """
         annulus_dict, res_img = self.annulus_detect(img)
 
-        if annulus_dict is None:
+        if annulus_dict is None or None in annulus_dict.values():
             return None, res_img
         R_point, G_point, B_point = annulus_dict["R"], annulus_dict["G"], annulus_dict["B"]
 
@@ -548,8 +541,8 @@ class Solution:
         mask = self.traditional_color_detector.binarization(_img)
 
         # 膨胀
-        kernel = np.ones((5, 5), np.uint8)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=6)
+        kernel = np.ones((3, 3), np.uint8)
+        mask = cv2.dilate(mask, kernel, iterations=6)
 
         res_img = cv2.bitwise_and(_img, _img, mask=mask)
         return res_img

@@ -102,7 +102,7 @@ class SendImg(object):
 
                 img_encode = cv2.imencode(".jpg", _img, [int(cv2.IMWRITE_JPEG_QUALITY), 70])[1]
                 data_encode = np.array(img_encode)
-                self.stream.write(data_encode)
+                self.stream.write(data_encode) # type: ignore
                 self.connect.write(struct.pack("<L", self.stream.tell()))
                 self.connect.flush()
                 self.stream.seek(0)
@@ -145,15 +145,19 @@ class ReceiveImg(object):
 
     def __init__(self, host, port):
         """初始化"""
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client_socket.connect((host, port))
-        self.connection = self.client_socket.makefile("rb")
-        self.stream_bytes = b" "
+        try:
+            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client_socket.connect((host, port))
+            self.connection = self.client_socket.makefile("rb")
+            self.stream_bytes = b" "
 
-        print(" ")
-        print("已连接到服务端：")
-        print("Host : ", host)
-        print("请按‘q’退出图像传输!")
+            print(" ")
+            print("已连接到服务端：")
+            print("Host : ", host)
+            print("请按‘q’退出图像传输!")
+        except Exception as e:
+            print(Fore.RED + "Error: ", e)
+            exit()
 
     def read(self):
         """读取图像数据"""

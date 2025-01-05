@@ -5,9 +5,3 @@
 - TODO:在树莓派上测试各个功能（尤其是圆环识别）的识别速度，不再用帧率作为指标，而是识别时间
 - TODO:完成远程图传到调参功能
 - TODO:解决绿色圆环难以识别的问题（可能是与物料的色相不同导致）
-- TODO:参考旧版本的圆环识别，但是要实现一个函数，只识别圆环(没有识别颜色的功能)，返回圆环的坐标 @Anan-yy
-```python
-def annulus_top(self,img:cv2.typing.MatLike) -> tuple[int,int]:
-    ...
-    return x,y
-```

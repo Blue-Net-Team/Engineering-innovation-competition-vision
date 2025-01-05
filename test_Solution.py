@@ -33,7 +33,7 @@ COLOR_DIC = {0: "R", 1: "G", 2: "B"}
 
 
 class Test_solution(Solution):
-    def __init__(self, ser_port: str, sender:VideoStreaming|None=None) -> None:
+    def __init__(self, ser_port: str|None=None, sender: SendImg | None=None) -> None:
         """
         解决方案
         ----
@@ -44,8 +44,6 @@ class Test_solution(Solution):
         super().__init__(ser_port)
         # 顶层方法字典
         self.TOP_FUNC_DICT = {
-            "0": self.get_rotator_centre,  # 获取转盘中心点
-            "1": self.annulus_detect_top,  # 圆环检测
             "2": self.right_angle_detect,  # 直角检测
             "3": self.material_moving_detect,  # 物料运动检测
             "4": self.get_material,  # 获取物料位号
@@ -61,6 +59,10 @@ class Test_solution(Solution):
     def test_func(self, cap_id: int, sign: str):
         """
         测试Solution顶层功能
+        ----
+        * "2": 直角检测
+        * "3": 物料运动检测
+        * "4": 获取物料位号
 
         Args:
             cap_id (int): 摄像头编号

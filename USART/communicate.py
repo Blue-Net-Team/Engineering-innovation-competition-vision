@@ -35,12 +35,6 @@ Usart类
         - `tail`: 包尾，默认值为空字符串
 - `clear(self)`: 清除串口的输入和输出缓存区。
 """
-import sys
-sys.path.append("/usr/local/lib/python3.6/dist-packages")
-print("add sys path /usr/local/lib/python3.6/dist-packages")
-sys.path.append("/home/iven/.local/lib/python3.6/site-packages")
-print("add sys path /home/iven/.local/lib/python3.6/site-packages")
-
 import serial
 
 

@@ -91,8 +91,7 @@ class Solution:
             self.area1_points:list[list[int]] = [[0,0],[0,0]]
             self.area2_points:list[list[int]] = [[0,0],[0,0]]
             self.area3_points:list[list[int]] = [[0,0],[0,0]]
-            self.nums = 0
-            print(Fore.RED + "配置文件读取annulus_point,rotator_centre_point,nums失败")
+            print(Fore.RED + "配置文件读取位号参数失败")
 
         # 加载圆环识别的圆环参数
         load_err1 = self.annulus_circle_detector.load_config("config.json", "annulus")

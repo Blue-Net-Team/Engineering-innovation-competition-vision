@@ -118,10 +118,26 @@ class SendImg(object):
 
     else:
         def connecting(self):
+            """
+            连接客户端
+            ----
+            """
             return None
         def start(self):
+            """
+            开始传输视频流
+            ----
+            """
             return None
         def send(self, _img: cv2.typing.MatLike):
+            """
+            发送图像数据
+            ----
+            Args:
+                _img (cv2.typing.MatLike): 图像数据
+            Returns:
+                res (bool): 发送是否成功
+            """
             return False
 
 class ReceiveImg(object):

@@ -9,8 +9,7 @@ from detector import (
     CircleDetector,
     TraditionalColorDetector,
 )
-from utils.dataset import LoadCap
-from img_trans import LoadWebCam
+from utils import LoadCap, LoadWebCam
 from colorama import Fore, Style, init
 
 # 初始化 colorama

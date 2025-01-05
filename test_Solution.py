@@ -26,10 +26,8 @@ import time
 import cv2
 import numpy as np
 from Solution import Solution, draw_material
-from utils.dataset import LoadCap
+from utils import LoadCap, SendImg
 from detector import TraditionalColorDetector, LineDetector
-from img_trans import VideoStreaming
-
 
 COLOR_DIC = {0: "R", 1: "G", 2: "B"}
 

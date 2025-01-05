@@ -1,5 +1,6 @@
 # pip install -r requirements.txt
 
 # -------required-------
-opencv-python
+opencv-python >= 4.6.0
 colorama
+pyserial

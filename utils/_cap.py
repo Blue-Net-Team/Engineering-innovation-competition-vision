@@ -39,6 +39,9 @@ class LoadCap:
         self.cap.release()
         cv2.destroyAllWindows()
 
+    def __del__(self):
+        self.release()
+
 
 class Cap(cv2.VideoCapture):
     def __init__(self, _id:int=0) -> None:

@@ -91,8 +91,7 @@ class Solution:
             self.area1_points:list[list[int]] = [[0,0],[0,0]]
             self.area2_points:list[list[int]] = [[0,0],[0,0]]
             self.area3_points:list[list[int]] = [[0,0],[0,0]]
-            self.nums = 0
-            print(Fore.RED + "配置文件读取annulus_point,rotator_centre_point,nums失败")
+            print(Fore.RED + "配置文件读取位号参数失败")
 
         # 加载圆环识别的圆环参数
         load_err1 = self.annulus_circle_detector.load_config("config.json", "annulus")
@@ -340,4 +339,176 @@ class Solution:
         :param data: 数据
         """
         self.uart.write(data, head, tail)
+    # endregion
+
+    # region 圆环检测
+    def annulus_color_detect(self, _img:cv2.typing.MatLike) -> tuple[dict[str, tuple[int, int] | None], cv2.typing.MatLike]:
+        """
+        地面圆环颜色和位置检测
+        ----
+        本方法不是顶层需求,可以用于测试，本方法会画出圆环和圆心
+
+        Args:
+            _img (np.ndarray): 图片
+        Returns:
+            annulus_dict (dict): 圆环颜色和位置字典，例如：{"R":(x,y), "G":(x,y), "B":(x,y)}
+        """
+        res_img = _img.copy()
+        annulus_dict:dict[str,tuple[int,int]|None] = {}
+
+        for color in COLOR_DIC.values():
+            bit_with_and_img = self.get_with_and_img(_img, color)
+            avg_point, avg_r = self.annulus_detect_only(bit_with_and_img)
+
+            if avg_point and avg_r:
+                # 画出圆环
+                cv2.circle(
+                    res_img,
+                    (int(avg_point[0]),int(avg_point[1])),
+                    int(avg_r),
+                    (255, 0, 0),
+                    2
+                )
+                # 画出圆心
+                cv2.circle(res_img, (int(avg_point[0]), int(avg_point[1])), 5, (0, 0, 255), 2)
+                # 绘制文字，用于显示颜色
+                cv2.putText(
+                    res_img,
+                    color,
+                    (int(avg_point[0])+10, int(avg_point[1])+10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (0, 0, 255),
+                    2,
+                )
+
+                annulus_dict[color] = avg_point
+            else:
+                annulus_dict[color] = None
+        return annulus_dict, res_img
+
+    def annulus_color_top(self, _img:cv2.typing.MatLike) -> tuple[str|None,cv2.typing.MatLike]:
+        """
+        地面圆环颜色和位置检测
+        ----
+        返回三个圆环的颜色和位置
+
+        本方法会画出圆环和圆心
+
+        - 图片噪声的波动可能会返回none
+
+        Args:
+            _img (np.ndarray): 图片
+        Returns:
+            res (str): 对应颜色的圆环的位置
+
+            `err`的格式为：RXXXYYYGXXXYYYBXXXYYY
+            * RGB代表颜色
+            * XXX代表x坐标，YYY代表y坐标，如果没检测到这个颜色，则对应返回FFF
+        """
+        annulus_dict, res_img = self.annulus_color_detect(_img)
+
+        # 结果列表
+        errs = [
+            (
+                [
+                    color,
+                    [
+                        annulus_dict[color][0],     # type:ignore  x轴坐标
+                        annulus_dict[color][1],     # type:ignore  y轴坐标
+                    ],
+                ]
+                if annulus_dict[color]
+                else [color, None]
+            )
+            for color in annulus_dict
+        ]
+
+        # 将结果转换成字符串
+        res = "".join(
+            [
+                f"{color}"\
+                f"{str(err[1][0]).rjust(3, '0')}"\
+                f"{str(err[1][1]).rjust(3, '0')}"
+                for color, err in errs
+            ]
+        )
+
+        return res, res_img
+
+    def get_with_and_img(self, _img:cv2.typing.MatLike ,color_name:str):
+        """
+        获取按位与的图片
+        ----
+        Args:
+            _img (cv2.typing.MatLike): 图片
+            color_name (str): 颜色名称
+        Returns:
+            res_img (cv2.typing.MatLike): 按位与的图片
+        """
+        self.traditional_color_detector.update_range(color_name)
+        mask = self.traditional_color_detector.binarization(_img)
+
+        # 膨胀
+        kernel = np.ones((5, 5), np.uint8)
+        mask = cv2.dilate(mask, kernel, iterations=6)
+
+        res_img = cv2.bitwise_and(_img, _img, mask=mask)
+        return res_img
+
+    def annulus_detect_only(self, _img:cv2.typing.MatLike) -> tuple[tuple[int,int]|None,int|None]:
+        """
+        圆环检测
+        ----
+        本方法不是顶层需求
+
+        Args:
+            _img (cv2.typing.MatLike): 图片
+        Returns:
+            res (tuple|None): 圆环的位置和半径
+        """
+        img = _img.copy()
+        points, rs = self.annulus_circle_detector.detect_circle(img)
+
+        if points is None or rs is None:
+            return None, None
+
+        # 取前5个圆环的坐标平均值
+        avg_point = np.mean(points[:5], axis=0)
+        avg_point = (int(avg_point[0]), int(avg_point[1]))
+        avg_r = int(np.mean(rs[:5]))
+
+        return avg_point, avg_r
+
+    def annulus_top(self, _img:cv2.typing.MatLike) -> tuple[str|None, cv2.typing.MatLike]:
+        """
+        圆环检测
+        ----
+        本方法是顶层需求
+
+        Args:
+            _img (cv2.typing.MatLike): 图片
+        Returns:
+            res (str|None): 圆环的位置和半径
+        """
+        avg_point, avg_r = self.annulus_detect_only(_img)
+
+        if avg_point is None or avg_r is None:
+            return None, _img
+
+        # 画出圆环
+        cv2.circle(
+            _img,
+            avg_point,
+            avg_r,
+            (255, 0, 0),
+            2
+        )
+        # 画出圆心
+        cv2.circle(_img, avg_point, 2, (255, 255, 0), 2)
+
+        res =   f"{str(avg_point[0]).rjust(3, '0')}"\
+                f"{str(avg_point[1]).rjust(3, '0')}"
+
+        return res, _img
     # endregion

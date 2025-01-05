@@ -24,8 +24,7 @@ r"""
 import time
 import cv2
 import Solution
-from utils import LoadCap
-from img_trans import VideoStreaming
+from utils import LoadCap, SendImg
 
 # TODO: 请填写串口头和尾
 HEAD: str = ...
@@ -39,7 +38,7 @@ PORT: int = 8000  # 端口号
 SERIAL_PORT = "/dev/ttyUSB0"  # TODO: 填写串口号
 
 # region 主代码
-vs = VideoStreaming(IP, PORT)
+vs = SendImg(IP, PORT)
 solution = Solution.Solution(SERIAL_PORT)
 cap1 = LoadCap(0)
 

@@ -1,26 +1,6 @@
-from ast import In
-import os
 import threading
 import cv2
 from collections import deque
-
-COLOR_DIC = {
-    'R':0,
-    'G':1,
-    'B':2,
-    'W':3
-}
-
-def get_all_file_paths(directory):
-    """
-    获取目录下所有文件的路径
-    """
-    file_paths = []
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            file_paths.append(os.path.join(root, file))
-    return file_paths
-
 
 class LoadCap:
     def __init__(self, _id:int=0) -> None:
@@ -58,6 +38,9 @@ class LoadCap:
         self.thread.join()
         self.cap.release()
         cv2.destroyAllWindows()
+
+    def __del__(self):
+        self.release()
 
 
 class Cap(cv2.VideoCapture):

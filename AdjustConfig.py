@@ -9,8 +9,7 @@ from detector import (
     CircleDetector,
     TraditionalColorDetector,
 )
-from utils.dataset import LoadCap
-from img_trans import LoadWebCam
+from utils import LoadCap, LoadWebCam, ReceiveImg
 from colorama import Fore, Style, init
 
 # 初始化 colorama
@@ -168,9 +167,11 @@ class Ad_Area_config:
     area_dict: dict[int, list[tuple[int, int]]]
     x:int
 
-    def __init__(self) -> None:
+    def __init__(self, _webcam:ReceiveImg|None=None) -> None:
         self.load_config()
         self.x = 0
+
+        self.webcam = _webcam
 
     def load_config(self):
         """
@@ -215,14 +216,19 @@ class Ad_Area_config:
         cv2.namedWindow("img", cv2.WINDOW_AUTOSIZE)
         cv2.setMouseCallback("img", self.__mouse_callback)
         self.createTrackbar()
-        cap = cv2.VideoCapture(0)
-        cap.set(3, 640)
-        cap.set(4, 480)
-        cap.set(5, 60)
-        cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
+
+        if self.webcam is not None:
+            cap = self.webcam
+        else:
+            cap = cv2.VideoCapture(0)
+            cap.set(3, 640)
+            cap.set(4, 480)
+            cap.set(5, 60)
+            cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
+
         while True:
             ret, img = cap.read()
-            if not ret:
+            if img is None:
                 continue
             for key, value in self.area_dict.items():
                 cv2.rectangle(
@@ -251,16 +257,26 @@ class Ad_Area_config:
 
 
 class Ad_Line_config(LineDetector):
-    def __init__(self) -> None:
+    def __init__(self, _webcam:ReceiveImg|None=None) -> None:
         super().__init__()
         print(self.load_config("config.json"))
+        self.webcam = _webcam
 
     def ad_line(self):
         self.createTrackbar()
-        cap = cv2.VideoCapture(0)
+
+        if self.webcam is None:
+            cap = cv2.VideoCapture(0)
+            cap.set(3, 640)
+            cap.set(4, 480)
+            cap.set(5, 60)
+            cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
+        else:
+            cap = self.webcam
+
         while True:
             ret, img = cap.read()
-            if not ret:
+            if img is None:
                 continue
 
             lines = self.find_line(img)
@@ -281,10 +297,19 @@ class Ad_Line_config(LineDetector):
 
     def ad_right_angle(self):
         self.createTrackbar()
-        cap = cv2.VideoCapture(0)
+
+        if self.webcam is None:
+            cap = cv2.VideoCapture(0)
+            cap.set(3, 640)
+            cap.set(4, 480)
+            cap.set(5, 60)
+            cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
+        else:
+            cap = self.webcam
+
         while True:
             ret, img = cap.read()
-            if not ret:
+            if img is None:
                 continue
 
             img = self.sharpen(img)

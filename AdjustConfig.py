@@ -36,7 +36,7 @@ class Ad_Config(Solution):
         if ip is not None and port is not None:
             self.cap = LoadWebCam(ip, port)
         else:
-            self.cap = LoadCap(cap_id)
+            self.cap = LoadCap(cap_id,cap_method='opencv')
 
     def adjust_circle(self, config_name: str):
         """
@@ -326,14 +326,14 @@ class Ad_Line_config(LineDetector):
 
 
 if __name__ == "__main__":
-    # ad_config = Ad_Config(
-    #     "COM8",
-    #     0
-    # )
+    ad_config = Ad_Config(
+            0,
+
+    )
     # ad_config.adjust_circle("annulus")
-    # ad_config.adjust_color_threshold()
-    ad_area_config = Ad_Area_config()
-    ad_area_config.main()
+    ad_config.adjust_color_threshold()
+    # ad_area_config = Ad_Area_config()
+    # ad_area_config.main()
 
     # ad_line_config = Ad_Line_config()
     # ad_line_config.ad_line()

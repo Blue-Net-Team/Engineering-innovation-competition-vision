@@ -2,5 +2,6 @@
 
 # -------required-------
 opencv-python >= 4.6.0
-colorama
-pyserial
+colorama~=0.4.6
+pyserial~=3.5
+numpy~=2.2.1

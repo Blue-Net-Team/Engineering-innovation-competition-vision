@@ -45,22 +45,29 @@ class Usart(serial.Serial):
     * 继承了serial.Serial类，实现了使用包头包尾接受数据的方法
     * 发送数据的时候可以指定包头包尾
     """
-    port: str|None = None
 
-    def __init__(self, port, baudrate=9600, timeout=None):
-        self.port = port
-        if self.port:
-            super().__init__(port=port, baudrate=baudrate, timeout=timeout)
+    def __init__(self, port:str|None, baudrate:int=9600, timeout:float|None=None):
+        """
+        初始化串口通信对象
+        ----
+        Args:
+            port (str): 串口端口
+            baudrate (int): 波特率，默认9600
+            timeout (float): 超时时间，默认无
+        """
+        super().__init__(port=port, baudrate=baudrate, timeout=timeout)
 
-    if port:
-        def read(self, head: str, tail: str = "\n") -> str:
-            """
-            读取数据
-            ----
-            :param head: 包头
-            :param tail: 包尾
-            :return: 数据
-            """
+    def read(self, head: str, tail: str = "\n") -> str:
+        """
+        读取数据
+        ----
+        Args:
+            head (str): 包头
+            tail (str): 包尾，默认为换行符
+        Returns:
+            result (str): 去掉包尾的数据字符串
+        """
+        if self.is_open:
             HEAD, TAIL = head.encode("ascii"), tail.encode("ascii")
             data = b""
             while True:
@@ -80,30 +87,24 @@ class Usart(serial.Serial):
                 data += byte
                 if data.endswith(TAIL):
                     return data[: -len(TAIL)].decode("ascii")  # 返回去掉包尾的数据
-
-        def write(self, data: str, head: str = "", tail: str = ""):
-            """
-            发送数据
-            ----
-            :param data: 数据
-            :param head: 包头
-            :param tail: 包尾
-            """
-            HEAD, TAIL = head.encode("ascii"), tail.encode("ascii")
-            super().write(HEAD + data.encode("ascii") + TAIL)
-
-        def clear(self):
-            """
-            清除缓存区
-            """
-            super().reset_input_buffer()
-            super().reset_output_buffer()
-    else:
-        def read(self, head: str, tail: str = "\n") -> str:
+        else:
             return ""
 
-        def write(self, data: str, head: str = "", tail: str = ""):
-            pass
+    def write(self, data: str, head: str = "", tail: str = ""):
+        """
+        发送数据
+        ----
+        Args:
+            data (str): 要发送的数据
+            head (str): 包头，默认为空字符串
+            tail (str): 包尾，默认为空字符串
+        """
+        HEAD, TAIL = head.encode("ascii"), tail.encode("ascii")
+        super().write(HEAD + data.encode("ascii") + TAIL)
 
-        def clear(self):
-            pass
+    def clear(self):
+        """
+        清除缓存区
+        """
+        super().reset_input_buffer()
+        super().reset_output_buffer()

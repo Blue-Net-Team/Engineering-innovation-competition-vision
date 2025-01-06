@@ -36,9 +36,6 @@ init(autoreset=True)
 
 class SendImg(object):
     """服务端视频发送"""
-    HOST: str|None=None
-    PORT: int|None=None
-
     def __init__(self, host:str|None=None, port:int|None=None):
         """初始化
         ----
@@ -46,8 +43,7 @@ class SendImg(object):
             host (str): 主机IP地址
             port (int): 端口号
         """
-        self.HOST = host
-        self.PORT = port
+        self.is_open = False
 
         if host and port:
             try:
@@ -57,17 +53,16 @@ class SendImg(object):
                 self.connection = None
                 self.connect = None
                 self.stream = io.BytesIO()
+                self.is_open = True
             except Exception as e:
                 print(Fore.RED + "Error: ", e)
-                self.HOST = None
-                self.PORT = None
 
-    if HOST and PORT:
-        def connecting(self):
-            """
-            连接客户端
-            ----
-            """
+    def connecting(self):
+        """
+        连接客户端
+        ----
+        """
+        if self.is_open:
             print("等待连接")
             self.connection, self.client_address = self.server_socket.accept()
             self.connect = self.connection.makefile("wb")
@@ -75,27 +70,28 @@ class SendImg(object):
             self.host_ip = socket.gethostbyname(self.host_name)
             print("连接成功")
 
-        def start(self) -> None:
-            """
-            开始传输视频流
-            ----
-            运行这个函数之前，必须先运行`connecting`函数
-            """
-            print("Client Host Name:", self.host_name)
-            print("Connection from: ", self.client_address)
-            print("Streaming...")
+    def start(self) -> None:
+        """
+        开始传输视频流
+        ----
+        运行这个函数之前，必须先运行`connecting`函数
+        """
+        print("Client Host Name:", self.host_name)
+        print("Connection from: ", self.client_address)
+        print("Streaming...")
 
-        def send(self, _img: cv2.typing.MatLike) -> bool:
-            """
-            发送图像数据
-            ----
-            运行这个函数之前，必须运行`start`函数
+    def send(self, _img: cv2.typing.MatLike) -> bool:
+        """
+        发送图像数据
+        ----
+        运行这个函数之前，必须运行`connecting`函数
 
-            Args:
-                _img (cv2.typing.MatLike): 图像数据
-            Returns:
-                res (bool): 发送是否成功
-            """
+        Args:
+            _img (cv2.typing.MatLike): 图像数据
+        Returns:
+            res (bool): 发送是否成功
+        """
+        if self.is_open:
             try:
                 if self.connect is None:
                     raise ConnectionError("未连接到客户端")
@@ -115,30 +111,9 @@ class SendImg(object):
                 print("连接已重置")
                 self.connecting()
                 return False
-
-    else:
-        def connecting(self):
-            """
-            连接客户端
-            ----
-            """
-            return None
-        def start(self):
-            """
-            开始传输视频流
-            ----
-            """
-            return None
-        def send(self, _img: cv2.typing.MatLike):
-            """
-            发送图像数据
-            ----
-            Args:
-                _img (cv2.typing.MatLike): 图像数据
-            Returns:
-                res (bool): 发送是否成功
-            """
+        else:
             return False
+
 
 class ReceiveImg(object):
     """客户端接收视频流"""

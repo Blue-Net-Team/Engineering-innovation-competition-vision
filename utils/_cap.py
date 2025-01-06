@@ -1,10 +1,24 @@
 import threading
+import time
 import cv2
 from collections import deque
 
 class LoadCap:
-    def __init__(self, _id:int=0) -> None:
-        self.cap = cv2.VideoCapture(_id)
+    def __init__(self, _id:int=0, cap_method:str="opencv") -> None:
+        """
+        初始化
+        ----
+        Args:
+            _id (int):摄像头编号
+            cap_method (str):摄像头的方法，包括'opencv'和'interpolated'
+        """
+        if cap_method not in ["opencv", "interpolated"]:
+            raise ValueError("argument cap_method must is opencv or interpolated")
+        if cap_method == "opencv":
+            self.cap = cv2.VideoCapture(_id)
+        else:
+            self.cap=Cap(_id)
+
         self.cap.set(3, 640)
         self.cap.set(4, 480)
         self.cap.set(5, 60)
@@ -42,21 +56,26 @@ class LoadCap:
     def __del__(self):
         self.release()
 
-
 class Cap(cv2.VideoCapture):
+    """
+    运用插值补帧方法的Cap类
+    """
     def __init__(self, _id:int=0) -> None:
         super().__init__(_id)
         self.set(3, 640)
         self.set(4, 480)
-        self.set(5, 60)
+        self.set(5, 100)
         self.set(6, cv2.VideoWriter.fourcc('M', 'J', 'P', 'G'))
 
         self.prev_frame = None
-        self.alpha = 0.5  # 插值系数
+        # 插值系数
+        self.alpha = 0.5
         self.prev_tick = cv2.getTickCount()
         self.frame_count = 0
-        self.fps_deque = deque(maxlen=30)  # 用于存储最近30帧的FPS值
+        # 用于存储最近30帧的FPS值
+        self.fps_deque = deque(maxlen=30)
         self.avg_fps = 0
+
 
     def read(self):
         ret, frame = super().read()
@@ -64,38 +83,10 @@ class Cap(cv2.VideoCapture):
             if self.prev_frame is not None:
                 # 使用插值方法生成新帧
                 interpolated_frame = cv2.addWeighted(frame, self.alpha, self.prev_frame, 1 - self.alpha, 0)
-                cv2.putText(interpolated_frame, f"FPS: {self.avg_fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-                cv2.imshow('Interpolated Camera', interpolated_frame)
-
-            cv2.imshow('Original Camera', frame)
             self.prev_frame = frame
-
-            # 计算并显示FPS
-            self.frame_count += 1
-            if self.frame_count >= 10:
-                tick = cv2.getTickCount()
-                time_diff = (tick - self.prev_tick) / cv2.getTickFrequency()
-                fps = self.frame_count / time_diff
-                self.fps_deque.append(fps)
-                self.avg_fps = sum(self.fps_deque) / len(self.fps_deque)
-                self.prev_tick = tick
-                self.frame_count = 0
         return ret, frame
 
     def release(self):
         super().release()
         cv2.destroyAllWindows()
 
-if __name__ == "__main__":
-    cap = Cap()
-    cap.open(0)
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        if cv2.waitKey(1) == 27:
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()

@@ -19,17 +19,17 @@ CircleDetector类
             - `_img (numpy.ndarray)`: 需要检测的图像。
         返回:
             `tuple`: 圆心坐标列表和半径列表，如果没有检测到圆形则返回 (None, None)。
-    - `save_config(self, jsion_path, circle_type)`:
+    - `save_config(self, json_path, circle_type)`:
         保存当前配置到指定的 JSON 文件中。
 
         参数:
-            - `jsion_path (str)`: 配置文件路径。
+            - `json_path (str)`: 配置文件路径。
             - `circle_type (str)`: 圆形类型，包含 "material"（物料圆环）和 "annulus"（地面圆环）。
-    - `load_config(self, jsion_path, circle_type)`:
+    - `load_config(self, json_path, circle_type)`:
         从指定的 JSON 文件中加载配置。
 
         参数:
-            - `jsion_path (str)`: 配置文件路径。
+            - `json_path (str)`: 配置文件路径。
             - `circle_type (str)`: 圆形类型，包含 "material"（物料圆环）和 "annulus"（地面圆环）。
 
 TraditionalColorDetector:

@@ -26,16 +26,15 @@ import cv2
 import Solution
 from utils import LoadCap, SendImg
 
-# TODO: 请填写串口头和尾
-HEAD: str = ...
-TAIL: str = ...
+HEAD: str = "@"
+TAIL: str = "#"
 
-DEAL_IMG = "show"  # 处理图像的方式,包含"show"、"send"、"hide"
+DEAL_IMG = "hide"  # 处理图像的方式,包含"show"、"send"、"hide"
 
-IP: str = ""  # TODO: 填写主机(jetson)IP地址
+IP: str = "169.254.60.115"
 PORT: int = 8000  # 端口号
 
-SERIAL_PORT = "/dev/ttyUSB0"  # TODO: 填写串口号
+SERIAL_PORT = "/dev/ttyUSB0"
 
 # region 主代码
 vs = SendImg(IP, PORT)

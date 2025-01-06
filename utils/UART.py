@@ -38,7 +38,7 @@ Usart类
 import serial
 
 
-class Usart(serial.Serial):
+class Uart(serial.Serial):
     """
     串口通信类
     ----

@@ -12,7 +12,7 @@
 import json
 import cv2
 import numpy as np
-from USART.communicate import Usart
+from utils import Uart
 import detector
 from colorama import Fore, Style, init
 import math
@@ -76,7 +76,7 @@ class Solution:
         self.annulus_circle_detector = detector.CircleDetector()
         self.traditional_color_detector = detector.TraditionalColorDetector()
         self.line_detector = detector.LineDetector()
-        self.uart = Usart(ser_port)
+        self.uart = Uart(ser_port)
         self.position_id_stack:list[dict[str,int|None]] = []     # 用于存放上一帧图像的物料位号的栈
 
         # region 读取配置文件

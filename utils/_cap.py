@@ -46,6 +46,9 @@ class LoadCap:
     def __del__(self):
         self.cap.release()
 
+    def release(self):
+        self.cap.release()
+
 
 class InterpolatedCap(Cap):
     """

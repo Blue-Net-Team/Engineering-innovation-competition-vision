@@ -217,7 +217,6 @@ class Solution:
         )
         return res, res_img
 
-
     def __detect_material_positions(self, _img:cv2.typing.MatLike) -> dict[str, tuple[int, int, int, int] | None]:
         """
         物料位置检测(跟踪)
@@ -319,7 +318,9 @@ class Solution:
     # endregion
 
     # region 圆环检测
-    def annulus_color_detect(self, _img:cv2.typing.MatLike) -> tuple[dict[str, tuple[int, int] | None], cv2.typing.MatLike]:
+    def annulus_color_detect(
+        self, _img: cv2.typing.MatLike
+    ) -> tuple[dict[str, tuple[int, int] | None], cv2.typing.MatLike]:
         """
         地面圆环颜色和位置检测
         ----

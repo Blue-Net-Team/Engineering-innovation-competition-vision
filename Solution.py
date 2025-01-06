@@ -57,7 +57,7 @@ def draw_material(
         cv2.putText(
             img,
             color,
-            (x, y),
+            (x+10, y+10),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.5,
             (0, 0, 255),

@@ -318,29 +318,6 @@ class Solution:
         return str_res, res_img
     # endregion
 
-    # region 串口
-    def read_serial(self, head: str, tail: str):
-        """
-        读取串口数据
-        ----
-        :param head: 数据头
-        :param tail: 数据尾
-        """
-        # 清除缓冲区
-        self.uart.clear()
-        # 读取数据
-        data = self.uart.read(head, tail)
-        return data
-
-    def write_serial(self, data: str, head: str, tail: str):
-        """
-        写入串口数据
-        ----
-        :param data: 数据
-        """
-        self.uart.write(data, head, tail)
-    # endregion
-
     # region 圆环检测
     def annulus_color_detect(self, _img:cv2.typing.MatLike) -> tuple[dict[str, tuple[int, int] | None], cv2.typing.MatLike]:
         """

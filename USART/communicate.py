@@ -68,6 +68,7 @@ class Usart(serial.Serial):
             result (str): 去掉包尾的数据字符串
         """
         if self.is_open:
+            self.clear()
             HEAD, TAIL = head.encode("ascii"), tail.encode("ascii")
             data = b""
             while True:

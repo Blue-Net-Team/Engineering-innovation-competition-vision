@@ -56,7 +56,7 @@ if DEAL_IMG == "send":
     vs.start()
 
 while True:
-    sign = solution.read_serial(head=HEAD, tail=TAIL)  # 读取串口
+    sign = solution.uart.read(head=HEAD, tail=TAIL)  # 读取串口
     # 判断信号是否合法
     if sign in solution_dict:  # 信号合法
         for img in cap1:      # 读取摄像头
@@ -74,7 +74,7 @@ while True:
             DEAL_IMG_DICT[DEAL_IMG](res_img)
 
             if res:
-                solution.write_serial(res, head=HEAD, tail=TAIL)
+                solution.uart.write(res, head=HEAD, tail=TAIL)
                 print(f"Detect time(ms): {detect_time * 1000:.2f}")
                 break
     else:  # 信号非法

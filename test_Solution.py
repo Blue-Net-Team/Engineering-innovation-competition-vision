@@ -25,9 +25,8 @@ Test_Line_detect
 import time
 import cv2
 import numpy as np
-from Solution import Solution, draw_material
+from Solution import Solution
 from utils import LoadCap, SendImg
-from detector import TraditionalColorDetector, LineDetector
 
 COLOR_DIC = {0: "R", 1: "G", 2: "B"}
 
@@ -44,6 +43,7 @@ class Test_solution(Solution):
         super().__init__(ser_port)
         # 顶层方法字典
         self.TOP_FUNC_DICT = {
+            "1": self.annulus_top,  # 物料位置检测
             "2": self.right_angle_detect,  # 直角检测
             "3": self.material_moving_detect,  # 物料运动检测
             "4": self.get_material,  # 获取物料位号
@@ -227,7 +227,8 @@ class Test_solution(Solution):
         cap.release()
 
 if __name__ == "__main__":
-    test = Test_solution()
+    sender = SendImg("169.254.60.115", 8000)
+    test = Test_solution(sender=sender)
     test.test_func(0, "2")
     # test.test_material_positions(0)
     # test.test_annulus_color(0, "G")

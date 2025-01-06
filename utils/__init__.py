@@ -1,5 +1,13 @@
-from ._cap import Cap, LoadCap
+from ._cap import InterpolatedCap, LoadCap, Cap
 from .ImgTrans import SendImg, ReceiveImg, LoadWebCam
 from .UART import Uart
 
-__all__ = ["Cap", "LoadCap", "SendImg", "ReceiveImg", "LoadWebCam", "Uart"]
+__all__ = [
+    "Cap",
+    "InterpolatedCap",
+    "LoadCap",
+    "SendImg",
+    "ReceiveImg",
+    "LoadWebCam",
+    "Uart",
+]

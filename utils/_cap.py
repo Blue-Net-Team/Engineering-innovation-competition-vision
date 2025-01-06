@@ -3,8 +3,18 @@ import time
 import cv2
 from collections import deque
 
+
+class Cap(cv2.VideoCapture):
+    def __init__(self, _id: int = 0, w: int = 640, h: int = 480, fps: int = 60) -> None:
+        super().__init__(_id)
+        self.set(3, w)
+        self.set(4, h)
+        self.set(5, fps)
+        self.set(6, cv2.VideoWriter.fourcc("M", "J", "P", "G"))
+
+
 class LoadCap:
-    def __init__(self, _id:int=0, cap_method:str="opencv") -> None:
+    def __init__(self, _id: int = 0, cap_method: str = "opencv") -> None:
         """
         初始化
         ----
@@ -15,13 +25,9 @@ class LoadCap:
         if cap_method not in ["opencv", "interpolated"]:
             raise ValueError("argument cap_method must is opencv or interpolated")
         if cap_method == "opencv":
-            self.cap = cv2.VideoCapture(_id)
-            self.cap.set(3, 640)
-            self.cap.set(4, 480)
-            self.cap.set(5, 60)
-            self.cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
+            self.cap = Cap(_id)
         else:
-            self.cap=InterpolatedCap(_id)
+            self.cap = InterpolatedCap(_id)
 
         self.img = None
         self.flag = True
@@ -42,16 +48,18 @@ class LoadCap:
     def __del__(self):
         self.cap.release()
 
-class InterpolatedCap(cv2.VideoCapture):
+
+class InterpolatedCap(Cap):
     """
     运用插值补帧方法的Cap类
     """
-    def __init__(self, _id:int=0) -> None:
+
+    def __init__(self, _id: int = 0) -> None:
         super().__init__(_id)
         self.set(3, 640)
         self.set(4, 480)
         self.set(5, 100)
-        self.set(6, cv2.VideoWriter.fourcc('M', 'J', 'P', 'G'))
+        self.set(6, cv2.VideoWriter.fourcc("M", "J", "P", "G"))
 
         self.prev_frame = None
         # 插值系数
@@ -62,17 +70,17 @@ class InterpolatedCap(cv2.VideoCapture):
         self.fps_deque = deque(maxlen=30)
         self.avg_fps = 0
 
-
     def read(self):
         ret, frame = super().read()
         if ret:
             if self.prev_frame is not None:
                 # 使用插值方法生成新帧
-                interpolated_frame = cv2.addWeighted(frame, self.alpha, self.prev_frame, 1 - self.alpha, 0)
+                interpolated_frame = cv2.addWeighted(
+                    frame, self.alpha, self.prev_frame, 1 - self.alpha, 0
+                )
             self.prev_frame = frame
         return ret, frame
 
     def release(self):
         super().release()
         cv2.destroyAllWindows()
-

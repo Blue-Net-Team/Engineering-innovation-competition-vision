@@ -46,10 +46,22 @@ class Usart(serial.Serial):
     * 发送数据的时候可以指定包头包尾
     """
 
-    def __init__(self, port, baudrate=9600, timeout=None):
+    def __init__(self, port:str, baudrate:int=9600, timeout:float|None=None):
+        """
+        初始化串口通信对象
+        ----
+        Args:
+            port (str): 串口端口
+            baudrate (int): 波特率，默认9600
+            timeout (float): 超时时间，默认无
+        """
         self.port = port
         if self.port:
-            super().__init__(port=port, baudrate=baudrate, timeout=timeout)
+            try:
+                super().__init__(port=port, baudrate=baudrate, timeout=timeout)
+            except serial.SerialException:
+                print(f"串口 {port} 打开失败")
+                self.port = None
 
     def read(self, head: str, tail: str = "\n") -> str:
         """

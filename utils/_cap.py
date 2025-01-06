@@ -16,13 +16,12 @@ class LoadCap:
             raise ValueError("argument cap_method must is opencv or interpolated")
         if cap_method == "opencv":
             self.cap = cv2.VideoCapture(_id)
+            self.cap.set(3, 640)
+            self.cap.set(4, 480)
+            self.cap.set(5, 60)
+            self.cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
         else:
-            self.cap=Cap(_id)
-
-        self.cap.set(3, 640)
-        self.cap.set(4, 480)
-        self.cap.set(5, 60)
-        self.cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
+            self.cap=InterpolatedCap(_id)
 
         self.img = None
         self.flag = True
@@ -43,7 +42,7 @@ class LoadCap:
     def __del__(self):
         self.cap.release()
 
-class Cap(cv2.VideoCapture):
+class InterpolatedCap(cv2.VideoCapture):
     """
     运用插值补帧方法的Cap类
     """

@@ -27,34 +27,21 @@ class LoadCap:
         self.img = None
         self.flag = True
 
-    def get_img(self):
-        while self.flag:
-            ret, frame = self.cap.read()
-            if ret:
-                self.img = frame
-
     def __len__(self):
         return 1
 
     def __iter__(self):
-        self.thread = threading.Thread(target=self.get_img)
-        self.thread.start()
         return self
 
     def __next__(self):
-        if self.img is not None:
-            return self.img
+        _, frame = self.cap.read()
+        if frame is not None:
+            return frame
         else:
             return None
 
-    def release(self):
-        self.flag = False
-        self.thread.join()
-        self.cap.release()
-        cv2.destroyAllWindows()
-
     def __del__(self):
-        self.release()
+        self.cap.release()
 
 class Cap(cv2.VideoCapture):
     """

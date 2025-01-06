@@ -1,16 +1,14 @@
 import json
 import time
-from typing import Callable
 import cv2
 import numpy as np
 from Solution import Solution
 from detector import (
     LineDetector,
-    CircleDetector,
     TraditionalColorDetector,
 )
-from utils import LoadCap, LoadWebCam, ReceiveImg
-from colorama import Fore, Style, init
+from utils import LoadCap, LoadWebCam, ReceiveImg, Cap
+from colorama import Fore, init
 
 # 初始化 colorama
 init(autoreset=True)
@@ -220,11 +218,7 @@ class Ad_Area_config:
         if self.webcam is not None:
             cap = self.webcam
         else:
-            cap = cv2.VideoCapture(0)
-            cap.set(3, 640)
-            cap.set(4, 480)
-            cap.set(5, 60)
-            cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
+            cap = Cap(0)
 
         while True:
             ret, img = cap.read()
@@ -266,11 +260,7 @@ class Ad_Line_config(LineDetector):
         self.createTrackbar()
 
         if self.webcam is None:
-            cap = cv2.VideoCapture(0)
-            cap.set(3, 640)
-            cap.set(4, 480)
-            cap.set(5, 60)
-            cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
+            cap = Cap(0)
         else:
             cap = self.webcam
 
@@ -299,11 +289,7 @@ class Ad_Line_config(LineDetector):
         self.createTrackbar()
 
         if self.webcam is None:
-            cap = cv2.VideoCapture(0)
-            cap.set(3, 640)
-            cap.set(4, 480)
-            cap.set(5, 60)
-            cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
+            cap = Cap(0)
         else:
             cap = self.webcam
 

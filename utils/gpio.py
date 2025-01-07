@@ -71,8 +71,10 @@ class Toggleswitch(Switch):
             current_button_state = GPIO.input(self.InPin)
             if current_button_state != last_button_state and current_button_state == GPIO.LOW:
                #检测按钮按下
-               self.toggle_state = 1 if self.toggle_state ==2 else 2
-            last_button_state = current_button_state= current_button_state
+              self.toggle_state = (self.toggle_state + 1) % 3
+            print(f"Button pressed! Toggle state changed to {self.toggle_state}")
+            last_button_state = current_button_state
+
 
     def get_toggle_state(self) -> int:
         """获取切换后的状态"""

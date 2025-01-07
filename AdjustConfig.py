@@ -77,13 +77,15 @@ class Ad_Config(Solution):
             cv2.imshow("img", img)
             print(res)
 
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                # 保存配置
-                detector.save_config("config.json", "annulus")
-                print(Fore.GREEN + "保存配置")
+            press_key = cv2.waitKey(1)
+            if press_key & 0xFF == ord("q"):
                 # 释放摄像头
                 self.cap.release()
                 break
+            elif press_key & 0xFF == ord("s"):
+                # 保存配置
+                detector.save_config("config.json", "annulus")
+                print(Fore.GREEN + "保存配置")
 
     def adjust_color_threshold(self, color_name: str="R"):
         """
@@ -280,18 +282,32 @@ class Ad_Line_config(LineDetector):
                 print(Fore.GREEN + "保存配置")
 
 
+def ad_color(_cap:cv2.VideoCapture|Cap|ReceiveImg):
+    ad_config = Ad_Config(_cap)
+    ad_config.adjust_color_threshold()
+
+def ad_circle(_cap:cv2.VideoCapture|Cap|ReceiveImg):
+    ad_config = Ad_Config(_cap)
+    ad_config.adjust_circle()
+
+def ad_area(_cap:cv2.VideoCapture|Cap|ReceiveImg):
+    ad_area_config = Ad_Area_config(_cap)
+    ad_area_config.main()
+
+def ad_line(_cap:cv2.VideoCapture|Cap|ReceiveImg):
+    ad_line_config = Ad_Line_config(_cap)
+    ad_line_config.ad_line()
+
+def ad_right_angle(_cap:cv2.VideoCapture|Cap|ReceiveImg):
+    ad_line_config = Ad_Line_config(_cap)
+    ad_line_config.ad_right_angle()
+
 
 if __name__ == "__main__":
     cap = Cap(0)
 
-    ad_config = Ad_Config(cap)
-    # ad_config.adjust_circle("annulus")
-    ad_config.adjust_color_threshold()
-
-    # ad_area_config = Ad_Area_config(cap)
-    # ad_area_config.main()
-
-    # ad_line_config = Ad_Line_config(cap)
-    # ad_line_config.ad_line()
-    # ad_line_config.ad_right_angle()
+    ad_color(cap)
+    # ad_area(cap)
+    # ad_circle(cap)
+    # ad_line(cap)
 # end main

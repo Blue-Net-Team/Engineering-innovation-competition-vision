@@ -35,10 +35,12 @@ Usart类
         - `tail`: 包尾，默认值为空字符串
 - `clear(self)`: 清除串口的输入和输出缓存区。
 """
+from typing import Union, overload
+from utils.typingCheck import check_args
 import serial
 
 
-class Usart(serial.Serial):
+class Uart(serial.Serial):
     """
     串口通信类
     ----
@@ -68,6 +70,7 @@ class Usart(serial.Serial):
             result (str): 去掉包尾的数据字符串
         """
         if self.is_open:
+            self.clear()
             HEAD, TAIL = head.encode("ascii"), tail.encode("ascii")
             data = b""
             while True:
@@ -90,17 +93,55 @@ class Usart(serial.Serial):
         else:
             return ""
 
-    def write(self, data: str, head: str = "", tail: str = ""):
+    @overload
+    def write(self, data: str, head: str = "", tail: str = "") -> None: ...
+    @overload
+    def write(self, data:int, head: bytes = b"", tail: bytes = b"") -> None: ...
+    @overload
+    def write(self, data: list[int], head: bytes = b"", tail: bytes = b"") -> None: ...
+
+    def write(
+        self,
+        data: Union[str, int, list[int]],
+        head: Union[str, bytes] = "",
+        tail: Union[str, bytes] = ""
+    ):
         """
         发送数据
         ----
         Args:
-            data (str): 要发送的数据
-            head (str): 包头，默认为空字符串
-            tail (str): 包尾，默认为空字符串
+            data (Union[str, int, list[int]]): 要发送的数据
+            head (Union[str, bytes]): 包头，默认为空字符串或空字节串
+            tail (Union[str, bytes]): 包尾，默认为空字符串或空字节串
         """
-        HEAD, TAIL = head.encode("ascii"), tail.encode("ascii")
-        super().write(HEAD + data.encode("ascii") + TAIL)
+        if check_args(
+            (data, str),
+            (head, str),
+            (tail, str)
+        )[0]:
+            super().write((head + data + tail).encode("ascii"))
+
+        elif check_args(
+            (data, int),
+            (head, bytes),
+            (tail, bytes)
+        )[0]:
+            data_bytes = data.to_bytes(4, byteorder="big", signed=True)
+            super().write(head + data_bytes + tail)
+
+        elif check_args(
+            (data, list[int]),
+            (head, bytes),
+            (tail, bytes)
+        )[0]:
+            data_bytes = b""
+            for item in data:
+                data_bytes += item.to_bytes(4, byteorder="big", signed=True)
+            super().write(head + data_bytes + tail)
+
+        else:
+            raise TypeError("Invalid data type")
+
 
     def clear(self):
         """

@@ -12,7 +12,7 @@
 import json
 import cv2
 import numpy as np
-from USART.communicate import Usart
+from utils import Uart
 import detector
 from colorama import Fore, Style, init
 import math
@@ -57,7 +57,7 @@ def draw_material(
         cv2.putText(
             img,
             color,
-            (x, y),
+            (x+10, y+10),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.5,
             (0, 0, 255),
@@ -76,7 +76,7 @@ class Solution:
         self.annulus_circle_detector = detector.CircleDetector()
         self.traditional_color_detector = detector.TraditionalColorDetector()
         self.line_detector = detector.LineDetector()
-        self.uart = Usart(ser_port)
+        self.uart = Uart(ser_port)
         self.position_id_stack:list[dict[str,int|None]] = []     # 用于存放上一帧图像的物料位号的栈
 
         # region 读取配置文件
@@ -87,10 +87,12 @@ class Solution:
                 self.area1_points:list[list[int]] = config["area1_points"]
                 self.area2_points:list[list[int]] = config["area2_points"]
                 self.area3_points:list[list[int]] = config["area3_points"]
+                self.target_angel:int = config["target_angel"]
         except Exception as e:
             self.area1_points:list[list[int]] = [[0,0],[0,0]]
             self.area2_points:list[list[int]] = [[0,0],[0,0]]
             self.area3_points:list[list[int]] = [[0,0],[0,0]]
+            self.target_angel:int = 0
             print(Fore.RED + "配置文件读取位号参数失败")
 
         # 加载圆环识别的圆环参数
@@ -217,7 +219,6 @@ class Solution:
         )
         return res, res_img
 
-
     def __detect_material_positions(self, _img:cv2.typing.MatLike) -> dict[str, tuple[int, int, int, int] | None]:
         """
         物料位置检测(跟踪)
@@ -311,38 +312,19 @@ class Solution:
             2,
         )
 
-        res1 = f"A{'0' if angel < 0 else '1'}{str(abs(angel)).rjust(2, '0')}"
-        res3 = f"P{'0' if cross_point[0] < 0 else '1'}{str(abs(cross_point[0])).rjust(3, '0')}{'0' if cross_point[1] < 0 else '1'}{str(abs(cross_point[1])).rjust(3, '0')}"
+        diff_angel = angel - self.target_angel
+
+        res1 = f"A{'0' if diff_angel < 0 else '1'}{str(abs(diff_angel)).rjust(2, '0')}"
+        res3 = f"P{str(abs(cross_point[0])).rjust(3, '0')}{str(abs(cross_point[1])).rjust(3, '0')}"
 
         str_res = res1 + res3
         return str_res, res_img
     # endregion
 
-    # region 串口
-    def read_serial(self, head: str, tail: str):
-        """
-        读取串口数据
-        ----
-        :param head: 数据头
-        :param tail: 数据尾
-        """
-        # 清除缓冲区
-        self.uart.clear()
-        # 读取数据
-        data = self.uart.read(head, tail)
-        return data
-
-    def write_serial(self, data: str, head: str, tail: str):
-        """
-        写入串口数据
-        ----
-        :param data: 数据
-        """
-        self.uart.write(data, head, tail)
-    # endregion
-
     # region 圆环检测
-    def annulus_color_detect(self, _img:cv2.typing.MatLike) -> tuple[dict[str, tuple[int, int] | None], cv2.typing.MatLike]:
+    def annulus_color_detect(
+        self, _img: cv2.typing.MatLike
+    ) -> tuple[dict[str, tuple[int, int] | None], cv2.typing.MatLike]:
         """
         地面圆环颜色和位置检测
         ----

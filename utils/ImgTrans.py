@@ -152,6 +152,11 @@ class ReceiveImg(object):
             print("Error：连接出错！")
         return False, None
 
+    def release(self):
+        """释放资源"""
+        self.connection.close()
+        self.client_socket.close()
+
 
 class LoadWebCam:
     """读取远程图传的迭代器"""

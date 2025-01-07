@@ -104,10 +104,9 @@ class Test_solution(Solution):
             None
         """
         while True:
-            data = self.read_serial(head, tail)
-            print(
-                f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())} readed {data}"
-            )
+            data = self.uart.read(head, tail)
+            now_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+            print(f"{now_time} readed {data}")
 
     def test_usart_write(self, data: str, head: str, tail: str):
         """
@@ -120,10 +119,9 @@ class Test_solution(Solution):
             None
         """
         while True:
-            self.write_serial(data, head, tail)
-            print(
-                f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())} writed {data}"
-            )
+            self.uart.write(data, head, tail)
+            now_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+            print(f"{now_time} writed {data}")
             time.sleep(0.5)
 
     def detect_material_positions(self, _img:cv2.typing.MatLike) -> tuple[dict[str, tuple[int, int] | None], cv2.typing.MatLike]:

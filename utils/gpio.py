@@ -62,19 +62,20 @@ class Toggleswitch(Switch):
     def __init__(self,_InPin:int, pull_up_down:int = GPIO.PUD_UP,_PowPin:int | None = None) -> None:
         """初始化开关"""
         super().__init__(_InPin,pull_up_down,_PowPin)
+        self.last_button_state = GPIO.input(self.InPin)
         self.toggle_state: int = 0
 
     def _read_statusAlway(self) -> None:
         """一直读取开关状态"""
-        last_button_state = GPIO.input(self.InPin)
         while self.readFlag:
-            current_button_state = GPIO.input(self.InPin)
-            if current_button_state != last_button_state and current_button_state == GPIO.LOW:
-               #检测按钮按下
-              self.toggle_state = (self.toggle_state + 1) % 3
-            print(f"Button pressed! Toggle state changed to {self.toggle_state}")
-            last_button_state = current_button_state
+            current_button_state = self.read_status()
 
+            if current_button_state != self.last_button_state:
+                self.last_button_state = current_button_state
+                if current_button_state == GPIO.LOW:
+                    # 检测到按钮按下
+                    self.toggle_state = 1 if self.toggle_state == 0 else 0
+                    print(f"Button pressed! Toggle state changed to {self.toggle_state}")
 
     def get_toggle_state(self) -> int:
         """获取切换后的状态"""

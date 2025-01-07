@@ -2,7 +2,7 @@ from utils.gpio import *
 import time
 
 def test_toggle_switch():
-    toggle_switch = Toggleswitch(_InPin=15, _PowPin=18)
+    toggle_switch = Toggleswitch(_InPin=18)
     toggle_switch.read_statusAlway()
     try:
         while True:

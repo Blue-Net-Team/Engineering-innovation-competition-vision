@@ -2,7 +2,7 @@ import cv2
 from utils import LoadWebCam, SendImg
 
 if __name__ == "__main__":
-    stream = SendImg("169.254.60.115", 8000)
+    stream = SendImg("169.254.60.115", 4444)
     cap = cv2.VideoCapture(0)
     stream.connecting()
     stream.start()

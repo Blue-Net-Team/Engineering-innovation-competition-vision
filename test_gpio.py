@@ -1,5 +1,7 @@
-from utils.gpio import *
 import time
+import threading
+from utils.gpio import *
+
 
 def test_switch():
     switch = Switch(_InPin=18)
@@ -14,19 +16,18 @@ def test_switch():
     finally:
         switch.stop_read()
 
-def test_toggle_switch():
-    toggle_switch = Toggleswitch(_InPin=18)
+def test_ToggleSwitch():
+    toggle_switch = ToggleSwitch(_InPin=18)
     toggle_switch.read_statusAlway()
     try:
         while True:
-            print(toggle_switch.get_toggle_state())
+            print(toggle_switch.read_status())
             time.sleep(0.1)
     except KeyboardInterrupt:
         toggle_switch.stop_read()
         print("stop read")
-    finally:
-        toggle_switch.stop_read()
+
 
 if __name__ == "__main__":
-    # test_toggle_switch()
-    test_switch()
+    test_ToggleSwitch()
+    # test_switch()

@@ -328,7 +328,6 @@ class Ad_Line_config(LineDetector):
 if __name__ == "__main__":
     ad_config = Ad_Config(
             0,
-
     )
     # ad_config.adjust_circle("annulus")
     ad_config.adjust_color_threshold()

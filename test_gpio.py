@@ -27,7 +27,20 @@ def test_ToggleSwitch():
         toggle_switch.stop_read()
         print("stop read")
 
+def test_ToggleStateSwitch():
+    toggle_state_switch = ToggleStateSwitch(_InPin=18)
+    toggle_state_switch.read_statusAlway()
+    try:
+        while True:
+            print(f"Current State: {toggle_state_switch.current_state}")
+            time.sleep(0.1)
+    except KeyboardInterrupt:
+        toggle_state_switch.stop_read()
+        print("stop read")
+    finally:
+        toggle_state_switch.stop_read()
 
 if __name__ == "__main__":
-    test_ToggleSwitch()
+    # test_ToggleSwitch()
     # test_switch()
+    test_ToggleStateSwitch()

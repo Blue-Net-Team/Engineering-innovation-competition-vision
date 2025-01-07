@@ -59,7 +59,7 @@ class Switch:
 
 class Toggleswitch(Switch):
     """可切换状态的开关类"""
-    def __init__(self,_InPin:int, pull_up_down:int = GPIO.PUD_UP,_PowPin:int | None = None) -> None:
+    def __init__(self,_InPin:int, pull_up_down:int = GPIO.PUD_UP, _PowPin:int | None = None) -> None:
         """初始化开关"""
         super().__init__(_InPin,pull_up_down,_PowPin)
         self.last_button_state = GPIO.input(self.InPin)

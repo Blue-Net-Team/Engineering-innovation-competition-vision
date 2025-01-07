@@ -301,10 +301,15 @@ def ad_right_angle(_cap:cv2.VideoCapture|Cap|ReceiveImg):
 
 
 if __name__ == "__main__":
+    # 机载摄像头
     cap = Cap(0)
 
+    # 图传接收器
+    # cap = ReceiveImg("169.254.60.115", 8000)
+
+    #  先s保存，再q退出
     ad_color(cap)
-    # ad_area(cap)
-    # ad_circle(cap)
-    # ad_line(cap)
+    ad_area(cap)
+    ad_circle(cap)
+    ad_line(cap)
 # end main

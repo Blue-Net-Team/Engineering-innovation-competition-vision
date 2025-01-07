@@ -72,5 +72,6 @@
         "param2": 100,
         "minRadius": 40,
         "maxRadius": 97
-    }
+    },
+    "target_angel":0
 }

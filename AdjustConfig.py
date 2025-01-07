@@ -3,11 +3,8 @@ import time
 import cv2
 import numpy as np
 from Solution import Solution
-from detector import (
-    LineDetector,
-    TraditionalColorDetector,
-)
-from utils import LoadCap, LoadWebCam, ReceiveImg, Cap
+from detector import LineDetector
+from utils import ReceiveImg, Cap
 from colorama import Fore, init
 
 # 初始化 colorama

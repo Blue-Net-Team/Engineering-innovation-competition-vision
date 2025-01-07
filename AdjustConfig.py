@@ -1,16 +1,11 @@
 import json
 import time
-from typing import Callable
 import cv2
 import numpy as np
 from Solution import Solution
-from detector import (
-    LineDetector,
-    CircleDetector,
-    TraditionalColorDetector,
-)
-from utils import LoadCap, LoadWebCam, ReceiveImg
-from colorama import Fore, Style, init
+from detector import LineDetector
+from utils import ReceiveImg, Cap
+from colorama import Fore, init
 
 # 初始化 colorama
 init(autoreset=True)
@@ -26,42 +21,29 @@ class Ad_Config(Solution):
 
     def __init__(
         self,
-        cap_id: int = 0,
+        _cap:cv2.VideoCapture|Cap|ReceiveImg,
         ser_port: str|None = None,
-        ip: str | None = None,
-        port: int | None = None,
     ):
         super().__init__(ser_port)
 
-        if ip is not None and port is not None:
-            self.cap = LoadWebCam(ip, port)
-        else:
-            self.cap = LoadCap(cap_id,cap_method='opencv')
+        self.cap = _cap
 
-    def adjust_circle(self, config_name: str):
+    def adjust_circle(self):
         """
         调整圆环参数
         ----
-        Args:
-            config_name (str): 配置名称,包含"material"(物料)、"annulus"(圆环)
         """
         cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         detector = self.annulus_circle_detector
 
-        # 加载配置
-        # detector.load_config("config.json", config_name)
-
         # 创建滑动条
         detector.createTrackbar()
-        for img in self.cap:
+        while True:
+            t0 = time.perf_counter()
+            _, img = self.cap.read()
+
             if img is None:
                 continue
-            t0 = time.perf_counter()
-
-            try:
-                read_img_time = t0 - t1
-            except:
-                read_img_time = 0
 
             res = self.annulus_circle_detector.detect_circle(img)
             t1 = time.perf_counter()
@@ -75,11 +57,9 @@ class Ad_Config(Solution):
             for point, r in zip(points, radius):
                 cv2.circle(img, point, r, (0, 255, 0), 2)
 
-
             detect_time = t1 - t0
 
-            process_time = read_img_time + detect_time
-            fps = 1 / process_time
+            fps = 1 / detect_time
 
             cv2.putText(  # 显示FPS
                 img,
@@ -94,32 +74,34 @@ class Ad_Config(Solution):
             cv2.imshow("img", img)
             print(res)
 
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                # 保存配置
-                detector.save_config("config.json", config_name)
+            press_key = cv2.waitKey(1)
+            if press_key & 0xFF == ord("q"):
                 # 释放摄像头
                 self.cap.release()
                 break
+            elif press_key & 0xFF == ord("s"):
+                # 保存配置
+                detector.save_config("config.json", "annulus")
+                print(Fore.GREEN + "保存配置")
 
     def adjust_color_threshold(self, color_name: str="R"):
         """
         调整颜色阈值
         ----
         """
-        tcd = TraditionalColorDetector()
-        tcd.load_config("config.json")
-        tcd.createTrackbar()
+        self.traditional_color_detector.createTrackbar()
         cv2.namedWindow("img", cv2.WINDOW_NORMAL)
-        tcd.update_range(color_name)
-        for img in self.cap:
+        self.traditional_color_detector.update_range(color_name)
+        while True:
+            _, img = self.cap.read()
             if img is None:
                 continue
 
             new_img = img.copy()
 
-            binarization_img = tcd.binarization(img)
+            binarization_img = self.traditional_color_detector.binarization(img)
 
-            position = tcd.get_color_position(binarization_img)
+            position = self.traditional_color_detector.get_color_position(binarization_img)
             if position:
                 point = position[:2]
                 w, h = position[2:]
@@ -149,7 +131,7 @@ class Ad_Config(Solution):
             if key_pressed & 0xFF == ord("q"):
                 break
             elif key_pressed & 0xFF == ord("s"):
-                tcd.save_params("config.json")
+                self.traditional_color_detector.save_params("config.json")
                 print(Fore.GREEN + "保存配置")
 
         self.cap.release()
@@ -167,11 +149,11 @@ class Ad_Area_config:
     area_dict: dict[int, list[tuple[int, int]]]
     x:int
 
-    def __init__(self, _webcam:ReceiveImg|None=None) -> None:
+    def __init__(self, _cap:cv2.VideoCapture|Cap|ReceiveImg,) -> None:
         self.load_config()
         self.x = 0
 
-        self.webcam = _webcam
+        self.cap = _cap
 
     def load_config(self):
         """
@@ -217,17 +199,8 @@ class Ad_Area_config:
         cv2.setMouseCallback("img", self.__mouse_callback)
         self.createTrackbar()
 
-        if self.webcam is not None:
-            cap = self.webcam
-        else:
-            cap = cv2.VideoCapture(0)
-            cap.set(3, 640)
-            cap.set(4, 480)
-            cap.set(5, 60)
-            cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
-
         while True:
-            ret, img = cap.read()
+            _, img = self.cap.read()
             if img is None:
                 continue
             for key, value in self.area_dict.items():
@@ -257,25 +230,16 @@ class Ad_Area_config:
 
 
 class Ad_Line_config(LineDetector):
-    def __init__(self, _webcam:ReceiveImg|None=None) -> None:
+    def __init__(self, _cap:cv2.VideoCapture|Cap|ReceiveImg,) -> None:
         super().__init__()
         print(self.load_config("config.json"))
-        self.webcam = _webcam
+        self.cap = _cap
 
     def ad_line(self):
         self.createTrackbar()
 
-        if self.webcam is None:
-            cap = cv2.VideoCapture(0)
-            cap.set(3, 640)
-            cap.set(4, 480)
-            cap.set(5, 60)
-            cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
-        else:
-            cap = self.webcam
-
         while True:
-            ret, img = cap.read()
+            _, img = self.cap.read()
             if img is None:
                 continue
 
@@ -298,17 +262,8 @@ class Ad_Line_config(LineDetector):
     def ad_right_angle(self):
         self.createTrackbar()
 
-        if self.webcam is None:
-            cap = cv2.VideoCapture(0)
-            cap.set(3, 640)
-            cap.set(4, 480)
-            cap.set(5, 60)
-            cap.set(6,cv2.VideoWriter.fourcc('M','J','P','G'))
-        else:
-            cap = self.webcam
-
         while True:
-            ret, img = cap.read()
+            ret, img = self.cap.read()
             if img is None:
                 continue
 
@@ -324,17 +279,32 @@ class Ad_Line_config(LineDetector):
                 print(Fore.GREEN + "保存配置")
 
 
+def ad_color(_cap:cv2.VideoCapture|Cap|ReceiveImg):
+    ad_config = Ad_Config(_cap)
+    ad_config.adjust_color_threshold()
+
+def ad_circle(_cap:cv2.VideoCapture|Cap|ReceiveImg):
+    ad_config = Ad_Config(_cap)
+    ad_config.adjust_circle()
+
+def ad_area(_cap:cv2.VideoCapture|Cap|ReceiveImg):
+    ad_area_config = Ad_Area_config(_cap)
+    ad_area_config.main()
+
+def ad_line(_cap:cv2.VideoCapture|Cap|ReceiveImg):
+    ad_line_config = Ad_Line_config(_cap)
+    ad_line_config.ad_line()
+
+def ad_right_angle(_cap:cv2.VideoCapture|Cap|ReceiveImg):
+    ad_line_config = Ad_Line_config(_cap)
+    ad_line_config.ad_right_angle()
+
 
 if __name__ == "__main__":
-    ad_config = Ad_Config(
-            0,
-    )
-    # ad_config.adjust_circle("annulus")
-    ad_config.adjust_color_threshold()
-    # ad_area_config = Ad_Area_config()
-    # ad_area_config.main()
+    cap = Cap(0)
 
-    # ad_line_config = Ad_Line_config()
-    # ad_line_config.ad_line()
-    # ad_line_config.ad_right_angle()
+    ad_color(cap)
+    # ad_area(cap)
+    # ad_circle(cap)
+    # ad_line(cap)
 # end main

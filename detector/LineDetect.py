@@ -174,7 +174,7 @@ class LineDetector(Detect):
 
         return None, None, None
 
-    def find_line(self, _img):
+    def find_line(self, _img) -> np.ndarray:
         """
         找出直线
         ----

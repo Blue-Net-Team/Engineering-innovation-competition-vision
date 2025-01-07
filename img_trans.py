@@ -2,7 +2,7 @@ import cv2
 from utils import LoadWebCam, SendImg
 
 if __name__ == "__main__":
-    cap = LoadWebCam("169.254.60.115", 8000)
+    cap = LoadWebCam("169.254.60.115", 4444)
     for img in cap:
         if img is None:
             continue

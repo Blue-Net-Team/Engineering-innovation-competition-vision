@@ -313,7 +313,7 @@ class Solution:
             2,
         )
 
-        diff_angel = int(angel*10 - 45)
+        diff_angel = int((angel - self.target_angel)*10)
 
         res1 = f"L{'0' if diff_angel < 0 else '1'}{str(abs(diff_angel)).rjust(3, '0')}"
         res3 =  f"{str(abs(cross_point[0])).rjust(3, '0')}"\

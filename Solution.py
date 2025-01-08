@@ -92,7 +92,7 @@ class Solution:
             self.area1_points:list[list[int]] = [[0,0],[0,0]]
             self.area2_points:list[list[int]] = [[0,0],[0,0]]
             self.area3_points:list[list[int]] = [[0,0],[0,0]]
-            self.target_angel:int = 0
+            self.target_angel:int = 45
             print(Fore.RED + "配置文件读取位号参数失败")
 
         # 加载圆环识别的圆环参数

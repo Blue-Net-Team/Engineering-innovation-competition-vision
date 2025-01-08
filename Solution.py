@@ -213,7 +213,7 @@ class Solution:
 
         res = "".join(
             [
-                f"{color}{area if area else 'F'}"
+                f"{color}{area if area else '0'}"
                 for color, area in color_position_id_dict.items()
             ]
         )

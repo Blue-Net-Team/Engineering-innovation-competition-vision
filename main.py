@@ -74,7 +74,8 @@ while True:
 
             if res:
                 solution.uart.write(res, head=HEAD, tail=TAIL)
-                print(f"Detect time(ms): {detect_time * 1000:.2f}")
+                now_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                print(f"[{now_time}] Detect time(ms): {detect_time * 1000:.2f} writed {res}")
                 break
     else:  # 信号非法
         print(f"Invalid sign {sign}")

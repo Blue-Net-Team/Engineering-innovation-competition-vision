@@ -92,8 +92,9 @@ class Test_solution(Solution):
             else:
                 cv2.imshow("img", res_img)
 
-            now_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-            print(f"[{now_time}] res:{res} \t detect time(ms):{detect_time * 1000:.2f}")
+            if res:
+                now_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                print(f"[{now_time}] res:{res} \t detect time(ms):{detect_time * 1000:.2f}")
 
             # if self.sender is None:
             #     if cv2.waitKey(1) & 0xFF == ord("q"):

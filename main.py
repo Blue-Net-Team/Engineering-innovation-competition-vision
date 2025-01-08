@@ -20,64 +20,105 @@ r"""
                               神兽保佑
                              工创国一！！
 """
-
-import time
+import threading
 import cv2
 import Solution
-from utils import LoadCap, SendImg
+from utils import SendImg, Cap
+from utils import Switch
+import numpy as np
 
-# TODO: 请填写串口头和尾
-HEAD: str = ...
-TAIL: str = ...
+from utils.ImgTrans import NeedReConnect
 
-DEAL_IMG = "show"  # 处理图像的方式,包含"show"、"send"、"hide"
+class MainSystem:
 
-IP: str = ""  # TODO: 填写主机(jetson)IP地址
-PORT: int = 8000  # 端口号
+    sending_flag = False
 
-SERIAL_PORT = "/dev/ttyUSB0"  # TODO: 填写串口号
+    def __init__(
+        self,
+        ser_port: str,
+        sender: SendImg | None=None
+    ) -> None:
+        """
+        主系统
+        ----
+        Args:
+            ser_port (str): 串口号
+        """
+        self.cap = Cap()
+        self.solution = Solution.Solution(ser_port)
+        self.switch = Switch(18)
+        self.sender = sender
 
-# region 主代码
-vs = SendImg(IP, PORT)
-solution = Solution.Solution(SERIAL_PORT)
-cap1 = LoadCap(0)
+        self.need_send_img:cv2.typing.MatLike = np.zeros((480, 640, 3), np.uint8)
+        cv2.putText(
+            self.need_send_img,
+            "No Image",
+            (100, 100),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (255, 255, 255),
+            2
+        )
 
-DEAL_IMG_DICT = {"show": Solution.show, "send": vs.send, "hide": lambda x: None}
+        self.img = self.need_send_img.copy()
 
-solution_dict = {
-    "2": solution.right_angle_detect,  # 直角检测
-    "3": solution.material_moving_detect,  # 物料运动检测
-    "4": solution.get_material,  # 获取物料位号
-}
+    def main(self):
+        """
+        主函数
+        ----
+        """
+        # 读取图像
+        img_thread = threading.Thread(target=self.__read_img)
+        img_thread.start()
 
+        while True:
+            switch_status = self.switch.read_status()
 
-if DEAL_IMG == "send":
-    vs.connecting()
-    vs.start()
+            if switch_status:
+                if not self.sending_flag:   # 如果线程未启动
+                    print("Start sending image")
+                    self.sending_flag = True
+                    img_sending_thread = threading.Thread(target=self.__send_ori_img)
+                    img_sending_thread.start()
+            else:
+                if self.sending_flag:       # 如果线程已启动
+                    print("Stop sending image")
+                    self.sending_flag = False
+                    img_sending_thread.join()
 
-while True:
-    sign = solution.uart.read(head=HEAD, tail=TAIL)  # 读取串口
-    # 判断信号是否合法
-    if sign in solution_dict:  # 信号合法
-        for img in cap1:      # 读取摄像头
+    def __send_ori_img(self):
+        """
+        发送原始图像
+        ----
+        """
+        if self.sender:
+            while self.sending_flag:
+                if self.sender.connecting():
+                    break
+            while self.sending_flag:
+                try:
+                    self.sender.send(self.img)
+                except NeedReConnect:
+                    while self.sending_flag:
+                        if self.sender.connecting():
+                            break
+
+    def __read_img(self):
+        """
+        读取图像
+        ----
+        """
+        while True:
+            _, img = self.cap.read()
             if img is None:
                 continue
+            self.img = img
 
-            t0 = time.perf_counter()
 
-            # 如果res是none，会继续读取下一帧图像，直到res不是none
-            res, res_img = solution_dict[sign](img)
-
-            t1 = time.perf_counter()
-            detect_time = t1 - t0
-
-            DEAL_IMG_DICT[DEAL_IMG](res_img)
-
-            if res:
-                solution.uart.write(res, head=HEAD, tail=TAIL)
-                print(f"Detect time(ms): {detect_time * 1000:.2f}")
-                break
-    else:  # 信号非法
-        print(f"Invalid sign {sign}")
-        continue
-# endregion
+if __name__ == "__main__":
+    mainsystem = MainSystem(
+        ser_port="/dev/ttyUSB0",
+        sender=SendImg("169.254.60.115", 4444)
+    )
+    mainsystem.main()
+# end main

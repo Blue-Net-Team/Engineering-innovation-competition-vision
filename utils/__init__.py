@@ -2,6 +2,7 @@ from ._cap import InterpolatedCap, LoadCap, Cap
 from .ImgTrans import SendImg, ReceiveImg, LoadWebCam
 from .UART import Uart
 from .typingCheck import check_args
+from .gpio import Switch
 
 __all__ = [
     "Cap",
@@ -12,4 +13,5 @@ __all__ = [
     "LoadWebCam",
     "Uart",
     "check_args",
+    "Switch",
 ]

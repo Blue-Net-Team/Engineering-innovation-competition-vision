@@ -47,9 +47,10 @@ cap1 = LoadCap(0)
 DEAL_IMG_DICT = {"show": Solution.show, "send": vs.send, "hide": lambda x: None}
 
 solution_dict = {
-    "2": solution.right_angle_detect,  # 直角检测
-    "3": solution.material_moving_detect,  # 物料运动检测
-    "4": solution.get_material,  # 获取物料位号
+    "1": solution.material_moving_detect,  # 物料运动检测
+    "2": solution.get_material,  # 获取物料位号
+    "3": solution.right_angle_detect,  # 直角检测
+    "4": solution.annulus_top,      # 圆环检测
 }
 
 

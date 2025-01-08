@@ -34,6 +34,10 @@ from colorama import Fore, Style, init
 
 init(autoreset=True)
 
+class NeedReConnect(Exception):
+    """需要重新连接"""
+    pass
+
 class SendImg(object):
     """服务端视频发送"""
     def __init__(self, host:str|None=None, port:int|None=None):
@@ -50,6 +54,7 @@ class SendImg(object):
                 self.server_socket = socket.socket()
                 self.server_socket.bind((host, port))
                 self.server_socket.listen(5)
+                self.server_socket.settimeout(0.05)
                 self.connection = None
                 self.connect = None
                 self.stream = io.BytesIO()
@@ -63,12 +68,21 @@ class SendImg(object):
         ----
         """
         if self.is_open:
-            print("等待连接")
-            self.connection, self.client_address = self.server_socket.accept()
-            self.connect = self.connection.makefile("wb")
-            self.host_name = socket.gethostname()
-            self.host_ip = socket.gethostbyname(self.host_name)
-            print("连接成功")
+
+            try:
+                self.connection, self.client_address = self.server_socket.accept()
+                self.connect = self.connection.makefile("wb")
+                self.host_name = socket.gethostname()
+                self.host_ip = socket.gethostbyname(self.host_name)
+
+                return True
+            except socket.timeout:
+                # print(
+                #     Fore.RED + "连接超时，请检查客户端是否已连接"
+                # )
+                pass
+
+        return False
 
     def start(self) -> None:
         """
@@ -107,10 +121,8 @@ class SendImg(object):
                 self.stream.truncate()
                 self.connect.write(struct.pack("<L", 0))
                 return True
-            except ConnectionResetError:
-                print("连接已重置")
-                self.connecting()
-                return False
+            except ConnectionResetError or ConnectionAbortedError:
+                raise NeedReConnect("连接已断开，请重新连接")
         else:
             return False
 

@@ -21,6 +21,7 @@ r"""
                              工创国一！！
 """
 
+import datetime
 import time
 import cv2
 import Solution
@@ -41,7 +42,17 @@ SERIAL_PORT = "/dev/ttyUSB0"
 
 # region 主代码
 vs = SendImg(IP, PORT)
-solution = Solution.Solution(SERIAL_PORT)
+while 1:
+    try:
+        solution = Solution.Solution(SERIAL_PORT)
+        break
+    except:
+        now_time = datetime.datetime.now().strftime("%H:%M:%S:%f")
+        print(
+            Fore.YELLOW + f"[{now_time}]" + Style.RESET_ALL,
+            "串口连接失败，正在重试..."
+        )
+        continue
 cap1 = LoadCap(0)
 
 DEAL_IMG_DICT = {"show": Solution.show, "send": vs.send, "hide": lambda x: None}
@@ -65,6 +76,7 @@ while True:
         for img in cap1:      # 读取摄像头
             if img is None:
                 continue
+            img = img[:400,:]
 
             t0 = time.perf_counter()
 
@@ -77,7 +89,7 @@ while True:
             DEAL_IMG_DICT[DEAL_IMG](res_img)
 
             if res:
-                solution.uart.write(res, head=HEAD, tail=TAIL)
+                solution.uart.write(res)
                 now_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
                 time_show = detect_time * 1000
 

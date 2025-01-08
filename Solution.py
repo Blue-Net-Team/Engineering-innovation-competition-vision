@@ -217,6 +217,7 @@ class Solution:
                 for color, area in color_position_id_dict.items()
             ]
         )
+        res = "C" + res + "E"
         return res, res_img
 
     def __detect_material_positions(self, _img:cv2.typing.MatLike) -> dict[str, tuple[int, int, int, int] | None]:
@@ -301,7 +302,7 @@ class Solution:
             return None, res_img
 
         # 取出大于0的角度
-        angel = angel1 if 0 < angel1 < 90 else angel2
+        angel = angel1/10 if 0 < angel1 < 900 else angel2/10
 
         point2 = (cross_point[0] + 100 * math.cos(math.radians(angel)), cross_point[1] + 100 * math.sin(math.radians(angel)))
         cv2.line(
@@ -312,7 +313,7 @@ class Solution:
             2,
         )
 
-        diff_angel = angel - self.target_angel
+        diff_angel = int(angel*10 - 45)
 
         res1 = f"L{'0' if diff_angel < 0 else '1'}{str(abs(diff_angel)).rjust(3, '0')}"
         res3 =  f"{str(abs(cross_point[0])).rjust(3, '0')}"\

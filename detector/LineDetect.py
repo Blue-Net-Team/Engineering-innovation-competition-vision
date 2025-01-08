@@ -193,8 +193,6 @@ class LineDetector(Detect):
 
         img = cv2.inRange(img, np.array([50]), np.array([255]))
 
-        cv2.imshow("canny", img)
-
         # 霍夫直线检测
         # lines是形状为(n,1,4)的数组
         # n是检测到的直线数量

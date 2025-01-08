@@ -22,6 +22,7 @@ Test_Line_detect
     - `test(self):` 测试方法，显示检测结果
 """
 
+from datetime import datetime
 import time
 import cv2
 import numpy as np
@@ -51,7 +52,9 @@ class Test_solution(Solution):
 
         if sender is not None:
             self.sender = sender
-            self.sender.connecting()
+            while True:
+                if self.sender.connecting():
+                    break
             self.sender.start()
         else:
             self.sender = None
@@ -70,11 +73,13 @@ class Test_solution(Solution):
         Returns:
             None
         """
-        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        # cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         cap = LoadCap(cap_id)
         for img in cap:
             if img is None:
                 continue
+
+            img = img[:400,:]
 
             t0 = time.perf_counter()
             res, res_img = self.TOP_FUNC_DICT[sign](img)
@@ -90,9 +95,9 @@ class Test_solution(Solution):
             now_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             print(f"[{now_time}] res:{res} \t detect time(ms):{detect_time * 1000:.2f}")
 
-            if self.sender is None:
-                if cv2.waitKey(1) & 0xFF == ord("q"):
-                    break
+            # if self.sender is None:
+            #     if cv2.waitKey(1) & 0xFF == ord("q"):
+            #         break
 
     def test_usart_read(self, head: str, tail: str):
         """
@@ -105,8 +110,15 @@ class Test_solution(Solution):
         """
         while True:
             data = self.uart.read(head, tail)
-            now_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+            now = datetime.now()
+            now_time = now.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
             print(f"{now_time} readed {data}")
+
+            self.uart.write("R1G3B0", "C", "E")
+            now_time = now.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+            print(f"{now_time} writed R1G3B0")
+
+
 
     def test_usart_write(self, data: str, head: str, tail: str):
         """
@@ -120,7 +132,9 @@ class Test_solution(Solution):
         """
         while True:
             self.uart.write(data, head, tail)
-            now_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+            time.sleep(0.3)
+            self.uart.write("0051125375", "L", "E")
+            now_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
             print(f"{now_time} writed {data}")
             time.sleep(0.5)
 
@@ -225,9 +239,14 @@ class Test_solution(Solution):
         cap.release()
 
 if __name__ == "__main__":
-    sender = SendImg("169.254.60.115", 8000)
-    test = Test_solution(sender=sender)
+    sender = SendImg("169.254.60.115", 4444)
+    test = Test_solution(
+        ser_port=None,
+        sender=sender
+    )
+    # test.test_usart_read("@", "#")
     test.test_func(0, "2")
+    # test.test_usart_write("R1G2B3", "C", "E")
     # test.test_material_positions(0)
     # test.test_annulus_color(0, "G")
 # end main

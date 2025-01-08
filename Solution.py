@@ -213,7 +213,7 @@ class Solution:
 
         res = "".join(
             [
-                f"{color}{area if area else 'F'}"
+                f"{color}{area if area else '0'}"
                 for color, area in color_position_id_dict.items()
             ]
         )
@@ -314,8 +314,9 @@ class Solution:
 
         diff_angel = angel - self.target_angel
 
-        res1 = f"A{'0' if diff_angel < 0 else '1'}{str(abs(diff_angel)).rjust(2, '0')}E"
-        res3 = f"P{str(abs(cross_point[0])).rjust(3, '0')}{str(abs(cross_point[1])).rjust(3, '0')}E"
+        res1 = f"L{'0' if diff_angel < 0 else '1'}{str(abs(diff_angel)).rjust(3, '0')}"
+        res3 =  f"{str(abs(cross_point[0])).rjust(3, '0')}"\
+                f"{str(abs(cross_point[1])).rjust(3, '0')}E"
 
         str_res = res1 + res3
         return str_res, res_img
@@ -489,8 +490,9 @@ class Solution:
         # 画出圆心
         cv2.circle(_img, avg_point, 2, (255, 255, 0), 2)
 
-        res =   f"{str(avg_point[0]).rjust(3, '0')}"\
-                f"{str(avg_point[1]).rjust(3, '0')}"
+        res =   f"L0000"\
+                f"{str(avg_point[0]).rjust(3, '0')}"\
+                f"{str(avg_point[1]).rjust(3, '0')}E"
 
         return res, _img
     # endregion

@@ -267,6 +267,7 @@ class Ad_Line_config(LineDetector):
             if img is None:
                 continue
 
+            img = img[:400,:]
             img = self.sharpen(img)
             angel1, angel2, point = self.get_right_angle(img, True)
 
@@ -312,4 +313,5 @@ if __name__ == "__main__":
     ad_area(cap)
     ad_circle(cap)
     ad_line(cap)
+    ad_right_angle(cap)
 # end main

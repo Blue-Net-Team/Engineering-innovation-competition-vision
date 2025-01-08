@@ -305,7 +305,7 @@ if __name__ == "__main__":
     cap = Cap(0)
 
     # 图传接收器
-    # cap = ReceiveImg("169.254.60.115", 8000)
+    # cap = ReceiveImg("169.254.60.115", 4444)
 
     #  先s保存，再q退出
     ad_color(cap)

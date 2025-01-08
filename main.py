@@ -33,10 +33,10 @@ init(autoreset=True)
 HEAD: str = "@"
 TAIL: str = "#"
 
-DEAL_IMG = "hide"  # 处理图像的方式,包含"show"、"send"、"hide"
+DEAL_IMG = "send"  # 处理图像的方式,包含"show"、"send"、"hide"
 
 IP: str = "169.254.60.115"
-PORT: int = 8000  # 端口号
+PORT: int = 4444  # 端口号
 
 SERIAL_PORT = "/dev/ttyUSB0"
 
@@ -66,7 +66,10 @@ solution_dict = {
 
 
 if DEAL_IMG == "send":
-    vs.connecting()
+    while 1:
+        if vs.connecting():
+            break
+
     vs.start()
 
 while True:
@@ -100,10 +103,13 @@ while True:
                 else:
                     color = Fore.RED
 
+
                 print(
-                    f"[{now_time}] Detect time(ms):",
-                        color + f"{time_show}" + Style.RESET_ALL,
-                      "writed {res}"
+                    Fore.BLUE + f"[{now_time}]" + Style.RESET_ALL,
+                    "Detect time(ms):",
+                    color + f"{time_show:.2f}" + Style.RESET_ALL,
+                    "writed:",
+                    Fore.MAGENTA + f"{res}" + Style.RESET_ALL
                 )
                 break
     else:  # 信号非法

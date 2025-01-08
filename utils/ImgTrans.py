@@ -68,7 +68,6 @@ class SendImg(object):
         ----
         """
         if self.is_open:
-
             try:
                 self.connection, self.client_address = self.server_socket.accept()
                 self.connect = self.connection.makefile("wb")
@@ -77,10 +76,7 @@ class SendImg(object):
 
                 return True
             except socket.timeout:
-                # print(
-                #     Fore.RED + "连接超时，请检查客户端是否已连接"
-                # )
-                pass
+                return False
 
         return False
 

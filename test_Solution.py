@@ -27,7 +27,7 @@ import time
 import cv2
 import numpy as np
 from Solution import Solution
-from utils import LoadCap, SendImg
+from utils import LoadCap, SendImg, ReceiveImg, Cap
 
 COLOR_DIC = {0: "R", 1: "G", 2: "B"}
 
@@ -59,7 +59,7 @@ class Test_solution(Solution):
         else:
             self.sender = None
 
-    def test_func(self, cap_id: int, sign: str):
+    def test_func(self, cap:Cap|ReceiveImg, sign: str):
         """
         测试Solution顶层功能
         ----
@@ -74,8 +74,8 @@ class Test_solution(Solution):
             None
         """
         # cv2.namedWindow("img", cv2.WINDOW_NORMAL)
-        cap = LoadCap(cap_id)
-        for img in cap:
+        while True:
+            _,img = cap.read()
             if img is None:
                 continue
 
@@ -219,16 +219,16 @@ class Test_solution(Solution):
 
         return res_dict, res
 
-    def test_material_positions(self, cap_id: int):
+    def test_material_positions(self, cap: Cap|ReceiveImg):
         """
         测试物料位置检测
         ----
         Args:
             cap_id (int): 摄像头编号
         """
-        cap = LoadCap(cap_id)
         cv2.namedWindow("img", cv2.WINDOW_NORMAL)
-        for img in cap:
+        while True:
+            _, img = cap.read()
             if img is None:
                 continue
             res_dict, res = self.detect_material_positions(img)
@@ -240,14 +240,10 @@ class Test_solution(Solution):
         cap.release()
 
 if __name__ == "__main__":
-    sender = SendImg("169.254.60.115", 4444)
-    test = Test_solution(
-        ser_port=None,
-        sender=sender
-    )
-    # test.test_usart_read("@", "#")
-    test.test_func(0, "2")
-    # test.test_usart_write("R1G2B3", "C", "E")
+    sender = SendImg("169.254.60.115", 8000)
+    cap = Cap()
+    test = Test_solution(sender=sender)
+    test.test_func(cap, "2")
     # test.test_material_positions(0)
     # test.test_annulus_color(0, "G")
 # end main

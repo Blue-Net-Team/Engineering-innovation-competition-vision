@@ -128,17 +128,15 @@ class LineDetector(Detect):
 
         line_dict = {}
         for line in lines:
-            degree = int(
-                np.degrees(np.arctan2(line[0][3] - line[0][1], line[0][2] - line[0][0]))
-            )
+            degree: float = round(np.degrees(np.arctan2(line[0][3] - line[0][1], line[0][2] - line[0][0])), 1)
             line_dict[degree] = line[0]
 
             # 计算目标角度
             _target_degree = degree - 90 if degree > 0 else degree + 90
 
             # 目标角度误差范围
-            target_degree_range = range(
-                _target_degree - self.bias, _target_degree + self.bias
+            target_degree_range = np.arange(
+                _target_degree - self.bias, _target_degree + self.bias, 0.1
             )
 
             for target_degree in target_degree_range:
@@ -170,7 +168,7 @@ class LineDetector(Detect):
                         self.draw_line(_img, target_line)
                         self.__draw_point(_img, cross_point)
 
-                    return degree, target_degree, cross_point
+                    return int(degree*10), int(target_degree*10), cross_point
 
         return None, None, None
 

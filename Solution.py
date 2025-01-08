@@ -314,8 +314,8 @@ class Solution:
 
         diff_angel = angel - self.target_angel
 
-        res1 = f"A{'0' if diff_angel < 0 else '1'}{str(abs(diff_angel)).rjust(2, '0')}"
-        res3 = f"P{str(abs(cross_point[0])).rjust(3, '0')}{str(abs(cross_point[1])).rjust(3, '0')}"
+        res1 = f"A{'0' if diff_angel < 0 else '1'}{str(abs(diff_angel)).rjust(2, '0')}E"
+        res3 = f"P{str(abs(cross_point[0])).rjust(3, '0')}{str(abs(cross_point[1])).rjust(3, '0')}E"
 
         str_res = res1 + res3
         return str_res, res_img

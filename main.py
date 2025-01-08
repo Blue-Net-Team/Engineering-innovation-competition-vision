@@ -25,6 +25,9 @@ import time
 import cv2
 import Solution
 from utils import LoadCap, SendImg
+from colorama import Fore, Style, init
+
+init(autoreset=True)
 
 HEAD: str = "@"
 TAIL: str = "#"
@@ -75,7 +78,20 @@ while True:
             if res:
                 solution.uart.write(res, head=HEAD, tail=TAIL)
                 now_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                print(f"[{now_time}] Detect time(ms): {detect_time * 1000:.2f} writed {res}")
+                time_show = detect_time * 1000
+
+                if time_show <= 30:
+                    color = Fore.GREEN
+                elif time_show <= 50:
+                    color = Fore.YELLOW
+                else:
+                    color = Fore.RED
+
+                print(
+                    f"[{now_time}] Detect time(ms):",
+                        color + f"{time_show}" + Style.RESET_ALL,
+                      "writed {res}"
+                )
                 break
     else:  # 信号非法
         print(f"Invalid sign {sign}")

@@ -5,7 +5,7 @@
         "Hough_threshold": 48,
         "minLineLength": 41,
         "maxLineGap": 49,
-        "bias": 3
+        "bias": 1
     },
     "area1_points": [
         [

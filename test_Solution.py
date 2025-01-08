@@ -240,7 +240,7 @@ class Test_solution(Solution):
         cap.release()
 
 if __name__ == "__main__":
-    sender = SendImg("169.254.60.115", 8000)
+    sender = SendImg("169.254.60.115", 4444)
     cap = Cap()
     test = Test_solution(sender=sender)
     test.test_func(cap, "2")

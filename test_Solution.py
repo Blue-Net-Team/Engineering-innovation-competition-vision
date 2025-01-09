@@ -28,6 +28,9 @@ import cv2
 import numpy as np
 from Solution import Solution
 from utils import LoadCap, SendImg, ReceiveImg, Cap
+from colorama import Fore, Style, init
+
+init(autoreset=True)
 
 COLOR_DIC = {0: "R", 1: "G", 2: "B"}
 
@@ -93,8 +96,27 @@ class Test_solution(Solution):
                 cv2.imshow("img", res_img)
 
             if res:
+                time_show = detect_time * 1000
+
+                if time_show <= 30:
+                    color = Fore.GREEN
+                elif time_show <= 50:
+                    color = Fore.YELLOW
+                else:
+                    color = Fore.RED
+
                 now_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                print(f"[{now_time}] res:{res} \t detect time(ms):{detect_time * 1000:.2f}")
+                print(
+                    Fore.YELLOW + f"[{now_time}]" + Style.RESET_ALL,
+                    "res:",
+                    Fore.MAGENTA + f"{'+'if res[1]=='1' else '-'}{res[2:4]}.{res[4]}" + Style.RESET_ALL,
+                    "x:",
+                    Fore.MAGENTA + f"{res[5:8]}" + Style.RESET_ALL,
+                    "y:",
+                    Fore.MAGENTA + f"{res[8:11]}" + Style.RESET_ALL,
+                    "\t detect time(ms):",
+                    color + f"{detect_time * 1000:.2f}" + Style.RESET_ALL
+                )
 
             # if self.sender is None:
             #     if cv2.waitKey(1) & 0xFF == ord("q"):

@@ -20,14 +20,17 @@ r"""
                               神兽保佑
                              工创国一！！
 """
+import datetime
 import threading
+from colorama import Fore, Style, init
 import cv2
 import Solution
-from utils import SendImg, Cap
-from utils import Switch
+from utils import SendImg, Cap, Switch
 import numpy as np
 
 from utils.ImgTrans import NeedReConnect
+
+init(autoreset=True)
 
 class MainSystem:
 
@@ -92,9 +95,17 @@ class MainSystem:
         ----
         """
         if self.sender:
+            print(
+                Fore.YELLOW + f"[{datetime.datetime.now()}]" + Fore.RESET,
+                "Waiting for connecting..."
+            )
             while self.sending_flag:
                 if self.sender.connecting():
                     break
+            print(
+                Fore.GREEN + f"[{datetime.datetime.now()}]" + Fore.RESET,
+                "Start sending image"
+            )
             while self.sending_flag:
                 try:
                     self.sender.send(self.img)
@@ -102,6 +113,10 @@ class MainSystem:
                     while self.sending_flag:
                         if self.sender.connecting():
                             break
+        else:
+            print(
+                Fore.RED + "No sender, please check the network connection" + Fore.RESET
+            )
 
     def __read_img(self):
         """

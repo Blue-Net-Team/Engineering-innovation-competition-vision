@@ -41,6 +41,42 @@ try:
 except ModuleNotFoundError:
     from detector.Detect import Detect
 
+def calculate_cross_point(
+        p1:tuple[int, int], p2:tuple[int, int], p3:tuple[int, int], p4:tuple[int, int]
+):
+    """
+    计算两条直线的交点
+    ----
+    Args:
+        p1: 第一条直线的两个端点
+        p2: 第一条直线的两个端点
+        p3: 第二条直线的两个端点
+        p4: 第二条直线的两个端点
+    Returns:
+        交点坐标
+    """
+    x1, y1 = p1
+    x2, y2 = p2
+    x3, y3 = p3
+    x4, y4 = p4
+
+    A = np.array(
+        (
+            [-(y4-y3)/(x4-x3), 1],
+            [-(y2-y1)/(x2-x1), 1]
+        )
+    )
+    B = np.array(
+        (
+            [y3-((y4-y3)/(x4-x3))*x3],
+            [y1-((y2-y1)/(x2-x1))*x1]
+        )
+    )
+
+    # 求解矩阵方程 Ax=B
+    cross_point = np.linalg.solve(A, B)
+
+    return cross_point
 
 class LineDetector(Detect):
     """
@@ -109,7 +145,7 @@ class LineDetector(Detect):
             img: 传入的图像数据
             point: 交点坐标
         """
-        cv2.circle(img, point, 4, (255, 0, 0), 3)
+        cv2.circle(img, point, 2, (255, 0, 0), 3)
 
     def get_right_angle(self, _img, draw: bool = True) -> tuple[None|int, None|int, None|tuple[int, int]]:
         """
@@ -148,27 +184,20 @@ class LineDetector(Detect):
                     x3, y3, x4, y4 = target_line
                     target_line = [target_line]
                     try:
-                        cross_point = (
-                            int(
-                                (x1 * y2 - y1 * x2) * (x3 - x4)
-                                - (x1 - x2) * (x3 * y4 - y3 * x4)
-                            )
-                            // ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)),
-                            int(
-                                (x1 * y2 - y1 * x2) * (y3 - y4)
-                                - (y1 - y2) * (x3 * y4 - y3 * x4)
-                            )
-                            // ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)),
+                        cross_point_ff = calculate_cross_point(
+                            (x1, y1), (x2, y2), (x3, y3), (x4, y4)
                         )
                     except ValueError:
                         return None, None, None
 
+                    cross_point_ii = tuple(map(int, cross_point_ff))
+
                     if draw:  # 画出直线
                         self.draw_line(_img, line)
                         self.draw_line(_img, target_line)
-                        self.__draw_point(_img, cross_point)
+                        self.__draw_point(_img, cross_point_ii)
 
-                    return int(degree*10), int(target_degree*10), cross_point
+                    return int(degree*10), int(target_degree*10), cross_point_ff
 
         return None, None, None
 

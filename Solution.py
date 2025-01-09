@@ -299,10 +299,12 @@ class Solution:
         - xxx和yyy代表交点的坐标
         """
         res_img = _img.copy()
-        angel1, angel2, cross_point = self.line_detector.get_right_angle(res_img, draw=True)
+        angel1, angel2, cross_point_ff = self.line_detector.get_right_angle(res_img, draw=True)
 
-        if angel1 is None or angel2 is None or cross_point is None:
+
+        if angel1 is None or angel2 is None or cross_point_ff is None:
             return None, res_img
+        cross_point = round(cross_point_ff[0][0]), round(cross_point_ff[1][0])
 
         # 取出大于0的角度
         angel = angel1/10 if 0 < angel1 < 900 else angel2/10

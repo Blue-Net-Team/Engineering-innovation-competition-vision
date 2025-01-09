@@ -93,7 +93,12 @@ while True:
 
             if res:
                 solution.uart.write(res)
-                now_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                now_time = time.strftime(
+                    "%Y-%m-%d %H:%M:%S",
+                    time.localtime(
+                        time.time() + 8 * 3600
+                    )
+                )
                 time_show = detect_time * 1000
 
                 if time_show <= 30:

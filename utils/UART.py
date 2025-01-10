@@ -58,6 +58,8 @@ class Uart(serial.Serial):
             timeout (float): 超时时间，默认无
         """
         super().__init__(port=port, baudrate=baudrate, timeout=timeout)
+        self.read_falg = True
+
 
     def new_read(self, head: str, tail: str = "\n") -> str:
         """
@@ -73,7 +75,7 @@ class Uart(serial.Serial):
             self.clear()
             HEAD, TAIL = head.encode("ascii"), tail.encode("ascii")
             data = b""
-            while True:
+            while self.read_falg:
                 byte = super().read(1)
                 if not byte:
                     continue
@@ -83,15 +85,16 @@ class Uart(serial.Serial):
 
             # -----读到包头-----
             data = b""
-            while True:
+            while self.read_falg:
                 byte = super().read(1)
                 if not byte:
                     continue
                 data += byte
                 if data.endswith(TAIL):
                     return data[: -len(TAIL)].decode("ascii")  # 返回去掉包尾的数据
+            return None
         else:
-            return ""
+            return None
 
     @overload
     def write(self, data: str, head: str = "", tail: str = "") -> None: ...

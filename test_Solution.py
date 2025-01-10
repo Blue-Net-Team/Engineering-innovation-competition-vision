@@ -27,7 +27,7 @@ import time
 import cv2
 import numpy as np
 from Solution import Solution
-from utils import LoadCap, SendImg, ReceiveImg, Cap
+from utils import LoadCap, SendImg, ReceiveImg, Cap, InterpolatedCap
 from colorama import Fore, Style, init
 
 init(autoreset=True)
@@ -106,17 +106,30 @@ class Test_solution(Solution):
                     color = Fore.RED
 
                 now_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                print(
-                    Fore.YELLOW + f"[{now_time}]" + Style.RESET_ALL,
-                    "res:",
-                    Fore.MAGENTA + f"{'+'if res[1]=='1' else '-'}{res[2:4]}.{res[4]}" + Style.RESET_ALL,
-                    "x:",
-                    Fore.MAGENTA + f"{res[5:8]}" + Style.RESET_ALL,
-                    "y:",
-                    Fore.MAGENTA + f"{res[8:11]}" + Style.RESET_ALL,
-                    "\t detect time(ms):",
-                    color + f"{detect_time * 1000:.2f}" + Style.RESET_ALL
-                )
+                if res[0] == "L":
+                    print(
+                        Fore.YELLOW + f"[{now_time}]" + Style.RESET_ALL,
+                        "res:",
+                        Fore.MAGENTA + f"{'+'if res[1]=='1' else '-'}{res[2:4]}.{res[4]}" + Style.RESET_ALL,
+                        "x:",
+                        Fore.MAGENTA + f"{res[5:8]}" + Style.RESET_ALL,
+                        "y:",
+                        Fore.MAGENTA + f"{res[8:11]}" + Style.RESET_ALL,
+                        "\t detect time(ms):",
+                        color + f"{detect_time * 1000:.2f}" + Style.RESET_ALL
+                    )
+                elif res[0] == "C":
+                    # "CR1G2B3E"
+                    print(
+                        Fore.YELLOW + f"[{now_time}]" + Style.RESET_ALL,
+                        "res:",
+                        Fore.RED + f"{res[1:3]}" + Style.RESET_ALL,
+                        Fore.GREEN + f"{res[3:5]}" + Style.RESET_ALL,
+                        Fore.BLUE + f"{res[5:7]}" + Style.RESET_ALL,
+                        "\t detect time(ms):",
+                        color + f"{detect_time * 1000:.2f}" + Style.RESET_ALL
+                    )
+
 
             # if self.sender is None:
             #     if cv2.waitKey(1) & 0xFF == ord("q"):

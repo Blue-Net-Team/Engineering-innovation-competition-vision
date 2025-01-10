@@ -77,30 +77,30 @@ class TraditionalColorDetector:
     color = COLOR_DICT[color_index]
 
     color_threshold = {
-        "R":{
+        "R": {
             "centre": 0,
-            "error": 10,
-            "L_S": 55,
+            "error": 12,
+            "L_S": 20,
             "U_S": 255,
             "L_V": 0,
-            "U_V": 255,
+            "U_V": 255
         },
-        "G":{
-            "centre": 65,
-            "error": 10,
-            "L_S": 55,
+        "G": {
+            "centre": 69,
+            "error": 12,
+            "L_S": 20,
+            "U_S": 255,
+            "L_V": 30,
+            "U_V": 255
+        },
+        "B": {
+            "centre": 108,
+            "error": 11,
+            "L_S": 100,
             "U_S": 255,
             "L_V": 0,
-            "U_V": 255,
-        },
-        "B":{
-            "centre": 130,
-            "error": 10,
-            "L_S": 55,
-            "U_S": 255,
-            "L_V": 0,
-            "U_V": 255,
-        },
+            "U_V": 255
+        }
     }
 
     def __init__(self):

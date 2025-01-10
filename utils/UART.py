@@ -61,7 +61,7 @@ class Uart(serial.Serial):
         self.read_falg = True
 
 
-    def read(self, head: str, tail: str = "\n") -> str|None:
+    def new_read(self, head: str, tail: str = "\n") -> str:
         """
         读取数据
         ----

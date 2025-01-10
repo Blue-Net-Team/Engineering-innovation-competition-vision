@@ -92,7 +92,7 @@ class Solution:
             self.area1_points:list[list[int]] = [[0,0],[0,0]]
             self.area2_points:list[list[int]] = [[0,0],[0,0]]
             self.area3_points:list[list[int]] = [[0,0],[0,0]]
-            self.target_angel:int = 0
+            self.target_angel:int = 45
             print(Fore.RED + "配置文件读取位号参数失败")
 
         # 加载圆环识别的圆环参数
@@ -291,15 +291,20 @@ class Solution:
             res (str, cv2.typing.MatLike): 直角的角度和画出直角的图片
 
         * str的结果会表示为
-        'AHXXPHxxxHyyy'，
-        其中：A和a代表第一个和第二个直线的角度，P代表交点，H代表正负号（0和1），XX代表角度，
-        xxx和yyy代表交点的坐标
+        'LHXXXxxxyyyE'，
+        其中：
+        - LE代表包头包尾
+        - H是正负标记，0- 1+
+        - XXX是角度的十倍，例如： 45.0->450,46.7->467
+        - xxx和yyy代表交点的坐标
         """
         res_img = _img.copy()
-        angel1, angel2, cross_point = self.line_detector.get_right_angle(res_img, draw=True)
+        angel1, angel2, cross_point_ff = self.line_detector.get_right_angle(res_img, draw=True)
 
-        if angel1 is None or angel2 is None or cross_point is None:
+
+        if angel1 is None or angel2 is None or cross_point_ff is None:
             return None, res_img
+        cross_point = round(cross_point_ff[0][0]), round(cross_point_ff[1][0])
 
         # 取出大于0的角度
         angel = angel1/10 if 0 < angel1 < 900 else angel2/10

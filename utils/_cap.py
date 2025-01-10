@@ -64,22 +64,26 @@ class InterpolatedCap(Cap):
 
         self.prev_frame = None
         # 插值系数
-        self.alpha = 0.5
+        self.alpha = 0.6
         self.prev_tick = cv2.getTickCount()
         self.frame_count = 0
         # 用于存储最近30帧的FPS值
         self.fps_deque = deque(maxlen=30)
         self.avg_fps = 0
+        self.interpolated_frame = None
 
     def read(self):
         ret, frame = super().read()
         if ret:
             if self.prev_frame is not None:
                 # 使用插值方法生成新帧
-                interpolated_frame = cv2.addWeighted(
+                self.interpolated_frame = cv2.addWeighted(
                     frame, self.alpha, self.prev_frame, 1 - self.alpha, 0
                 )
             self.prev_frame = frame
+
+        if self.interpolated_frame is not None:
+            return ret, self.interpolated_frame
         return ret, frame
 
     def release(self):

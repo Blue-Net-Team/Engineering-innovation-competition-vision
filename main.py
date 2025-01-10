@@ -20,251 +20,105 @@ r"""
                               神兽保佑
                              工创国一！！
 """
+
 import datetime
-import threading
-from colorama import Fore, Style, init
+import time
 import cv2
 import Solution
-from utils import SendImg, Cap, Switch
-import numpy as np
-
-from utils.ImgTrans import NeedReConnect
+from utils import LoadCap, SendImg, InterpolatedCap
+from colorama import Fore, Style, init
 
 init(autoreset=True)
 
-class MainSystem:
+HEAD: str = "@"
+TAIL: str = "#"
 
-    sending_ori_flag = False    # 发送原始图像线程标志
-    send_main_flag = False      # 发送主线程标志
-    send_main = False       # 主函数是否要发送图像
-    main_flag = False       # 主线程标志
-    reading_flag = True     # 读取图像线程标志
+DEAL_IMG = "send"  # 处理图像的方式,包含"show"、"send"、"hide"
 
-    def __init__(
-        self,
-        ser_port: str,
-        sender: SendImg | None=None,
-        if_send_main: bool = False
-    ) -> None:
-        """
-        主系统
-        ----
-        Args:
-            ser_port (str): 串口号
-        """
-        self.cap = Cap()
-        self.solution = Solution.Solution(ser_port)
-        self.switch = Switch(18)
-        self.sender = sender
+IP: str = "169.254.60.115"
+PORT: int = 4444  # 端口号
 
-        self.need_send_img:cv2.typing.MatLike = np.zeros((480, 640, 3), np.uint8)
-        cv2.putText(
-            self.need_send_img,
-            "No Image",
-            (100, 100),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (255, 255, 255),
-            2
+SERIAL_PORT = "/dev/ttyUSB0"
+
+# region 主代码
+vs = SendImg(IP, PORT)
+while 1:
+    try:
+        solution = Solution.Solution(SERIAL_PORT)
+        break
+    except:
+        now_time = datetime.datetime.now().strftime("%H:%M:%S:%f")
+        print(
+            Fore.YELLOW + f"[{now_time}]" + Style.RESET_ALL,
+            "串口连接失败，正在重试..."
         )
+        continue
+cap1 = InterpolatedCap(0)
 
-        self.img = self.need_send_img.copy()
+DEAL_IMG_DICT = {"show": Solution.show, "send": vs.send, "hide": lambda x: None}
 
-        self.TASK_DICT = {
-            "1": self.solution.material_moving_detect,  # 物料运动检测
-            "2": self.solution.get_material,  # 获取物料位号
-            "3": self.solution.right_angle_detect,  # 直角检测
-            "4": self.solution.annulus_top,  # 圆环检测
-        }
+solution_dict = {
+    "1": solution.material_moving_detect,  # 物料运动检测
+    "2": solution.get_material,  # 获取物料位号
+    "3": solution.right_angle_detect,  # 直角检测
+    "4": solution.annulus_top,      # 圆环检测
+}
 
-        self.send_main = if_send_main
 
-    def main(self):
-        """
-        主函数
-        ----
-        """
-        # 读取图像
-        img_thread = threading.Thread(target=self.__read_img)
-        img_thread.start()
+if DEAL_IMG == "send":
+    while 1:
+        if vs.connecting():
+            break
 
+    vs.start()
+
+while True:
+    sign = solution.uart.new_read(head=HEAD, tail=TAIL)  # 读取串口
+    # 判断信号是否合法
+    if sign in solution_dict:  # 信号合法
         while True:
-            switch_status = self.switch.read_status()
-
-            if switch_status:
-                if self.send_main_flag:  # 如果主线程图传线程已启动, 则关闭
-                    print("Stop sending main")
-                    self.send_main_flag = False
-                    main_sending_thread.join()
-
-                if not self.sending_ori_flag:  # 如果(原图像)图传线程未启动, 则启动
-                    # TODO:更新self.need_send_img
-                    print("Start sending image")
-                    self.sending_ori_flag = True
-                    img_ori_sending_thread = threading.Thread(
-                        target=self.__send_ori_img
-                    )
-                    img_ori_sending_thread.start()
-
-                if self.main_flag:  # 如果主线程已启动, 则关闭
-                    print("Stop main")
-                    self.main_flag = False
-                    self.solution.uart.read_falg = False
-                    main_thread.join()
-
-            else:
-                if self.sending_ori_flag:  # 如果(原图像)图传线程已启动, 则关闭
-                    print("Stop sending image")
-                    self.sending_ori_flag = False
-                    img_ori_sending_thread.join()
-
-                if not self.main_flag:  # 如果主线程未启动, 则启动
-                    print("Start main")
-                    self.main_flag = True
-                    self.solution.uart.read_falg = True
-                    main_thread = threading.Thread(target=self.__main)
-                    main_thread.start()
-
-                    if self.send_main:
-                        print("Start sending main")
-                        self.send_main_flag = True
-                        main_sending_thread = threading.Thread(
-                            target=self.__send_main_img, args=(False,)
-                        )
-                        main_sending_thread.start()
-
-    def __send_ori_img(self, if_ori_img: bool = True):
-        """
-        发送原始图像
-        ----
-        """
-        if self.sender:
-            self.__ori_connecting()
-            print(
-                Fore.GREEN + f"[{self.__get_time()}]" + Fore.RESET,
-                "Start sending image"
-            )
-            while self.sending_ori_flag:
-                if if_ori_img:
-                    self.need_send_img = self.img.copy()
-
-                try:
-                    self.sender.send(self.need_send_img)
-                except:
-                    self.__ori_connecting()
-        else:
-            print(
-                Fore.RED + "No sender, please check the network connection" + Fore.RESET
-            )
-    def __send_main_img(self, if_ori_img: bool = True):
-        """
-        发送原始图像
-        ----
-        """
-        if self.sender:
-            self.__main_connecting()
-            print(
-                Fore.GREEN + f"[{self.__get_time()}]" + Fore.RESET,
-                "Start sending image"
-            )
-            while self.send_main_flag:
-                if if_ori_img:
-                    self.need_send_img = self.img.copy()
-
-                try:
-                    self.sender.send(self.need_send_img)
-                except:
-                    self.__main_connecting()
-        else:
-            print(
-                Fore.RED + "No sender, please check the network connection" + Fore.RESET
-            )
-
-    def __ori_connecting(self):
-        if self.sender:
-            print(
-                Fore.YELLOW + f"[{self.__get_time()}]" + Fore.RESET,
-                "Waiting for connecting...",
-            )
-            while self.sending_ori_flag:
-                if self.sender.connecting():
-                    break
-
-    def __main_connecting(self):
-        if self.sender:
-            print(
-                Fore.YELLOW + f"[{self.__get_time()}]" + Fore.RESET,
-                "Waiting for connecting...",
-            )
-            while self.send_main_flag:
-                if self.sender.connecting():
-                    break
-
-    def __get_time(self):
-        return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-
-    def __main(self):
-        while self.main_flag:
-            sign = self.solution.uart.new_read("@", "#")
-
-            if sign in self.TASK_DICT:
-                print(
-                    Fore.BLUE + f"[{self.__get_time()}]" + Fore.RESET,
-                    f"sign:",
-                    Fore.CYAN + f"{sign}" + Fore.RESET
-                )
-                while True:
-                    img = self.img.copy()
-                    img = img[:400,:]
-
-                    t0 = datetime.datetime.now()
-                    res, self.need_send_img = self.TASK_DICT[sign](img)
-                    t1 = datetime.datetime.now()
-
-                    if res is not None:
-                        detect_time_ms = (t1 - t0).total_seconds() * 1000
-
-                        if detect_time_ms < 40:
-                            font_color = Fore.GREEN
-                        elif detect_time_ms < 60:
-                            font_color = Fore.YELLOW
-                        else:
-                            font_color = Fore.RED
-
-                        print(
-                            Fore.BLUE + f"[{self.__get_time()}]" + Fore.RESET,
-                            f"res:",
-                            Fore.MAGENTA + f"{res}" + Fore.RESET,
-                            "\t detect time(s):",
-                            font_color + f"{detect_time_ms:.2f}" + Fore.RESET,
-                        )
-
-                        self.solution.uart.write(res)
-                        break
-
-            else:
-                print(
-                    Fore.BLUE + f"[{self.__get_time()}]" + Fore.RESET,
-                    Fore.RED + "Invalid sign" + Fore.RESET
-                )
-
-    def __read_img(self):
-        """
-        读取图像
-        ----
-        """
-        while self.reading_flag:
-            _, img = self.cap.read()
+            _, img = cap1.read()
             if img is None:
                 continue
-            self.img = img
+            img = img[:400,:]
+
+            t0 = time.perf_counter()
+
+            # 如果res是none，会继续读取下一帧图像，直到res不是none
+            res, res_img = solution_dict[sign](img)
+
+            t1 = time.perf_counter()
+            detect_time = t1 - t0
+
+            DEAL_IMG_DICT[DEAL_IMG](res_img)
+
+            if res:
+                solution.uart.write(res)
+                now_time = time.strftime(
+                    "%Y-%m-%d %H:%M:%S",
+                    time.localtime(
+                        time.time() + 8 * 3600
+                    )
+                )
+                time_show = detect_time * 1000
+
+                if time_show <= 30:
+                    color = Fore.GREEN
+                elif time_show <= 50:
+                    color = Fore.YELLOW
+                else:
+                    color = Fore.RED
 
 
-if __name__ == "__main__":
-    mainsystem = MainSystem(
-        ser_port="/dev/ttyUSB0",
-        sender=SendImg("169.254.60.115", 4444),
-        if_send_main=True
-    )
-    mainsystem.main()
-# end main
+                print(
+                    Fore.BLUE + f"[{now_time}]" + Style.RESET_ALL,
+                    "Detect time(ms):",
+                    color + f"{time_show:.2f}" + Style.RESET_ALL,
+                    "writed:",
+                    Fore.MAGENTA + f"{res}" + Style.RESET_ALL
+                )
+                break
+    else:  # 信号非法
+        print(f"Invalid sign {sign}")
+        continue
+# endregion

@@ -76,23 +76,21 @@ while True:
     sign = solution.uart.new_read(head=HEAD, tail=TAIL)  # 读取串口
     # 判断信号是否合法
     if sign in solution_dict:  # 信号合法
+        t0 = time.perf_counter()
         while True:
             _, img = cap1.read()
             if img is None:
                 continue
             img = img[:400,:]
 
-            t0 = time.perf_counter()
-
             # 如果res是none，会继续读取下一帧图像，直到res不是none
             res, res_img = solution_dict[sign](img)
-
-            t1 = time.perf_counter()
-            detect_time = t1 - t0
 
             DEAL_IMG_DICT[DEAL_IMG](res_img)
 
             if res:
+                t1 = time.perf_counter()
+                detect_time = t1 - t0
                 solution.uart.write(res)
                 now_time = time.strftime(
                     "%Y-%m-%d %H:%M:%S",

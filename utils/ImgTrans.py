@@ -117,7 +117,7 @@ class SendImg(object):
                 self.stream.truncate()
                 self.connect.write(struct.pack("<L", 0))
                 return True
-            except ConnectionResetError or ConnectionAbortedError:
+            except ConnectionResetError or ConnectionAbortedError or BrokenPipeError:
                 raise NeedReConnect("连接已断开，请重新连接")
         else:
             return False

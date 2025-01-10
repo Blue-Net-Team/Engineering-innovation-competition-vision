@@ -187,10 +187,10 @@ class LineDetector(Detect):
                         cross_point_ff = calculate_cross_point(
                             (x1, y1), (x2, y2), (x3, y3), (x4, y4)
                         )
+                        cross_point_ii = tuple(map(int, cross_point_ff))
                     except ValueError:
                         return None, None, None
 
-                    cross_point_ii = tuple(map(int, cross_point_ff))
 
                     if draw:  # 画出直线
                         self.draw_line(_img, line)

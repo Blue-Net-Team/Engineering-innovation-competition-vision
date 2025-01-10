@@ -73,7 +73,7 @@ if DEAL_IMG == "send":
     vs.start()
 
 while True:
-    sign = solution.uart.read(head=HEAD, tail=TAIL)  # 读取串口
+    sign = solution.uart.new_read(head=HEAD, tail=TAIL)  # 读取串口
     # 判断信号是否合法
     if sign in solution_dict:  # 信号合法
         for img in cap1:      # 读取摄像头

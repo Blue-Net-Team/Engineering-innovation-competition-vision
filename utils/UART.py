@@ -59,7 +59,7 @@ class Uart(serial.Serial):
         """
         super().__init__(port=port, baudrate=baudrate, timeout=timeout)
 
-    def read(self, head: str, tail: str = "\n") -> str:
+    def new_read(self, head: str, tail: str = "\n") -> str:
         """
         读取数据
         ----

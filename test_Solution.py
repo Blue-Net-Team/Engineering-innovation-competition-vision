@@ -132,15 +132,10 @@ class Test_solution(Solution):
             None
         """
         while True:
-            data = self.uart.read(head, tail)
+            data = self.uart.new_read(head, tail)
             now = datetime.now()
             now_time = now.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
             print(f"{now_time} readed {data}")
-
-            self.uart.write("R1G3B0", "C", "E")
-            now_time = now.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-            print(f"{now_time} writed R1G3B0")
-
 
 
     def test_usart_write(self, data: str, head: str, tail: str):

@@ -25,7 +25,7 @@ import datetime
 import time
 import cv2
 import Solution
-from utils import LoadCap, SendImg
+from utils import LoadCap, SendImg, InterpolatedCap
 from colorama import Fore, Style, init
 
 init(autoreset=True)
@@ -53,7 +53,7 @@ while 1:
             "串口连接失败，正在重试..."
         )
         continue
-cap1 = LoadCap(0)
+cap1 = InterpolatedCap(0)
 
 DEAL_IMG_DICT = {"show": Solution.show, "send": vs.send, "hide": lambda x: None}
 
@@ -76,7 +76,8 @@ while True:
     sign = solution.uart.new_read(head=HEAD, tail=TAIL)  # 读取串口
     # 判断信号是否合法
     if sign in solution_dict:  # 信号合法
-        for img in cap1:      # 读取摄像头
+        while True:
+            _, img = cap1.read()
             if img is None:
                 continue
             img = img[:400,:]

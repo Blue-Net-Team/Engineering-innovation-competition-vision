@@ -102,7 +102,7 @@ class MainSystem:
                     print("Start sending image")
                     self.sending_ori_flag = True
                     img_ori_sending_thread = threading.Thread(
-                        target=self.__send_img, args=(self.sending_ori_flag,)
+                        target=self.__send_ori_img
                     )
                     img_ori_sending_thread.start()
 
@@ -129,35 +129,58 @@ class MainSystem:
                         print("Start sending main")
                         self.send_main_flag = True
                         main_sending_thread = threading.Thread(
-                            target=self.__send_img, args=(self.send_main_flag, False)
+                            target=self.__send_main_img, args=(False,)
                         )
                         main_sending_thread.start()
 
-    def __send_img(self, flag, if_ori_img: bool = True):
+    def __send_ori_img(self, if_ori_img: bool = True):
         """
         发送原始图像
         ----
         """
         if self.sender:
-            self.__connecting()
+            self.__ori_connecting()
             print(
                 Fore.GREEN + f"[{self.__get_time()}]" + Fore.RESET,
                 "Start sending image"
             )
-            while flag:
+            while self.sending_ori_flag:
                 if if_ori_img:
                     self.need_send_img = self.img.copy()
 
                 try:
                     self.sender.send(self.need_send_img)
-                except NeedReConnect:
-                    self.__connecting()
+                except:
+                    self.__ori_connecting()
+        else:
+            print(
+                Fore.RED + "No sender, please check the network connection" + Fore.RESET
+            )
+    def __send_main_img(self, if_ori_img: bool = True):
+        """
+        发送原始图像
+        ----
+        """
+        if self.sender:
+            self.__main_connecting()
+            print(
+                Fore.GREEN + f"[{self.__get_time()}]" + Fore.RESET,
+                "Start sending image"
+            )
+            while self.send_main_flag:
+                if if_ori_img:
+                    self.need_send_img = self.img.copy()
+
+                try:
+                    self.sender.send(self.need_send_img)
+                except:
+                    self.__main_connecting()
         else:
             print(
                 Fore.RED + "No sender, please check the network connection" + Fore.RESET
             )
 
-    def __connecting(self):
+    def __ori_connecting(self):
         if self.sender:
             print(
                 Fore.YELLOW + f"[{self.__get_time()}]" + Fore.RESET,
@@ -167,14 +190,29 @@ class MainSystem:
                 if self.sender.connecting():
                     break
 
+    def __main_connecting(self):
+        if self.sender:
+            print(
+                Fore.YELLOW + f"[{self.__get_time()}]" + Fore.RESET,
+                "Waiting for connecting...",
+            )
+            while self.send_main_flag:
+                if self.sender.connecting():
+                    break
+
     def __get_time(self):
         return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
 
     def __main(self):
         while self.main_flag:
-            sign = self.solution.uart.read("@", "#")
+            sign = self.solution.uart.new_read("@", "#")
 
             if sign in self.TASK_DICT:
+                print(
+                    Fore.BLUE + f"[{self.__get_time()}]" + Fore.RESET,
+                    f"sign:",
+                    Fore.CYAN + f"{sign}" + Fore.RESET
+                )
                 while True:
                     img = self.img.copy()
                     img = img[:400,:]
@@ -225,7 +263,8 @@ class MainSystem:
 if __name__ == "__main__":
     mainsystem = MainSystem(
         ser_port="/dev/ttyUSB0",
-        sender=SendImg("169.254.60.115", 4444)
+        sender=SendImg("169.254.60.115", 4444),
+        if_send_main=True
     )
     mainsystem.main()
 # end main

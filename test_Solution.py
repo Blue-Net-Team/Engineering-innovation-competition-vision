@@ -145,15 +145,10 @@ class Test_solution(Solution):
             None
         """
         while True:
-            data = self.uart.read(head, tail)
+            data = self.uart.new_read(head, tail)
             now = datetime.now()
             now_time = now.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
             print(f"{now_time} readed {data}")
-
-            self.uart.write("R1G3B0", "C", "E")
-            now_time = now.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-            print(f"{now_time} writed R1G3B0")
-
 
 
     def test_usart_write(self, data: str, head: str, tail: str):
@@ -275,11 +270,10 @@ class Test_solution(Solution):
         cap.release()
 
 if __name__ == "__main__":
-    # sender = SendImg("169.254.60.115", 4444)
-
-    webCap = ReceiveImg("169.254.60.115", 4444)
-    test = Test_solution()
-    test.test_func(webCap, "2")
+    sender = SendImg("169.254.60.115", 4444)
+    cap = Cap()
+    test = Test_solution(sender=sender)
+    test.test_func(cap, "2")
     # test.test_material_positions(0)
     # test.test_annulus_color(0, "G")
 # end main

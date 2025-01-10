@@ -1,10 +1,10 @@
 import cv2
-from utils import LoadWebCam, SendImg
+from utils import LoadWebCam, SendImg, Cap, InterpolatedCap
 from utils.ImgTrans import NeedReConnect
 
 if __name__ == "__main__":
     stream = SendImg("169.254.60.115", 4444)
-    cap = cv2.VideoCapture(0)
+    cap = InterpolatedCap()
     while True:
         if stream.connecting():
             break

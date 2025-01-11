@@ -117,16 +117,24 @@ while True:
                 )
                 break
     else:
-        _split = sign.split("+")
-
-        if len(_split) == 2:
-            # 显示任务码
-            print(
-                Fore.BLUE + f"[{get_time()}]" + Style.RESET_ALL,
-                "Task code:",
-                Fore.MAGENTA + f"{_split[0]} + {_split[1]}" + Style.RESET_ALL
-            )
-            solution.uart_hmi(_split)
+        if sign is not None:
+            _split = sign.split("+")
+            if len(_split) == 2:
+                # 显示任务码
+                print(
+                    Fore.BLUE + f"[{get_time()}]" + Style.RESET_ALL,
+                    "Task code:",
+                    Fore.MAGENTA + f"{_split[0]} + {_split[1]}" + Style.RESET_ALL
+                )
+                solution.uart_hmi(_split)
+            else:
+                # 信号非法
+                now_time = get_time()
+                print(
+                    Fore.RED + f"[{now_time}]" + Style.RESET_ALL,
+                    f"Invalid sign {sign}"
+                )
+                continue
         else:
             # 信号非法
             now_time = get_time()

@@ -76,7 +76,7 @@ class Test_solution(Solution):
         Returns:
             None
         """
-        # cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         while True:
             _,img = cap.read()
             if img is None:
@@ -131,9 +131,9 @@ class Test_solution(Solution):
                     )
 
 
-            # if self.sender is None:
-            #     if cv2.waitKey(1) & 0xFF == ord("q"):
-            #         break
+            if self.sender is None:
+                if cv2.waitKey(1) & 0xFF == ord("q"):
+                    break
 
     def test_usart_read(self, head: str, tail: str):
         """
@@ -270,9 +270,9 @@ class Test_solution(Solution):
         cap.release()
 
 if __name__ == "__main__":
-    sender = SendImg("169.254.60.115", 4444)
-    cap = Cap()
-    test = Test_solution(sender=sender)
+    # sender = SendImg("169.254.60.115", 4444)
+    cap = ReceiveImg("169.254.60.115", 4444)
+    test = Test_solution(sender=None)
     test.test_func(cap, "2")
     # test.test_material_positions(0)
     # test.test_annulus_color(0, "G")

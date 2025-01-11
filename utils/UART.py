@@ -48,7 +48,7 @@ class Uart(serial.Serial):
     * 发送数据的时候可以指定包头包尾
     """
 
-    def __init__(self, port:str|None, baudrate:int=115200, timeout:float=0.05):
+    def __init__(self, port:str|None, baudrate:int=115200, timeout:float=0.01):
         """
         初始化串口通信对象
         ----

@@ -10,6 +10,7 @@
 """
 
 import json
+import time
 import cv2
 import numpy as np
 from utils import Uart
@@ -66,7 +67,7 @@ def draw_material(
     return img
 
 class Solution:
-    def __init__(self, ser_port: str|None):
+    def __init__(self, ser_port: list[str]):
         """
         解决方案
         ----
@@ -78,6 +79,8 @@ class Solution:
         self.line_detector = detector.LineDetector()
         self.uart1 = Uart(ser_port[0])
         self.uart2 = Uart(ser_port[1])
+        self.uart_32:None|Uart = None
+        self.uart_hmi:None|Uart = None
         self.position_id_stack:list[dict[str,int|None]] = []     # 用于存放上一帧图像的物料位号的栈
 
         # region 读取配置文件
@@ -134,16 +137,15 @@ class Solution:
 
         color_position_dict:dict[str,tuple[int,int,int,int]] = self.__detect_material_positions(_img)   # type:ignore
 
-        # 如果有物料没识别到，即color_position_dict有None，返回none
-        if None in color_position_dict.values():
-            return None, res_img
 
         for (color, position), area_point in zip(
             color_position_dict.items(),
             [self.area1_points, self.area2_points, self.area3_points],
         ):
-            # 画出物料
-            res_img = draw_material(position, res_img, color)
+            if position is not None:
+                # 画出物料
+                res_img = draw_material(position, res_img, color)
+
             # 画出位号
             cv2.rectangle(
                 res_img,
@@ -156,10 +158,6 @@ class Solution:
         # 将坐标转换成位号，在后面排除了now_color_position_id_dict中有None的情况
         now_color_position_id_dict: dict[str, int|None] = self.position2area(color_position_dict)     # type:ignore
 
-        # 如果有某个物料不在规定区域内，认为运动还没停止，返回none
-        if None in now_color_position_id_dict.values():
-            return None, res_img
-
         # 上一次的颜色位号
         last_color_position_id_dict: dict[str, int] = (
             self.position_id_stack.pop()
@@ -171,8 +169,11 @@ class Solution:
         self.position_id_stack.append(now_color_position_id_dict)
 
         # 如果两个字典不相等，说明物料运动了
-        if now_color_position_id_dict != last_color_position_id_dict:
-            return "1", res_img
+        if now_color_position_id_dict != last_color_position_id_dict\
+        and (len(set(now_color_position_id_dict.values())) == 3\
+            or list(now_color_position_id_dict.values()).count(None) == 2):
+            res, res_img = self.get_material(_img)
+            return res, res_img
         else:
             return None, res_img
 
@@ -214,7 +215,7 @@ class Solution:
 
         res = "".join(
             [
-                f"{color}{area if area else '0'}"
+                f"{area if area else '0'}"
                 for color, area in color_position_id_dict.items()
             ]
         )
@@ -278,6 +279,7 @@ class Solution:
                 color_area_dict[color] = 3
             else:
                 color_area_dict[color] = None  # 未知区域
+        # color_area_dict["time"] = int(time.time())
         return color_area_dict
     # endregion
 
@@ -513,7 +515,7 @@ class Solution:
     # endregion
 
     # region 串口屏支持
-    def uart_hmi(self, task:list):
+    def write_uart_hmi(self, task:list):
         need_write = b"page 1\xff\xff\xffn0.val={}\xff\xff\xffn1.val={}\xff\xff\xff"
         code0 = b"page 1\xff\xff\xffn0.val="
         code1 = task[0].encode("ascii")
@@ -521,7 +523,19 @@ class Solution:
         code3 = task[1].encode("ascii")
         code4 = b"\xff\xff\xff"
         need_write = code0+code1+code2+code3+code4
-        self.uart1.old_write(need_write)
-        self.uart2.old_write(need_write)
+        self.uart_hmi.old_write(need_write)
 
     # endregion
+
+    def update_uart32(self, _id):
+        if _id == 1:
+            self.uart_32 = self.uart1
+            self.uart_hmi = self.uart2
+        elif _id == 2:
+            self.uart_32 = self.uart2
+            self.uart_hmi = self.uart1
+        else:
+            self.uart_32 = None
+            self.uart_hmi = None
+
+

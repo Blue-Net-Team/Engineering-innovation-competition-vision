@@ -23,9 +23,8 @@ r"""
 
 import datetime
 import time
-import cv2
 import Solution
-from utils import LoadCap, SendImg, InterpolatedCap
+from utils import SendImg, Cap
 from colorama import Fore, Style, init
 import subprocess
 
@@ -66,7 +65,7 @@ while 1:
             "串口连接失败，正在重试..."
         )
         continue
-cap1 = InterpolatedCap(0)
+cap1 = Cap(0)
 
 DEAL_IMG_DICT = {"show": Solution.show, "send": vs.send, "hide": lambda x: None}
 
@@ -88,10 +87,48 @@ if DEAL_IMG == "send":
 while True:
     sign1 = solution.uart1.new_read(head=HEAD, tail=TAIL)  # 读取串口
     sign2 = solution.uart2.new_read(head=HEAD, tail=TAIL)
-    sign = sign1 if sign1 else sign2
+
+    if sign1:
+        uart32_id = 1
+        sign = sign1
+    elif sign2:
+        uart32_id = 2
+        sign = sign2
+    else:
+        uart32_id = None
+        sign = None
+
+    solution.update_uart32(uart32_id)
+
+    if sign is not None:
+        _split = sign.split("+")
+        if len(_split) == 2:
+            # 显示任务码
+            print(
+                Fore.BLUE + f"[{get_time()}]" + Style.RESET_ALL,
+                "Task code:",
+                Fore.MAGENTA + f"{_split[0]} + {_split[1]}" + Style.RESET_ALL
+            )
+            solution.write_uart_hmi(_split)
+            break
+
+
+while True:
+    sign = solution.uart_32.new_read(HEAD,TAIL)
     # 判断信号是否合法
+    if sign is not None:
+        print(
+            Fore.BLUE + f"[{get_time()}]" + Style.RESET_ALL,
+            "readed",
+            Fore.MAGENTA + f"{sign}" + Style.RESET_ALL
+        )
     if sign in solution_dict:  # 信号合法
         t0 = time.perf_counter()
+        if sign in ["1","2"]:
+            for i in range(30):
+                _, img = cap1.read()
+                DEAL_IMG_DICT[DEAL_IMG](img)
+            solution.position_id_stack = []
         while True:
             _, img = cap1.read()
             if img is None:
@@ -106,8 +143,7 @@ while True:
             if res:
                 t1 = time.perf_counter()
                 detect_time = t1 - t0
-                solution.uart1.write(res)
-                solution.uart2.write(res)
+                solution.uart_32.write(res)
                 now_time = get_time()
                 time_show = detect_time * 1000
 
@@ -128,30 +164,11 @@ while True:
                 )
                 break
     else:
-        if sign is not None:
-            _split = sign.split("+")
-            if len(_split) == 2:
-                # 显示任务码
-                print(
-                    Fore.BLUE + f"[{get_time()}]" + Style.RESET_ALL,
-                    "Task code:",
-                    Fore.MAGENTA + f"{_split[0]} + {_split[1]}" + Style.RESET_ALL
-                )
-                solution.uart_hmi(_split)
-            else:
-                # 信号非法
-                now_time = get_time()
-                print(
-                    Fore.RED + f"[{now_time}]" + Style.RESET_ALL,
-                    f"Invalid sign {sign}"
-                )
-                continue
-        else:
-            # 信号非法
-            now_time = get_time()
-            print(
-                Fore.RED + f"[{now_time}]" + Style.RESET_ALL,
-                f"Invalid sign {sign}"
-            )
-            continue
+        # 信号非法
+        now_time = get_time()
+        # print(
+        #     Fore.RED + f"[{now_time}]" + Style.RESET_ALL,
+        #     f"Invalid sign {sign}"
+        # )
+        continue
 # endregion

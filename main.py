@@ -40,6 +40,11 @@ PORT: int = 4444  # 端口号
 
 SERIAL_PORT = "/dev/ttyUSB0"
 
+def get_time():
+        utc_dt = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
+        bj_dt = utc_dt.astimezone(datetime.timezone(datetime.timedelta(hours=8)))
+        return str(bj_dt)[:-6]
+
 # region 主代码
 vs = SendImg(IP, PORT)
 while 1:
@@ -92,12 +97,7 @@ while True:
                 t1 = time.perf_counter()
                 detect_time = t1 - t0
                 solution.uart.write(res)
-                now_time = time.strftime(
-                    "%Y-%m-%d %H:%M:%S",
-                    time.localtime(
-                        time.time() + 8 * 3600
-                    )
-                )
+                now_time = get_time()
                 time_show = detect_time * 1000
 
                 if time_show <= 30:
@@ -117,6 +117,10 @@ while True:
                 )
                 break
     else:  # 信号非法
-        print(f"Invalid sign {sign}")
+        now_time = get_time()
+        print(
+            Fore.RED + f"[{now_time}]" + Style.RESET_ALL,
+            f"Invalid sign {sign}"
+        )
         continue
 # endregion

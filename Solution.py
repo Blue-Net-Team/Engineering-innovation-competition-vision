@@ -299,6 +299,14 @@ class Solution:
         - xxx和yyy代表交点的坐标
         """
         res_img = _img.copy()
+
+        # 高斯模糊
+        res_img = cv2.GaussianBlur(res_img, (3, 3), 2)
+
+        # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        # 膨胀
+        # canny = cv2.dilate(canny, kernel, iterations=1)
+
         angel1, angel2, cross_point_ff = self.line_detector.get_right_angle(res_img, draw=True)
 
 

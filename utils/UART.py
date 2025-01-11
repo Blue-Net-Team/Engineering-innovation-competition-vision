@@ -152,3 +152,6 @@ class Uart(serial.Serial):
         """
         super().reset_input_buffer()
         super().reset_output_buffer()
+
+    def old_write(self, data:bytes):
+        return super().write(data)

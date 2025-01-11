@@ -27,6 +27,12 @@ import cv2
 import Solution
 from utils import LoadCap, SendImg, InterpolatedCap
 from colorama import Fore, Style, init
+import subprocess
+
+def get_tty():
+    result = subprocess.run(['ls',"/dev"],capture_output=True,text=True)
+    res = result.stdout.split("\n")
+    return ["/dev/"+i for i in res if "ttyUSB" in i]
 
 init(autoreset=True)
 
@@ -38,7 +44,9 @@ DEAL_IMG = "send"  # 处理图像的方式,包含"show"、"send"、"hide"
 IP: str = "169.254.60.115"
 PORT: int = 4444  # 端口号
 
-SERIAL_PORT = "/dev/ttyUSB0"
+SERIAL_PORT = get_tty()
+if len(SERIAL_PORT) != 2:
+    raise ValueError("没有读到串口或者串口过多，请保证串口只有两个")
 
 def get_time():
         utc_dt = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
@@ -78,7 +86,9 @@ if DEAL_IMG == "send":
     vs.start()
 
 while True:
-    sign = solution.uart.new_read(head=HEAD, tail=TAIL)  # 读取串口
+    sign1 = solution.uart1.new_read(head=HEAD, tail=TAIL)  # 读取串口
+    sign2 = solution.uart2.new_read(head=HEAD, tail=TAIL)
+    sign = sign1 if sign1 else sign2
     # 判断信号是否合法
     if sign in solution_dict:  # 信号合法
         t0 = time.perf_counter()
@@ -96,7 +106,8 @@ while True:
             if res:
                 t1 = time.perf_counter()
                 detect_time = t1 - t0
-                solution.uart.write(res)
+                solution.uart1.write(res)
+                solution.uart2.write(res)
                 now_time = get_time()
                 time_show = detect_time * 1000
 

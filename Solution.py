@@ -76,8 +76,8 @@ class Solution:
         self.annulus_circle_detector = detector.CircleDetector()
         self.traditional_color_detector = detector.TraditionalColorDetector()
         self.line_detector = detector.LineDetector()
-        self.uart = Uart(ser_port)
-        self.hmi = Uart("/dev/ttyUSB1")
+        self.uart1 = Uart(ser_port[0])
+        self.uart2 = Uart(ser_port[1])
         self.position_id_stack:list[dict[str,int|None]] = []     # 用于存放上一帧图像的物料位号的栈
 
         # region 读取配置文件
@@ -514,8 +514,14 @@ class Solution:
 
     # region 串口屏支持
     def uart_hmi(self, task:list):
-        need_write = f"page 1\xff\xff\xffn0.val={task[0]}\xff\xff\xffn1.val={task[1]}\xff\xff\xff"
-        self.uart.write(need_write)
-        self.hmi.write(need_write)
+        need_write = b"page 1\xff\xff\xffn0.val={}\xff\xff\xffn1.val={}\xff\xff\xff"
+        code0 = b"page 1\xff\xff\xffn0.val="
+        code1 = task[0].encode("ascii")
+        code2 = b"\xff\xff\xffn1.val="
+        code3 = task[1].encode("ascii")
+        code4 = b"\xff\xff\xff"
+        need_write = code0+code1+code2+code3+code4
+        self.uart1.old_write(need_write)
+        self.uart2.old_write(need_write)
 
     # endregion

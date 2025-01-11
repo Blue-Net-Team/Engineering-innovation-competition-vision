@@ -61,7 +61,7 @@ class Uart(serial.Serial):
         self.read_falg = True
 
 
-    def new_read(self, head: str, tail: str = "\n") -> str:
+    def new_read(self, head: str, tail: str = "\n") -> str|None:
         """
         读取数据
         ----
@@ -78,7 +78,7 @@ class Uart(serial.Serial):
             while self.read_falg:
                 byte = super().read(1)
                 if not byte:
-                    continue
+                    return None
                 data += byte
                 if data.endswith(HEAD):
                     break

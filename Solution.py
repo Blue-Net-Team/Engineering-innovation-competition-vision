@@ -77,6 +77,7 @@ class Solution:
         self.traditional_color_detector = detector.TraditionalColorDetector()
         self.line_detector = detector.LineDetector()
         self.uart = Uart(ser_port)
+        self.hmi = Uart("/dev/ttyUSB1")
         self.position_id_stack:list[dict[str,int|None]] = []     # 用于存放上一帧图像的物料位号的栈
 
         # region 读取配置文件
@@ -509,4 +510,12 @@ class Solution:
                 f"{str(avg_point[1]).rjust(3, '0')}E"
 
         return res, _img
+    # endregion
+
+    # region 串口屏支持
+    def uart_hmi(self, task:list):
+        need_write = f"page 1\xff\xff\xffn0.val={task[0]}\xff\xff\xffn1.val={task[1]}\xff\xff\xff"
+        self.uart.write(need_write)
+        self.hmi.write(need_write)
+
     # endregion

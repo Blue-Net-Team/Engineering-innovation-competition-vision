@@ -53,19 +53,24 @@ class CircleDetector(Detect):
     param2 = 20  # 累加器的阈值，值越小，检测到的圆越多
     minRadius = 35  # 圆的最小半径
     maxRadius = 45  # 圆的最大半径
+    sigma = 0  # 高斯滤波器的标准差
+    odd_index = 3   # 奇数索引
+
+    @property
+    def kernel_size(self):
+        """kernel_size是第几个奇数"""
+        return 2 * self.odd_index - 1
 
     def createTrackbar(self):
         cv2.namedWindow("Trackbar")
         cv2.createTrackbar("dp", "Trackbar", self.dp, 10, self.__callback)
         cv2.createTrackbar("minDist", "Trackbar", self.minDist, 100, self.__callback)
-        cv2.createTrackbar("param1", "Trackbar", self.param1, 100, self.__callback)
+        cv2.createTrackbar("param1", "Trackbar", self.param1, 255, self.__callback)
         cv2.createTrackbar("param2", "Trackbar", self.param2, 100, self.__callback)
-        cv2.createTrackbar(
-            "minRadius", "Trackbar", self.minRadius, 100, self.__callback
-        )
-        cv2.createTrackbar(
-            "maxRadius", "Trackbar", self.maxRadius, 100, self.__callback
-        )
+        cv2.createTrackbar("minRadius", "Trackbar", self.minRadius, 100, self.__callback)
+        cv2.createTrackbar("maxRadius", "Trackbar", self.maxRadius, 100, self.__callback)
+        cv2.createTrackbar("odd_index", "Trackbar", self.odd_index, 20, self.__callback)
+        cv2.createTrackbar("sigma", "Trackbar", self.sigma * 10, 100, self.__callback)
 
         cv2.setTrackbarPos("dp", "Trackbar", self.dp)
         cv2.setTrackbarPos("minDist", "Trackbar", self.minDist)
@@ -73,6 +78,8 @@ class CircleDetector(Detect):
         cv2.setTrackbarPos("param2", "Trackbar", self.param2)
         cv2.setTrackbarPos("minRadius", "Trackbar", self.minRadius)
         cv2.setTrackbarPos("maxRadius", "Trackbar", self.maxRadius)
+        cv2.setTrackbarPos("odd_index", "Trackbar", self.odd_index)
+        cv2.setTrackbarPos("sigma", "Trackbar", self.sigma * 10)
 
     def __callback(self, x):
         self.dp = cv2.getTrackbarPos("dp", "Trackbar")
@@ -81,18 +88,29 @@ class CircleDetector(Detect):
         self.param2 = cv2.getTrackbarPos("param2", "Trackbar")
         self.minRadius = cv2.getTrackbarPos("minRadius", "Trackbar")
         self.maxRadius = cv2.getTrackbarPos("maxRadius", "Trackbar")
+        self.odd_index = cv2.getTrackbarPos("odd_index", "Trackbar")
+        self.sigma = cv2.getTrackbarPos("sigma", "Trackbar") / 10
 
-    def detect_circle(self, _img) -> tuple[list[tuple[int,int]]|None,list[int]|None]:
+    def detect_circle(self, _img) -> tuple[list[tuple[int,int]]|None,list[int]|None, cv2.typing.MatLike]:
         """
         检测圆形
         ----
         :param img: 需要检测的图片
-        :return: 圆心坐标列表, 半径列表，没识别到圆环返回none
+        :return: 圆心坐标列表, 半径列表，没识别到圆环返回none，以及经过滤波的灰度
         """
         point_lst = []
         r_lst = []
         img = _img.copy()
+        # 滤波
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img = cv2.medianBlur(img, self.kernel_size)
+        img = cv2.GaussianBlur(
+            img,
+            (self.kernel_size, self.kernel_size),
+            self.sigma,
+            borderType=cv2.BORDER_REPLICATE
+        )
+
         circles = cv2.HoughCircles(
             img,
             cv2.HOUGH_GRADIENT,
@@ -109,8 +127,8 @@ class CircleDetector(Detect):
                 x, y, r = circle
                 point_lst.append((int(x), int(y)))
                 r_lst.append(int(r))
-            return point_lst, r_lst
-        return None, None
+            return point_lst, r_lst, img
+        return None, None, img
 
     def save_config(self, jsion_path, circle_type):
         """
@@ -135,6 +153,8 @@ class CircleDetector(Detect):
             "param2": self.param2,
             "minRadius": self.minRadius,
             "maxRadius": self.maxRadius,
+            "sigma": self.sigma,
+            "odd_index": self.odd_index
         }
 
         super().save_config(jsion_path, config)
@@ -160,6 +180,8 @@ class CircleDetector(Detect):
             self.param2 = config["param2"]
             self.minRadius = config["minRadius"]
             self.maxRadius = config["maxRadius"]
+            self.sigma = config["sigma"]
+            self.odd_index = config["odd_index"]
             res_str = ""
         except:
             res_str = f"配置文件{jsion_path}中没有{circle_type}的配置"

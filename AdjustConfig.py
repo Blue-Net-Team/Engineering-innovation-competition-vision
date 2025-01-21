@@ -45,34 +45,12 @@ class Ad_Config(Solution):
             if img is None:
                 continue
 
-            res = self.annulus_circle_detector.detect_circle(img)
-            t1 = time.perf_counter()
+            res, res_img = self.annulus_top(img)
 
-            points = res[0]
-            radius = res[1]
+            if res:
+                print(Fore.GREEN + f"检测到圆环，圆心坐标：{res[0]}，半径：{res[1]}")
 
-            if points is None or radius is None:
-                continue
-
-            for point, r in zip(points, radius):
-                cv2.circle(img, point, r, (0, 255, 0), 2)
-
-            detect_time = t1 - t0
-
-            fps = 1 / detect_time
-
-            cv2.putText(  # 显示FPS
-                img,
-                f"FPS: {fps:.2f}",
-                (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (0, 255, 0),
-                2,
-            )
-
-            cv2.imshow("img", img)
-            print(res)
+            cv2.imshow("img", res_img)
 
             press_key = cv2.waitKey(1)
             if press_key & 0xFF == ord("q"):

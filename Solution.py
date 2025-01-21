@@ -445,7 +445,7 @@ class Solution:
         res_img = cv2.bitwise_and(_img, _img, mask=mask)
         return res_img
 
-    def annulus_detect_only(self, _img:cv2.typing.MatLike) -> tuple[tuple[int,int]|None,int|None]:
+    def annulus_detect_only(self, _img:cv2.typing.MatLike) -> tuple[tuple[int,int]|None,int|None,cv2.typing.MatLike]:
         """
         圆环检测
         ----
@@ -457,17 +457,17 @@ class Solution:
             res (tuple|None): 圆环的位置和半径
         """
         img = _img.copy()
-        points, rs = self.annulus_circle_detector.detect_circle(img)
+        points, rs, new_img = self.annulus_circle_detector.detect_circle(img)
 
         if points is None or rs is None:
-            return None, None
+            return None, None, new_img
 
         # 取前5个圆环的坐标平均值
         avg_point = np.mean(points[:5], axis=0)
         avg_point = (int(avg_point[0]), int(avg_point[1]))
         avg_r = int(np.mean(rs[:5]))
 
-        return avg_point, avg_r
+        return avg_point, avg_r, new_img
 
     def annulus_top(self, _img:cv2.typing.MatLike) -> tuple[str|None, cv2.typing.MatLike]:
         """
@@ -480,25 +480,39 @@ class Solution:
         Returns:
             res (str|None): 圆环的位置和半径
         """
-        avg_point, avg_r = self.annulus_detect_only(_img)
+        img = _img.copy()
+        avg_point, avg_r, new_img = self.annulus_detect_only(img)
+
+        canny_img = cv2.Canny(
+            new_img,
+            self.annulus_circle_detector.param1//2,
+            self.annulus_circle_detector.param1
+        )
+
+        if avg_point is not None and avg_r is not None:
+            # 画出圆环
+            cv2.circle(
+                new_img,
+                avg_point,
+                avg_r,
+                (255, 0, 0),
+                2
+            )
+            # 画出圆心
+            cv2.circle(new_img, avg_point, 2, (255, 255, 0), 2)
+
+        # 拼接canny和原图
+        res_img = np.vstack((
+            new_img,
+            canny_img
+        ))
 
         if avg_point is None or avg_r is None:
-            return None, _img
-
-        # 画出圆环
-        cv2.circle(
-            _img,
-            avg_point,
-            avg_r,
-            (255, 0, 0),
-            2
-        )
-        # 画出圆心
-        cv2.circle(_img, avg_point, 2, (255, 255, 0), 2)
+            return None, res_img
 
         res =   f"L0000"\
                 f"{str(avg_point[0]).rjust(3, '0')}"\
                 f"{str(avg_point[1]).rjust(3, '0')}E"
 
-        return res, _img
+        return res, res_img
     # endregion

@@ -98,21 +98,26 @@ class LineDetector(Detect):
     maxLineGap = 10  # 霍夫直线检测的最大间隔
 
     bias = 3            # 允许的角度误差
+    sigma = 0  # 高斯滤波器的标准差
+    odd_index = 3   # 奇数索引
+
+    @property
+    def kernel_size(self):
+        """kernel_size是第几个奇数"""
+        if self.odd_index == 0:
+            self.odd_index = 1
+        return 2 * self.odd_index - 1
 
     def createTrackbar(self):
         cv2.namedWindow("Trackbar")
         cv2.createTrackbar("Min_val", "Trackbar", self.Min_val, 255, self.__callback)
         cv2.createTrackbar("Max_val", "Trackbar", self.Max_val, 255, self.__callback)
-        cv2.createTrackbar(
-            "Hough_threshold", "Trackbar", self.Hough_threshold, 1000, self.__callback
-        )
-        cv2.createTrackbar(
-            "minLineLength", "Trackbar", self.minLineLength, 600, self.__callback
-        )
-        cv2.createTrackbar(
-            "maxLineGap", "Trackbar", self.maxLineGap, 600, self.__callback
-        )
+        cv2.createTrackbar("Hough_threshold", "Trackbar", self.Hough_threshold, 1000, self.__callback)
+        cv2.createTrackbar("minLineLength", "Trackbar", self.minLineLength, 600, self.__callback)
+        cv2.createTrackbar("maxLineGap", "Trackbar", self.maxLineGap, 600, self.__callback)
         cv2.createTrackbar("bias", "Trackbar", self.bias, 10, self.__callback)
+        cv2.createTrackbar("odd_index", "Trackbar", self.odd_index, 20, self.__callback)
+        cv2.createTrackbar("sigma", "Trackbar", self.sigma * 10, 100, self.__callback)
 
     def __callback(self, x):
         self.Min_val = cv2.getTrackbarPos("Min_val", "Trackbar")
@@ -121,6 +126,8 @@ class LineDetector(Detect):
         self.minLineLength = cv2.getTrackbarPos("minLineLength", "Trackbar")
         self.maxLineGap = cv2.getTrackbarPos("maxLineGap", "Trackbar")
         self.bias = cv2.getTrackbarPos("bias", "Trackbar")
+        self.odd_index = cv2.getTrackbarPos("odd_index", "Trackbar")
+        self.sigma = cv2.getTrackbarPos("sigma", "Trackbar") / 10
 
     def draw_line(self, img, line, _color=(0, 0, 255)):
         """
@@ -147,7 +154,7 @@ class LineDetector(Detect):
         """
         cv2.circle(img, point, 2, (255, 0, 0), 3)
 
-    def get_right_angle(self, _img, draw: bool = True) -> tuple[None|int, None|int, None|tuple[int, int]]:
+    def get_right_angle(self, _img, draw: bool = True) -> tuple[None|int, None|int, None|tuple[float, float], cv2.typing.MatLike]:
         """
         找出直角
         ----
@@ -157,10 +164,11 @@ class LineDetector(Detect):
         Returns:
             tuple:两个直线的角度，两直线的交点坐标
         """
-        lines = self.find_line(_img)
+        lines, canny_img = self.find_line(_img)
+        res_img = np.vstack([_img, cv2.cvtColor(canny_img, cv2.COLOR_GRAY2BGR)])
 
         if lines is None:  # 未检测到直线,直接返回
-            return None, None, None
+            return None, None, None, res_img
 
         line_dict = {}
         for line in lines:
@@ -189,19 +197,21 @@ class LineDetector(Detect):
                         )
                         cross_point_ii = tuple(map(int, cross_point_ff))
                     except ValueError:
-                        return None, None, None
+                        res_img = np.vstack([_img, cv2.cvtColor(canny_img, cv2.COLOR_GRAY2BGR)])
+                        return None, None, None, res_img
 
 
                     if draw:  # 画出直线
                         self.draw_line(_img, line)
                         self.draw_line(_img, target_line)
                         self.__draw_point(_img, cross_point_ii)
+                    res_img = np.vstack([_img, cv2.cvtColor(canny_img, cv2.COLOR_GRAY2BGR)])
 
-                    return int(degree*10), int(target_degree*10), cross_point_ff
+                    return int(degree*10), int(target_degree*10), cross_point_ff, res_img
 
-        return None, None, None
+        return None, None, None, res_img
 
-    def find_line(self, _img) -> np.ndarray:
+    def find_line(self, _img:cv2.typing.MatLike) -> tuple[np.ndarray, cv2.typing.MatLike]:
         """
         找出直线
         ----
@@ -212,15 +222,16 @@ class LineDetector(Detect):
         """
         img = _img.copy()
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # 转为灰度图
-        self.sharpen(img)  # 锐化
+        img = cv2.medianBlur(img, self.kernel_size)
+        img = cv2.GaussianBlur(
+            img,
+            (self.kernel_size, self.kernel_size),
+            self.sigma,
+            borderType=cv2.BORDER_REPLICATE
+        )
 
         # canny边缘检测
-        img = cv2.Canny(img, self.Min_val, self.Max_val)
-
-        # 锐化
-        img = self.sharpen(img)
-
-        img = cv2.inRange(img, np.array([50]), np.array([255]))
+        canny_img = cv2.Canny(img, self.Min_val, self.Max_val)
 
         # 霍夫直线检测
         # lines是形状为(n,1,4)的数组
@@ -228,7 +239,7 @@ class LineDetector(Detect):
         # 1是固定值
         # 4是直线的参数，(x1,y1,x2,y2)
         lines = cv2.HoughLinesP(
-            img,
+            canny_img,
             1,
             np.pi / 180,
             self.Hough_threshold,
@@ -236,7 +247,7 @@ class LineDetector(Detect):
             maxLineGap=self.maxLineGap,
         )
 
-        return lines
+        return lines, canny_img
 
     def get_line_angle(self, line):
         """
@@ -269,6 +280,8 @@ class LineDetector(Detect):
             "minLineLength": self.minLineLength,
             "maxLineGap": self.maxLineGap,
             "bias": self.bias,
+            "sigma": self.sigma,
+            "odd_index": self.odd_index
         }
         super().save_config(path, config)
 
@@ -289,6 +302,8 @@ class LineDetector(Detect):
             self.minLineLength = config["minLineLength"]
             self.maxLineGap = config["maxLineGap"]
             self.bias = config["bias"]
+            self.sigma = config["sigma"]
+            self.odd_index = config["odd_index"]
             res_str = ''
         except:
             res_str = f"加载{path}失败"

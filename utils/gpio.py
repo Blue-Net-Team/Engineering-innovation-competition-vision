@@ -16,7 +16,8 @@ class Switch:
         self,
         _InPin: int,
         pull_up_down: int = 22,
-        _PowPin: int | None = None
+        _PowPin: int | None = None,
+        reverse: bool = False
     ) -> None:
         """
         初始化开关
@@ -25,9 +26,11 @@ class Switch:
             _InPin: 输入引脚，该类回读取这个引脚的电平作为开关状态
             pull_up_down: 上下拉电阻
             _PowPin: 电源引脚,设置了的话,将会在初始化时将其设置为高电平
+            reverse: 是否反转开关状态
         """
         self.InPin = _InPin
         self.PowPin = _PowPin
+        self.reverse = reverse
 
         # 设置输入引脚
         GPIO.setup(self.InPin, GPIO.IN, pull_up_down=pull_up_down)
@@ -38,9 +41,14 @@ class Switch:
             GPIO.output(self.PowPin, GPIO.HIGH)
 
     def read_status(self) -> bool:
-        """读取开关状态"""
+        """
+        读取开关状态
+        ----
+        Returns:
+            status: 开关状态
+        """
         self.status = GPIO.input(self.InPin)
-        return self.status
+        return self.status if not self.reverse else not self.status
 
     def __read_statusAlway(self) -> None:
         """一直读取开关状态"""

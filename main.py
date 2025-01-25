@@ -84,16 +84,16 @@ class MainSystem:
             if switch_status:
                 # 开关状态1，开图传，关任务
                 print(
-                    Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
-                    Fore.WHITE + ":模式切换为" + Fore.RESET,
+                    Fore.YELLOW + f"[{getTimeStamp()}]:" + Fore.RESET,
+                    Fore.WHITE + "模式切换为" + Fore.RESET,
                     Fore.CYAN + "图传" + Fore.RESET
                 )
 
                 # 检查sender
                 if self.sender is None:
                     print(
-                        Fore.RED + f"[{getTimeStamp()}]" + Fore.RESET,
-                        Fore.RED + ": 没有设置图传发送器对象" + Fore.RESET
+                        Fore.RED + f"[{getTimeStamp()}]:" + Fore.RESET,
+                        Fore.RED + "没有设置图传发送器对象" + Fore.RESET
                     )
                     break
 
@@ -103,8 +103,8 @@ class MainSystem:
 
                 # 等待连接
                 print(
-                    Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
-                    Fore.WHITE + ": 等待图传连接\tIP:" + Fore.RESET,
+                    Fore.YELLOW + f"[{getTimeStamp()}]:" + Fore.RESET,
+                    Fore.WHITE + "等待图传连接\tIP:" + Fore.RESET,
                     Fore.CYAN + f"{self.sender.host}" + Fore.RESET,
                 )
                 while self.ori_imgTrans_running_flag:
@@ -116,8 +116,8 @@ class MainSystem:
                         break
 
                 print(
-                    Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
-                    Fore.WHITE + ": 图传连接成功" + Fore.RESET,
+                    Fore.YELLOW + f"[{getTimeStamp()}]:" + Fore.RESET,
+                    Fore.WHITE + "图传连接成功" + Fore.RESET,
                 )
 
                 while self.ori_imgTrans_running_flag:
@@ -137,8 +137,8 @@ class MainSystem:
                         self.sender.send(img)
                     except NeedReConnect:
                         print(
-                            Fore.RED + f"[{getTimeStamp()}]" + Fore.RESET,
-                            Fore.RED + ": 图传连接中断" + Fore.RESET
+                            Fore.RED + f"[{getTimeStamp()}]:" + Fore.RESET,
+                            Fore.RED + "图传连接中断" + Fore.RESET
                         )
 
                         # 检查开关
@@ -149,8 +149,8 @@ class MainSystem:
                         else:
                             # 重新连接
                             print(
-                                Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
-                                Fore.WHITE + ": 重新连接" + Fore.RESET
+                                Fore.YELLOW + f"[{getTimeStamp()}]:" + Fore.RESET,
+                                Fore.WHITE + "重新连接" + Fore.RESET
                             )
                             while self.ori_imgTrans_running_flag:
                                 if not self.switch.read_status():
@@ -169,8 +169,8 @@ class MainSystem:
             else:
                 # 开关状态2，开任务线程，关图传线程
                 print(
-                    Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
-                    Fore.WHITE + ":模式切换为" + Fore.RESET,
+                    Fore.YELLOW + f"[{getTimeStamp()}]:" + Fore.RESET,
+                    Fore.WHITE + "模式切换为" + Fore.RESET,
                     Fore.CYAN + "任务模式" + Fore.RESET
                 )
 
@@ -181,15 +181,15 @@ class MainSystem:
                 # 连接图传
                 if self.deal_img_method == "send" and self.sender:
                     print(
-                        Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
-                        Fore.WHITE + ": 等待图传连接\tIP:" + Fore.RESET,
+                        Fore.YELLOW + f"[{getTimeStamp()}]:" + Fore.RESET,
+                        Fore.WHITE + "等待图传连接\tIP:" + Fore.RESET,
                         Fore.CYAN + f"{self.sender.host}" + Fore.RESET,
                     )
                     while self.task_running_flag:
                         if self.sender.connecting():
                             print(
-                                Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
-                                Fore.WHITE + ": 图传连接成功" + Fore.RESET,
+                                Fore.YELLOW + f"[{getTimeStamp()}]:" + Fore.RESET,
+                                Fore.WHITE + "图传连接成功" + Fore.RESET,
                             )
                             break
                         if self.switch.read_status():
@@ -211,8 +211,8 @@ class MainSystem:
 
                     if sign not in self.TASK_DICT.keys():
                         print(
-                            Fore.RED + f"[{getTimeStamp()}]" + Fore.RESET,
-                            Fore.RED + ": 非法信号" + Fore.RESET
+                            Fore.RED + f"[{getTimeStamp()}]:" + Fore.RESET,
+                            Fore.RED + "非法信号" + Fore.RESET
                         )
                         # 检查开关
                         if self.switch.read_status():

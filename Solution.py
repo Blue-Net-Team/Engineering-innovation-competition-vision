@@ -299,11 +299,10 @@ class Solution:
         - xxx和yyy代表交点的坐标
         """
         res_img = _img.copy()
-        angel1, angel2, cross_point_ff = self.line_detector.get_right_angle(res_img, draw=True)
-
+        angel1, angel2, cross_point_ff, detect_res_img = self.line_detector.get_right_angle(res_img, draw=True)
 
         if angel1 is None or angel2 is None or cross_point_ff is None:
-            return None, res_img
+            return None, detect_res_img
         cross_point = round(cross_point_ff[0][0]), round(cross_point_ff[1][0])
 
         # 取出大于0的角度
@@ -311,7 +310,7 @@ class Solution:
 
         point2 = (cross_point[0] + 100 * math.cos(math.radians(angel)), cross_point[1] + 100 * math.sin(math.radians(angel)))
         cv2.line(
-            res_img,
+            detect_res_img,
             (cross_point[0], cross_point[1]),
             (int(point2[0]), int(point2[1])),
             (0, 255, 255),
@@ -325,7 +324,7 @@ class Solution:
                 f"{str(abs(cross_point[1])).rjust(3, '0')}E"
 
         str_res = res1 + res3
-        return str_res, res_img
+        return str_res, detect_res_img
     # endregion
 
     # region 圆环检测

@@ -31,6 +31,7 @@ import struct
 import cv2
 import numpy as np
 from colorama import Fore, Style, init
+import fcntl
 
 init(autoreset=True)
 
@@ -40,7 +41,23 @@ class NeedReConnect(Exception):
 
 class SendImg(object):
     """服务端视频发送"""
-    def __init__(self, host:str|None=None, port:int|None=None):
+    _host:str = ""
+    _interface:str = ""
+
+    @property
+    def host(self):
+        return self._host
+
+    @property
+    def interface(self):
+        return self._interface
+
+    @interface.setter
+    def interface(self, value:str):
+        self._interface = value
+        self._host = self.get_ip_address(value)
+
+    def __init__(self, interface:str, port:int=4444):
         """初始化
         ----
         Args:
@@ -48,11 +65,12 @@ class SendImg(object):
             port (int): 端口号
         """
         self.is_open = False
+        self.interface = interface
 
-        if host and port:
+        if self.host and port:
             try:
                 self.server_socket = socket.socket()
-                self.server_socket.bind((host, port))
+                self.server_socket.bind((self.host, port))
                 self.server_socket.listen(5)
                 self.server_socket.settimeout(0.05)
                 self.connection = None
@@ -61,6 +79,28 @@ class SendImg(object):
                 self.is_open = True
             except Exception as e:
                 print(Fore.RED + "Error: ", e)
+
+    @staticmethod
+    def get_ip_address(interface: str) -> str:
+        """
+        获取IP地址
+        ----
+        用于树莓派获取IP地址
+
+        Args:
+            interface (str): 网卡名称，lo为本地回环网卡，eth0为以太网网卡等
+        Returns:
+            ip (str): IP地址
+        """
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            return socket.inet_ntoa(fcntl.ioctl(
+                s.fileno(),
+                0x8915,  # SIOCGIFADDR
+                struct.pack('256s', interface[:15].encode('utf-8'))
+            )[20:24])
+        except:
+            return ""
 
     def connecting(self):
         """
@@ -121,6 +161,12 @@ class SendImg(object):
                 raise NeedReConnect("连接已断开，请重新连接")
         else:
             return False
+
+    def close(self):
+        """关闭连接"""
+        if self.is_open and self.connect and self.connection:
+            self.connection.close()
+            self.server_socket.close()
 
 
 class ReceiveImg(object):

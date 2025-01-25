@@ -10,6 +10,7 @@ from colorama import Fore, init
 # 初始化 colorama
 init(autoreset=True)
 
+
 class Ad_Config(Solution):
     """
     调整参数
@@ -45,34 +46,19 @@ class Ad_Config(Solution):
             if img is None:
                 continue
 
-            res = self.annulus_circle_detector.detect_circle(img)
-            t1 = time.perf_counter()
+            res, res_img = self.annulus_top(img)
 
-            points = res[0]
-            radius = res[1]
+            if res:
+                timeStamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                print(
+                    Fore.GREEN + f"[{timeStamp}]" + Fore.RESET,
+                    Fore.WHITE + f"检测到圆环，圆心坐标：x" + Fore.RESET,
+                    Fore.MAGENTA + f"{res[4:7]}" + Fore.RESET,
+                    Fore.WHITE + f"y" + Fore.RESET,
+                    Fore.MAGENTA + f"{res[7:10]}" + Fore.RESET,
+                )
 
-            if points is None or radius is None:
-                continue
-
-            for point, r in zip(points, radius):
-                cv2.circle(img, point, r, (0, 255, 0), 2)
-
-            detect_time = t1 - t0
-
-            fps = 1 / detect_time
-
-            cv2.putText(  # 显示FPS
-                img,
-                f"FPS: {fps:.2f}",
-                (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (0, 255, 0),
-                2,
-            )
-
-            cv2.imshow("img", img)
-            print(res)
+            cv2.imshow("img", res_img)
 
             press_key = cv2.waitKey(1)
             if press_key & 0xFF == ord("q"):
@@ -136,6 +122,49 @@ class Ad_Config(Solution):
 
         self.cap.release()
         cv2.destroyAllWindows()
+
+    def adjust_rightAngle(self):
+        """
+        调整直角识别参数
+        ----
+        """
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        detector = self.line_detector
+
+        # 创建滑动条
+        detector.createTrackbar()
+        while True:
+            _, img = self.cap.read()
+
+            if img is None:
+                continue
+
+            res, res_img = self.right_angle_detect(img)
+
+            if res:
+                timeStamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                print(
+                    Fore.GREEN + f"[{timeStamp}]" + Fore.RESET,
+                    Fore.WHITE + f"检测到直角，角度：" + Fore.RESET,
+                    Fore.MAGENTA + f"{'+' if res[0]=='1' else '-'}{res[1:3]}.{res[3]}\t" + Fore.RESET,
+                    Fore.WHITE + f"交点坐标：x:" + Fore.RESET,
+                    Fore.MAGENTA + f"{res[4:7]}\t" + Fore.RESET,
+                    Fore.WHITE + f"y:" + Fore.RESET,
+                    Fore.MAGENTA + f"{res[7:10]}" + Fore.RESET,
+                )
+
+            cv2.imshow("img", res_img)
+
+            press_key = cv2.waitKey(1)
+            if press_key & 0xFF == ord("q"):
+                break
+            elif press_key & 0xFF == ord("s"):
+                detector.save_config("config.json")
+                timeStamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+                print(
+                    Fore.GREEN + f"[{timeStamp}]" + Fore.RESET,
+                    Fore.CYAN + "保存配置" + Fore.RESET
+                )
 
 
 class Ad_Area_config:
@@ -229,57 +258,6 @@ class Ad_Area_config:
                 print(Fore.GREEN + "保存配置")
 
 
-class Ad_Line_config(LineDetector):
-    def __init__(self, _cap:cv2.VideoCapture|Cap|ReceiveImg,) -> None:
-        super().__init__()
-        print(self.load_config("config.json"))
-        self.cap = _cap
-
-    def ad_line(self):
-        self.createTrackbar()
-
-        while True:
-            _, img = self.cap.read()
-            if img is None:
-                continue
-
-            lines = self.find_line(img)
-
-            if lines is not None:
-                nums = len(lines) if len(lines) < 5 else 5
-
-                for i in range(nums):
-                    self.draw_line(img, lines[i])
-
-            cv2.imshow("img", img)
-            key = cv2.waitKey(1)
-            if key & 0xFF == ord("q"):
-                break
-            elif key & 0xFF == ord("s"):
-                self.save_config("config.json")
-                print(Fore.GREEN + "保存配置")
-
-    def ad_right_angle(self):
-        self.createTrackbar()
-
-        while True:
-            ret, img = self.cap.read()
-            if img is None:
-                continue
-
-            img = img[:400,:]
-            img = self.sharpen(img)
-            angel1, angel2, point = self.get_right_angle(img, True)
-
-            cv2.imshow("img", img)
-            key = cv2.waitKey(1)
-            if key & 0xFF == ord("q"):
-                break
-            elif key & 0xFF == ord("s"):
-                self.save_config("config.json")
-                print(Fore.GREEN + "保存配置")
-
-
 def ad_color(_cap:cv2.VideoCapture|Cap|ReceiveImg):
     ad_config = Ad_Config(_cap)
     ad_config.adjust_color_threshold()
@@ -292,13 +270,9 @@ def ad_area(_cap:cv2.VideoCapture|Cap|ReceiveImg):
     ad_area_config = Ad_Area_config(_cap)
     ad_area_config.main()
 
-def ad_line(_cap:cv2.VideoCapture|Cap|ReceiveImg):
-    ad_line_config = Ad_Line_config(_cap)
-    ad_line_config.ad_line()
-
 def ad_right_angle(_cap:cv2.VideoCapture|Cap|ReceiveImg):
-    ad_line_config = Ad_Line_config(_cap)
-    ad_line_config.ad_right_angle()
+    ad_line_config = Ad_Config(_cap)
+    ad_line_config.adjust_rightAngle()
 
 
 if __name__ == "__main__":
@@ -312,6 +286,5 @@ if __name__ == "__main__":
     ad_color(cap)
     ad_area(cap)
     ad_circle(cap)
-    ad_line(cap)
     ad_right_angle(cap)
 # end main

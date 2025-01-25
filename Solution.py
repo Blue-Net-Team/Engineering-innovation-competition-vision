@@ -67,7 +67,7 @@ def draw_material(
     return img
 
 class Solution:
-    def __init__(self, ser_port: list[str]):
+    def __init__(self, ser_port: str|None):
         """
         解决方案
         ----
@@ -77,10 +77,7 @@ class Solution:
         self.annulus_circle_detector = detector.CircleDetector()
         self.traditional_color_detector = detector.TraditionalColorDetector()
         self.line_detector = detector.LineDetector()
-        self.uart1 = Uart(ser_port[0])
-        self.uart2 = Uart(ser_port[1])
-        self.uart_32:None|Uart = None
-        self.uart_hmi:None|Uart = None
+        self.uart = Uart(ser_port)
         self.position_id_stack:list[dict[str,int|None]] = []     # 用于存放上一帧图像的物料位号的栈
 
         # region 读取配置文件
@@ -279,7 +276,6 @@ class Solution:
                 color_area_dict[color] = 3
             else:
                 color_area_dict[color] = None  # 未知区域
-        # color_area_dict["time"] = int(time.time())
         return color_area_dict
     # endregion
 
@@ -302,19 +298,10 @@ class Solution:
         - xxx和yyy代表交点的坐标
         """
         res_img = _img.copy()
-
-        # 高斯模糊
-        res_img = cv2.GaussianBlur(res_img, (3, 3), 2)
-
-        # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-        # 膨胀
-        # canny = cv2.dilate(canny, kernel, iterations=1)
-
-        angel1, angel2, cross_point_ff = self.line_detector.get_right_angle(res_img, draw=True)
-
+        angel1, angel2, cross_point_ff, detect_res_img = self.line_detector.get_right_angle(res_img, draw=True)
 
         if angel1 is None or angel2 is None or cross_point_ff is None:
-            return None, res_img
+            return None, detect_res_img
         cross_point = round(cross_point_ff[0][0]), round(cross_point_ff[1][0])
 
         # 取出大于0的角度
@@ -322,7 +309,7 @@ class Solution:
 
         point2 = (cross_point[0] + 100 * math.cos(math.radians(angel)), cross_point[1] + 100 * math.sin(math.radians(angel)))
         cv2.line(
-            res_img,
+            detect_res_img,
             (cross_point[0], cross_point[1]),
             (int(point2[0]), int(point2[1])),
             (0, 255, 255),
@@ -336,7 +323,7 @@ class Solution:
                 f"{str(abs(cross_point[1])).rjust(3, '0')}E"
 
         str_res = res1 + res3
-        return str_res, res_img
+        return str_res, detect_res_img
     # endregion
 
     # region 圆环检测
@@ -456,7 +443,7 @@ class Solution:
         res_img = cv2.bitwise_and(_img, _img, mask=mask)
         return res_img
 
-    def annulus_detect_only(self, _img:cv2.typing.MatLike) -> tuple[tuple[int,int]|None,int|None]:
+    def annulus_detect_only(self, _img:cv2.typing.MatLike) -> tuple[tuple[int,int]|None,int|None,cv2.typing.MatLike]:
         """
         圆环检测
         ----
@@ -468,17 +455,17 @@ class Solution:
             res (tuple|None): 圆环的位置和半径
         """
         img = _img.copy()
-        points, rs = self.annulus_circle_detector.detect_circle(img)
+        points, rs, new_img = self.annulus_circle_detector.detect_circle(img)
 
         if points is None or rs is None:
-            return None, None
+            return None, None, new_img
 
         # 取前5个圆环的坐标平均值
         avg_point = np.mean(points[:5], axis=0)
         avg_point = (int(avg_point[0]), int(avg_point[1]))
         avg_r = int(np.mean(rs[:5]))
 
-        return avg_point, avg_r
+        return avg_point, avg_r, new_img
 
     def annulus_top(self, _img:cv2.typing.MatLike) -> tuple[str|None, cv2.typing.MatLike]:
         """
@@ -491,51 +478,39 @@ class Solution:
         Returns:
             res (str|None): 圆环的位置和半径
         """
-        avg_point, avg_r = self.annulus_detect_only(_img)
+        img = _img.copy()
+        avg_point, avg_r, new_img = self.annulus_detect_only(img)
+
+        canny_img = cv2.Canny(
+            new_img,
+            self.annulus_circle_detector.param1//2,
+            self.annulus_circle_detector.param1
+        )
+
+        if avg_point is not None and avg_r is not None:
+            # 画出圆环
+            cv2.circle(
+                new_img,
+                avg_point,
+                avg_r,
+                (255, 0, 0),
+                2
+            )
+            # 画出圆心
+            cv2.circle(new_img, avg_point, 2, (255, 255, 0), 2)
+
+        # 拼接canny和原图
+        res_img = np.vstack((
+            new_img,
+            canny_img
+        ))
 
         if avg_point is None or avg_r is None:
-            return None, _img
-
-        # 画出圆环
-        cv2.circle(
-            _img,
-            avg_point,
-            avg_r,
-            (255, 0, 0),
-            2
-        )
-        # 画出圆心
-        cv2.circle(_img, avg_point, 2, (255, 255, 0), 2)
+            return None, res_img
 
         res =   f"L0000"\
                 f"{str(avg_point[0]).rjust(3, '0')}"\
                 f"{str(avg_point[1]).rjust(3, '0')}E"
 
-        return res, _img
+        return res, res_img
     # endregion
-
-    # region 串口屏支持
-    def write_uart_hmi(self, task:list):
-        need_write = b"page 1\xff\xff\xffn0.val={}\xff\xff\xffn1.val={}\xff\xff\xff"
-        code0 = b"page 1\xff\xff\xffn0.val="
-        code1 = task[0].encode("ascii")
-        code2 = b"\xff\xff\xffn1.val="
-        code3 = task[1].encode("ascii")
-        code4 = b"\xff\xff\xff"
-        need_write = code0+code1+code2+code3+code4
-        self.uart_hmi.old_write(need_write)
-
-    # endregion
-
-    def update_uart32(self, _id):
-        if _id == 1:
-            self.uart_32 = self.uart1
-            self.uart_hmi = self.uart2
-        elif _id == 2:
-            self.uart_32 = self.uart2
-            self.uart_hmi = self.uart1
-        else:
-            self.uart_32 = None
-            self.uart_hmi = None
-
-

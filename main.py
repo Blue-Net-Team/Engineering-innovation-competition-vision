@@ -20,155 +20,283 @@ r"""
                               神兽保佑
                              工创国一！！
 """
-
 import datetime
+import threading
 import time
-import Solution
-from utils import SendImg, Cap
 from colorama import Fore, Style, init
-import subprocess
+import cv2
+import Solution
+from utils import SendImg, Cap, Switch
+import numpy as np
 
-def get_tty():
-    result = subprocess.run(['ls',"/dev"],capture_output=True,text=True)
-    res = result.stdout.split("\n")
-    return ["/dev/"+i for i in res if "ttyUSB" in i]
+from utils.ImgTrans import NeedReConnect
 
 init(autoreset=True)
 
-HEAD: str = "@"
-TAIL: str = "#"
+class MainSystem:
 
-DEAL_IMG = "send"  # 处理图像的方式,包含"show"、"send"、"hide"
-
-IP: str = "169.254.60.115"
-PORT: int = 4444  # 端口号
-
-SERIAL_PORT = get_tty()
-if len(SERIAL_PORT) != 2:
-    raise ValueError("没有读到串口或者串口过多，请保证串口只有两个")
-
-def get_time():
-        utc_dt = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
-        bj_dt = utc_dt.astimezone(datetime.timezone(datetime.timedelta(hours=8)))
-        return str(bj_dt)[:-6]
-
-# region 主代码
-vs = SendImg(IP, PORT)
-while 1:
-    try:
-        solution = Solution.Solution(SERIAL_PORT)
-        break
-    except:
-        now_time = datetime.datetime.now().strftime("%H:%M:%S:%f")
-        print(
-            Fore.YELLOW + f"[{now_time}]" + Style.RESET_ALL,
-            "串口连接失败，正在重试..."
-        )
-        continue
-cap1 = Cap(0)
-
-DEAL_IMG_DICT = {"show": Solution.show, "send": vs.send, "hide": lambda x: None}
-
-solution_dict = {
-    "1": solution.material_moving_detect,  # 物料运动检测
-    "2": solution.get_material,  # 获取物料位号
-    "3": solution.right_angle_detect,  # 直角检测
-    "4": solution.annulus_top,      # 圆环检测
-}
+    deal_img_method = "hide"  # 处理图像的方法
+    ori_imgTrans_running_flag = False  # 原始图像是否正在传输
+    task_running_flag = False  # 任务是否正在运行
 
 
-if DEAL_IMG == "send":
-    while 1:
-        if vs.connecting():
-            break
+    def __init__(
+        self,
+        ser_port: str,
+        pkgHEAD:str,
+        pgkTAIL:str,
+        sender: SendImg | None = None,
+        deal_img_method: str = "hide"
+    ) -> None:
+        """
+        主系统
+        ----
+        Args:
+            ser_port (str): 串口号
+        """
+        self.cap = Cap()
+        self.solution = Solution.Solution(ser_port)
+        self.switch = Switch(18)
+        self.sender = sender
+        self.HEAD = pkgHEAD
+        self.TAIL = pgkTAIL
+        self.DEAL_IMG_DICT = {"show": Solution.show, "hide": lambda x: None}
+        if self.sender:
+            self.DEAL_IMG_DICT["send"] = self.sender.send
 
-    vs.start()
+        self.TASK_DICT = {
+            "1": self.solution.material_moving_detect,  # 物料运动检测
+            "2": self.solution.get_material,  # 获取物料位号
+            "3": self.solution.right_angle_detect,  # 直角检测
+            "4": self.solution.annulus_top,  # 圆环检测
+        }
 
-while True:
-    sign1 = solution.uart1.new_read(head=HEAD, tail=TAIL)  # 读取串口
-    sign2 = solution.uart2.new_read(head=HEAD, tail=TAIL)
+        self.deal_img_method = deal_img_method
 
-    if sign1:
-        uart32_id = 1
-        sign = sign1
-    elif sign2:
-        uart32_id = 2
-        sign = sign2
-    else:
-        uart32_id = None
-        sign = None
-
-    solution.update_uart32(uart32_id)
-
-    if sign is not None:
-        _split = sign.split("+")
-        if len(_split) == 2:
-            # 显示任务码
-            print(
-                Fore.BLUE + f"[{get_time()}]" + Style.RESET_ALL,
-                "Task code:",
-                Fore.MAGENTA + f"{_split[0]} + {_split[1]}" + Style.RESET_ALL
-            )
-            solution.write_uart_hmi(_split)
-            break
-
-
-while True:
-    sign = solution.uart_32.new_read(HEAD,TAIL)
-    # 判断信号是否合法
-    if sign is not None:
-        print(
-            Fore.BLUE + f"[{get_time()}]" + Style.RESET_ALL,
-            "readed",
-            Fore.MAGENTA + f"{sign}" + Style.RESET_ALL
-        )
-    if sign in solution_dict:  # 信号合法
-        t0 = time.perf_counter()
-        if sign in ["1","2"]:
-            for i in range(30):
-                _, img = cap1.read()
-                DEAL_IMG_DICT[DEAL_IMG](img)
-            solution.position_id_stack = []
+    def main(self):
+        """
+        主函数
+        ----
+        """
         while True:
-            _, img = cap1.read()
-            if img is None:
-                continue
-            img = img[:400,:]
+            switch_status = self.switch.read_status()
 
-            # 如果res是none，会继续读取下一帧图像，直到res不是none
-            res, res_img = solution_dict[sign](img)
+            if switch_status:
+                # 开关状态1，开图传，关任务
+                print(
+                    Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
+                    Fore.WHITE + ":模式切换为" + Fore.RESET,
+                    Fore.CYAN + "图传" + Fore.RESET
+                )
 
-            DEAL_IMG_DICT[DEAL_IMG](res_img)
+                # 检查sender
+                if self.sender is None:
+                    print(
+                        Fore.RED + f"[{getTimeStamp()}]" + Fore.RESET,
+                        Fore.RED + ": 没有设置图传发送器对象" + Fore.RESET
+                    )
+                    break
 
-            if res:
-                t1 = time.perf_counter()
-                detect_time = t1 - t0
-                solution.uart_32.write(res)
-                now_time = get_time()
-                time_show = detect_time * 1000
+                # 设置标志
+                self.ori_imgTrans_running_flag = True
+                self.task_running_flag = False
 
-                if time_show <= 30:
-                    color = Fore.GREEN
-                elif time_show <= 50:
-                    color = Fore.YELLOW
-                else:
-                    color = Fore.RED
-
+                # 等待连接
+                print(
+                    Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
+                    Fore.WHITE + ": 等待图传连接\tIP:" + Fore.RESET,
+                    Fore.CYAN + f"{self.sender.host}" + Fore.RESET,
+                )
+                while self.ori_imgTrans_running_flag:
+                    if self.sender.connecting():
+                        break
+                    if not self.switch.read_status():
+                        # 开关状态2，关闭图传
+                        self.ori_imgTrans_running_flag = False
+                        break
 
                 print(
-                    Fore.BLUE + f"[{now_time}]" + Style.RESET_ALL,
-                    "Detect time(ms):",
-                    color + f"{time_show:.2f}" + Style.RESET_ALL,
-                    "writed:",
-                    Fore.MAGENTA + f"{res}" + Style.RESET_ALL
+                    Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
+                    Fore.WHITE + ": 图传连接成功" + Fore.RESET,
                 )
-                break
-    else:
-        # 信号非法
-        now_time = get_time()
-        # print(
-        #     Fore.RED + f"[{now_time}]" + Style.RESET_ALL,
-        #     f"Invalid sign {sign}"
-        # )
-        continue
-# endregion
+
+                while self.ori_imgTrans_running_flag:
+                    _, img = self.cap.read()
+
+                    # 检查开关
+                    if not self.switch.read_status():
+                        # 开关状态2，关闭图传
+                        self.ori_imgTrans_running_flag = False
+                        break
+
+                    if img is None:
+                        continue
+
+                    # 发送图像
+                    try:
+                        self.sender.send(img)
+                    except NeedReConnect:
+                        print(
+                            Fore.RED + f"[{getTimeStamp()}]" + Fore.RESET,
+                            Fore.RED + ": 图传连接中断" + Fore.RESET
+                        )
+
+                        # 检查开关
+                        if not self.switch.read_status():
+                            # 开关状态2，关闭图传
+                            self.ori_imgTrans_running_flag = False
+                            break
+                        else:
+                            # 重新连接
+                            print(
+                                Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
+                                Fore.WHITE + ": 重新连接" + Fore.RESET
+                            )
+                            while self.ori_imgTrans_running_flag:
+                                if not self.switch.read_status():
+                                    # 开关状态2，关闭图传
+                                    self.ori_imgTrans_running_flag = False
+                                    break
+                                if self.sender.connecting():
+                                    continue
+
+                    # 检查开关
+                    if not self.switch.read_status():
+                        # 开关状态2，关闭图传
+                        self.ori_imgTrans_running_flag = False
+                        break
+
+            else:
+                # 开关状态2，开任务线程，关图传线程
+                print(
+                    Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
+                    Fore.WHITE + ":模式切换为" + Fore.RESET,
+                    Fore.CYAN + "任务模式" + Fore.RESET
+                )
+
+                # 设置标志
+                self.ori_imgTrans_running_flag = False
+                self.task_running_flag = True
+
+                # 连接图传
+                if self.deal_img_method == "send" and self.sender:
+                    print(
+                        Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
+                        Fore.WHITE + ": 等待图传连接\tIP:" + Fore.RESET,
+                        Fore.CYAN + f"{self.sender.host}" + Fore.RESET,
+                    )
+                    while self.task_running_flag:
+                        if self.sender.connecting():
+                            print(
+                                Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
+                                Fore.WHITE + ": 图传连接成功" + Fore.RESET,
+                            )
+                            break
+                        if self.switch.read_status():
+                            self.task_running_flag = False
+                            break
+
+                # 开始任务
+                while self.task_running_flag:
+                    # 读取串口信号
+                    sign = self.solution.uart.new_read(self.HEAD, self.TAIL)
+
+                    if sign is None:
+                        # 检查开关
+                        if self.switch.read_status():
+                            self.task_running_flag = False
+                            break
+                        else:
+                            continue
+
+                    if sign not in self.TASK_DICT.keys():
+                        print(
+                            Fore.RED + f"[{getTimeStamp()}]" + Fore.RESET,
+                            Fore.RED + ": 非法信号" + Fore.RESET
+                        )
+                        # 检查开关
+                        if self.switch.read_status():
+                            self.task_running_flag = False
+                            break
+                        else:
+                            continue
+
+                    # 执行任务
+                    t0 = time.perf_counter()
+                    num = 0
+                    while self.task_running_flag:
+                        if sign in ["1", "2"]:
+                            # 去除缓冲区图像
+                            for i in range(30):
+                                _, img = self.cap.read()
+                                cv2.putText(
+                                    img,
+                                    "Cleaning Buffer...",
+                                    (10, 30),
+                                    cv2.FONT_HERSHEY_SIMPLEX,
+                                    1,
+                                    (0, 0, 255),
+                                )
+                                self.DEAL_IMG_DICT[self.deal_img_method](img)
+
+                        _, img = self.cap.read()
+                        # 切割图片
+                        img = img[:400,:]
+
+                        res, res_img = self.TASK_DICT[sign](img)
+
+                        num += 1
+
+                        print(
+                            Fore.GREEN + f"[{getTimeStamp()}]" + Fore.RESET,
+                            Fore.WHITE + "result:" + Fore.RESET,
+                            Fore.MAGENTA + f"{res}" + Fore.RESET,
+                        )
+
+                        self.DEAL_IMG_DICT[self.deal_img_method](res_img)
+
+                        if res:
+                            t1 = time.perf_counter()
+                            used_time_ms = (t1 - t0) * 1000
+                            if used_time_ms < 40:
+                                color = Fore.GREEN
+                            elif used_time_ms < 60:
+                                color = Fore.YELLOW
+                            else:
+                                color = Fore.RED
+
+                            print(
+                                Fore.GREEN + f"[{getTimeStamp()}]" + Fore.RESET,
+                                Fore.WHITE + "sended:" + Fore.RESET,
+                                Fore.MAGENTA + f"{res}\t" + Fore.RESET,
+                                Fore.WHITE + "used time:" + Fore.RESET,
+                                color + f"{used_time_ms:.2f}ms" + Fore.RESET,
+                            )
+                            self.solution.uart.write(res, self.HEAD, self.TAIL)
+                            break
+
+                        # 每30帧检查一次开关
+                        if num % 30 == 0:
+                            if not self.switch.read_status():
+                                self.task_running_flag = False
+                                break
+
+
+def getTimeStamp():
+    """
+    获取时间戳(包含毫秒)
+    ----
+    """
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")[:-3]
+
+
+if __name__ == "__main__":
+    mainsystem = MainSystem(
+        ser_port="/dev/ttyUSB0",
+        pkgHEAD="@",
+        pgkTAIL="#",
+        sender=SendImg("wlan1", 4444),
+        deal_img_method="send"
+    )
+    mainsystem.main()
+# end main

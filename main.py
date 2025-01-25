@@ -22,6 +22,7 @@ r"""
 """
 import datetime
 import threading
+import time
 from colorama import Fore, Style, init
 import cv2
 import Solution
@@ -34,17 +35,18 @@ init(autoreset=True)
 
 class MainSystem:
 
-    sending_ori_flag = False    # 发送原始图像线程标志
-    send_main_flag = False      # 发送主线程标志
-    send_main = False       # 主函数是否要发送图像
-    main_flag = False       # 主线程标志
-    reading_flag = True     # 读取图像线程标志
+    deal_img_method = "hide"  # 处理图像的方法
+    ori_imgTrans_running_flag = False  # 原始图像是否正在传输
+    task_running_flag = False  # 任务是否正在运行
+
 
     def __init__(
         self,
         ser_port: str,
-        sender: SendImg | None=None,
-        if_send_main: bool = False
+        pkgHEAD:str,
+        pgkTAIL:str,
+        sender: SendImg | None = None,
+        deal_img_method: str = "hide"
     ) -> None:
         """
         主系统
@@ -56,19 +58,11 @@ class MainSystem:
         self.solution = Solution.Solution(ser_port)
         self.switch = Switch(18)
         self.sender = sender
-
-        self.need_send_img:cv2.typing.MatLike = np.zeros((480, 640, 3), np.uint8)
-        cv2.putText(
-            self.need_send_img,
-            "No Image",
-            (100, 100),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (255, 255, 255),
-            2
-        )
-
-        self.img = self.need_send_img.copy()
+        self.HEAD = pkgHEAD
+        self.TAIL = pgkTAIL
+        self.DEAL_IMG_DICT = {"show": Solution.show, "hide": lambda x: None}
+        if self.sender:
+            self.DEAL_IMG_DICT["send"] = self.sender.send
 
         self.TASK_DICT = {
             "1": self.solution.material_moving_detect,  # 物料运动检测
@@ -77,194 +71,232 @@ class MainSystem:
             "4": self.solution.annulus_top,  # 圆环检测
         }
 
-        self.send_main = if_send_main
+        self.deal_img_method = deal_img_method
 
     def main(self):
         """
         主函数
         ----
         """
-        # 读取图像
-        img_thread = threading.Thread(target=self.__read_img)
-        img_thread.start()
-
         while True:
             switch_status = self.switch.read_status()
 
             if switch_status:
-                if self.send_main_flag:  # 如果主线程图传线程已启动, 则关闭
-                    print("Stop sending main")
-                    self.send_main_flag = False
-                    main_sending_thread.join()
-
-                if not self.sending_ori_flag:  # 如果(原图像)图传线程未启动, 则启动
-                    # TODO:更新self.need_send_img
-                    print("Start sending image")
-                    self.sending_ori_flag = True
-                    img_ori_sending_thread = threading.Thread(
-                        target=self.__send_ori_img
-                    )
-                    img_ori_sending_thread.start()
-
-                if self.main_flag:  # 如果主线程已启动, 则关闭
-                    print("Stop main")
-                    self.main_flag = False
-                    self.solution.uart.read_falg = False
-                    main_thread.join()
-
-            else:
-                if self.sending_ori_flag:  # 如果(原图像)图传线程已启动, 则关闭
-                    print("Stop sending image")
-                    self.sending_ori_flag = False
-                    img_ori_sending_thread.join()
-
-                if not self.main_flag:  # 如果主线程未启动, 则启动
-                    print("Start main")
-                    self.main_flag = True
-                    self.solution.uart.read_falg = True
-                    main_thread = threading.Thread(target=self.__main)
-                    main_thread.start()
-
-                    if self.send_main:
-                        print("Start sending main")
-                        self.send_main_flag = True
-                        main_sending_thread = threading.Thread(
-                            target=self.__send_main_img, args=(False,)
-                        )
-                        main_sending_thread.start()
-
-    def __send_ori_img(self, if_ori_img: bool = True):
-        """
-        发送原始图像
-        ----
-        """
-        if self.sender:
-            self.__ori_connecting()
-            print(
-                Fore.GREEN + f"[{self.__get_time()}]" + Fore.RESET,
-                "Start sending image"
-            )
-            while self.sending_ori_flag:
-                if if_ori_img:
-                    self.need_send_img = self.img.copy()
-
-                try:
-                    self.sender.send(self.need_send_img)
-                except:
-                    self.__ori_connecting()
-        else:
-            print(
-                Fore.RED + "No sender, please check the network connection" + Fore.RESET
-            )
-    def __send_main_img(self, if_ori_img: bool = True):
-        """
-        发送原始图像
-        ----
-        """
-        if self.sender:
-            self.__main_connecting()
-            print(
-                Fore.GREEN + f"[{self.__get_time()}]" + Fore.RESET,
-                "Start sending image"
-            )
-            while self.send_main_flag:
-                if if_ori_img:
-                    self.need_send_img = self.img.copy()
-
-                try:
-                    self.sender.send(self.need_send_img)
-                except:
-                    self.__main_connecting()
-        else:
-            print(
-                Fore.RED + "No sender, please check the network connection" + Fore.RESET
-            )
-
-    def __ori_connecting(self):
-        if self.sender:
-            print(
-                Fore.YELLOW + f"[{self.__get_time()}]" + Fore.RESET,
-                "Waiting for connecting...",
-            )
-            while self.sending_ori_flag:
-                if self.sender.connecting():
-                    break
-
-    def __main_connecting(self):
-        if self.sender:
-            print(
-                Fore.YELLOW + f"[{self.__get_time()}]" + Fore.RESET,
-                "Waiting for connecting...",
-            )
-            while self.send_main_flag:
-                if self.sender.connecting():
-                    break
-
-    def __get_time(self):
-        return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-
-    def __main(self):
-        while self.main_flag:
-            sign = self.solution.uart.new_read("@", "#")
-
-            if sign in self.TASK_DICT:
+                # 开关状态1，开图传，关任务
                 print(
-                    Fore.BLUE + f"[{self.__get_time()}]" + Fore.RESET,
-                    f"sign:",
-                    Fore.CYAN + f"{sign}" + Fore.RESET
+                    Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
+                    Fore.WHITE + ":模式切换为" + Fore.RESET,
+                    Fore.CYAN + "图传" + Fore.RESET
                 )
-                while True:
-                    img = self.img.copy()
-                    img = img[:400,:]
 
-                    t0 = datetime.datetime.now()
-                    res, self.need_send_img = self.TASK_DICT[sign](img)
-                    t1 = datetime.datetime.now()
+                # 检查sender
+                if self.sender is None:
+                    print(
+                        Fore.RED + f"[{getTimeStamp()}]" + Fore.RESET,
+                        Fore.RED + ": 没有设置图传发送器对象" + Fore.RESET
+                    )
+                    break
 
-                    if res is not None:
-                        detect_time_ms = (t1 - t0).total_seconds() * 1000
+                # 设置标志
+                self.ori_imgTrans_running_flag = True
+                self.task_running_flag = False
 
-                        if detect_time_ms < 40:
-                            font_color = Fore.GREEN
-                        elif detect_time_ms < 60:
-                            font_color = Fore.YELLOW
-                        else:
-                            font_color = Fore.RED
+                # 等待连接
+                print(
+                    Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
+                    Fore.WHITE + ": 等待图传连接\tIP:" + Fore.RESET,
+                    Fore.CYAN + f"{self.sender.host}" + Fore.RESET,
+                )
+                while self.ori_imgTrans_running_flag:
+                    if self.sender.connecting():
+                        break
+                    if not self.switch.read_status():
+                        # 开关状态2，关闭图传
+                        self.ori_imgTrans_running_flag = False
+                        break
 
+                print(
+                    Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
+                    Fore.WHITE + ": 图传连接成功" + Fore.RESET,
+                )
+
+                while self.ori_imgTrans_running_flag:
+                    _, img = self.cap.read()
+
+                    # 检查开关
+                    if not self.switch.read_status():
+                        # 开关状态2，关闭图传
+                        self.ori_imgTrans_running_flag = False
+                        break
+
+                    if img is None:
+                        continue
+
+                    # 发送图像
+                    try:
+                        self.sender.send(img)
+                    except NeedReConnect:
                         print(
-                            Fore.BLUE + f"[{self.__get_time()}]" + Fore.RESET,
-                            f"res:",
-                            Fore.MAGENTA + f"{res}" + Fore.RESET,
-                            "\t detect time(s):",
-                            font_color + f"{detect_time_ms:.2f}" + Fore.RESET,
+                            Fore.RED + f"[{getTimeStamp()}]" + Fore.RESET,
+                            Fore.RED + ": 图传连接中断" + Fore.RESET
                         )
 
-                        self.solution.uart.write(res)
+                        # 检查开关
+                        if not self.switch.read_status():
+                            # 开关状态2，关闭图传
+                            self.ori_imgTrans_running_flag = False
+                            break
+                        else:
+                            # 重新连接
+                            print(
+                                Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
+                                Fore.WHITE + ": 重新连接" + Fore.RESET
+                            )
+                            while self.ori_imgTrans_running_flag:
+                                if not self.switch.read_status():
+                                    # 开关状态2，关闭图传
+                                    self.ori_imgTrans_running_flag = False
+                                    break
+                                if self.sender.connecting():
+                                    continue
+
+                    # 检查开关
+                    if not self.switch.read_status():
+                        # 开关状态2，关闭图传
+                        self.ori_imgTrans_running_flag = False
                         break
 
             else:
+                # 开关状态2，开任务线程，关图传线程
                 print(
-                    Fore.BLUE + f"[{self.__get_time()}]" + Fore.RESET,
-                    Fore.RED + "Invalid sign" + Fore.RESET
+                    Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
+                    Fore.WHITE + ":模式切换为" + Fore.RESET,
+                    Fore.CYAN + "任务模式" + Fore.RESET
                 )
 
-    def __read_img(self):
-        """
-        读取图像
-        ----
-        """
-        while self.reading_flag:
-            _, img = self.cap.read()
-            if img is None:
-                continue
-            self.img = img
+                # 设置标志
+                self.ori_imgTrans_running_flag = False
+                self.task_running_flag = True
+
+                # 连接图传
+                if self.deal_img_method == "send" and self.sender:
+                    print(
+                        Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
+                        Fore.WHITE + ": 等待图传连接\tIP:" + Fore.RESET,
+                        Fore.CYAN + f"{self.sender.host}" + Fore.RESET,
+                    )
+                    while self.task_running_flag:
+                        if self.sender.connecting():
+                            print(
+                                Fore.YELLOW + f"[{getTimeStamp()}]" + Fore.RESET,
+                                Fore.WHITE + ": 图传连接成功" + Fore.RESET,
+                            )
+                            break
+                        if self.switch.read_status():
+                            self.task_running_flag = False
+                            break
+
+                # 开始任务
+                while self.task_running_flag:
+                    # 读取串口信号
+                    sign = self.solution.uart.new_read(self.HEAD, self.TAIL)
+
+                    if sign is None:
+                        # 检查开关
+                        if self.switch.read_status():
+                            self.task_running_flag = False
+                            break
+                        else:
+                            continue
+
+                    if sign not in self.TASK_DICT.keys():
+                        print(
+                            Fore.RED + f"[{getTimeStamp()}]" + Fore.RESET,
+                            Fore.RED + ": 非法信号" + Fore.RESET
+                        )
+                        # 检查开关
+                        if self.switch.read_status():
+                            self.task_running_flag = False
+                            break
+                        else:
+                            continue
+
+                    # 执行任务
+                    t0 = time.perf_counter()
+                    num = 0
+                    while self.task_running_flag:
+                        if sign in ["1", "2"]:
+                            # 去除缓冲区图像
+                            for i in range(30):
+                                _, img = self.cap.read()
+                                cv2.putText(
+                                    img,
+                                    "Cleaning Buffer...",
+                                    (10, 30),
+                                    cv2.FONT_HERSHEY_SIMPLEX,
+                                    1,
+                                    (0, 0, 255),
+                                )
+                                self.DEAL_IMG_DICT[self.deal_img_method](img)
+
+                        _, img = self.cap.read()
+                        # 切割图片
+                        img = img[:400,:]
+
+                        res, res_img = self.TASK_DICT[sign](img)
+
+                        num += 1
+
+                        print(
+                            Fore.GREEN + f"[{getTimeStamp()}]" + Fore.RESET,
+                            Fore.WHITE + "result:" + Fore.RESET,
+                            Fore.MAGENTA + f"{res}" + Fore.RESET,
+                        )
+
+                        self.DEAL_IMG_DICT[self.deal_img_method](res_img)
+
+                        if res:
+                            t1 = time.perf_counter()
+                            used_time_ms = (t1 - t0) * 1000
+                            if used_time_ms < 40:
+                                color = Fore.GREEN
+                            elif used_time_ms < 60:
+                                color = Fore.YELLOW
+                            else:
+                                color = Fore.RED
+
+                            print(
+                                Fore.GREEN + f"[{getTimeStamp()}]" + Fore.RESET,
+                                Fore.WHITE + "sended:" + Fore.RESET,
+                                Fore.MAGENTA + f"{res}\t" + Fore.RESET,
+                                Fore.WHITE + "used time:" + Fore.RESET,
+                                color + f"{used_time_ms:.2f}ms" + Fore.RESET,
+                            )
+                            self.solution.uart.write(res, self.HEAD, self.TAIL)
+                            break
+
+                        # 每30帧检查一次开关
+                        if num % 30 == 0:
+                            if not self.switch.read_status():
+                                self.task_running_flag = False
+                                break
+
+
+def getTimeStamp():
+    """
+    获取时间戳(包含毫秒)
+    ----
+    """
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")[:-3]
 
 
 if __name__ == "__main__":
     mainsystem = MainSystem(
         ser_port="/dev/ttyUSB0",
-        sender=SendImg("169.254.60.115", 4444),
-        if_send_main=True
+        pkgHEAD="@",
+        pgkTAIL="#",
+        sender=SendImg("wlan1", 4444),
+        deal_img_method="send"
     )
     mainsystem.main()
 # end main

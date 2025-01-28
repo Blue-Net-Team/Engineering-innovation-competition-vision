@@ -53,6 +53,10 @@ class MainSystem:
         ----
         Args:
             ser_port (str): 串口号
+            pakHEAD (str): 包头
+            pgkTAIL (str): 包尾
+            sender (SendImg): 图传发送器
+            deal_img_method (str): 处理图像的方法,包含"show"(显示)、"hide"(隐藏)、"send"(发送)
         """
         self.cap = Cap()
         self.solution = Solution.Solution(ser_port)
@@ -272,7 +276,7 @@ class MainSystem:
                                 Fore.WHITE + "used time:" + Fore.RESET,
                                 color + f"{used_time_ms:.2f}ms" + Fore.RESET,
                             )
-                            self.solution.uart.write(res, self.HEAD, self.TAIL)
+                            self.solution.uart.write(res)
                             break
 
                         # 每30帧检查一次开关

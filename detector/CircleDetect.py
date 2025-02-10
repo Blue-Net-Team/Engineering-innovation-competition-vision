@@ -36,6 +36,7 @@ CircleDetector类
 
 import json
 import cv2
+import numpy as np
 from .Detect import Detect
 
 
@@ -111,6 +112,8 @@ class CircleDetector(Detect):
             borderType=cv2.BORDER_REPLICATE
         )
 
+        canny_img = cv2.Canny(img, self.param1//2, self.param1)
+
         circles = cv2.HoughCircles(
             img,
             cv2.HOUGH_GRADIENT,
@@ -121,14 +124,19 @@ class CircleDetector(Detect):
             minRadius=self.minRadius,
             maxRadius=self.maxRadius,
         )
+
+        # 将图像和canny图像拼接
+        res_img = cv2.cvtColor(canny_img, cv2.COLOR_GRAY2BGR)
+        res_img = np.vstack([_img, res_img])
+
         if circles is not None:
             circles = circles[0]
             for circle in circles:
                 x, y, r = circle
                 point_lst.append((int(x), int(y)))
                 r_lst.append(int(r))
-            return point_lst, r_lst, img
-        return None, None, img
+            return point_lst, r_lst, res_img
+        return None, None, res_img
 
     def save_config(self, jsion_path, circle_type):
         """

@@ -1,5 +1,8 @@
 import threading
 import RPi.GPIO as GPIO
+from luma.core.interface.serial import i2c
+from luma.oled.device import sh1106
+from PIL import ImageFont, ImageDraw, Image
 
 
 # 设置GPIO模式为BCM
@@ -71,3 +74,39 @@ class Switch:
         GPIO.cleanup(self.InPin)
         if self.PowPin:
             GPIO.cleanup(self.PowPin)
+
+
+class OLED_I2C:
+    def __init__(self, port:int=1, add:int=0x3c) -> None:
+        """
+        OLED初始化
+        ----
+        Args:
+            port(int):i2c的总线编号，即i2cdetect -y 1的1
+            add(int):16进制的i2c地址
+        """
+        ser = i2c(port=port, address=add)
+        self.device = sh1106(ser)
+        # 创建一个空白图像
+        self.image = Image.new('1', (self.device.width, self.device.height))
+        self.draw = ImageDraw.Draw(self.image)
+        self._font = ImageFont.load_default()
+
+    def text(self, data:str, position:tuple[int, int]):
+        """
+        在画面中绘制文字
+        ----
+        Args:
+            data(str):需要绘制的文字数据
+            position(tuple[int,int]):绘制文字的位置
+        """
+        self.draw.text(position, data, font=self._font, fill=255)
+
+    def display(self):
+        """在屏幕上显示画面"""
+        self.device.display(self.image)
+
+    def clear(self):
+        """清空画面"""
+        self.draw.rectangle(self.device.bounding_box, fill="black")
+        self.display()

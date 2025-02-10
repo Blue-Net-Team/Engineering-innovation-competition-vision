@@ -3,37 +3,37 @@
         "Min_val": 120,
         "Max_val": 255,
         "Hough_threshold": 48,
-        "minLineLength": 41,
+        "minLineLength": 70,
         "maxLineGap": 49,
         "bias": 1
     },
     "area1_points": [
         [
-            47,
-            13
+            50,
+            0
         ],
         [
-            289,
-            234
+            335,
+            235
         ]
     ],
     "area2_points": [
         [
-            322,
-            19
+            335,
+            0
         ],
         [
-            582,
-            240
+            585,
+            235
         ]
     ],
     "area3_points": [
         [
-            183,
-            258
+            130,
+            235
         ],
         [
-            465,
+            580,
             473
         ]
     ],

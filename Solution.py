@@ -10,6 +10,7 @@
 """
 
 import json
+import time
 import cv2
 import numpy as np
 from utils import Uart
@@ -133,16 +134,15 @@ class Solution:
 
         color_position_dict:dict[str,tuple[int,int,int,int]] = self.__detect_material_positions(_img)   # type:ignore
 
-        # 如果有物料没识别到，即color_position_dict有None，返回none
-        if None in color_position_dict.values():
-            return None, res_img
 
         for (color, position), area_point in zip(
             color_position_dict.items(),
             [self.area1_points, self.area2_points, self.area3_points],
         ):
-            # 画出物料
-            res_img = draw_material(position, res_img, color)
+            if position is not None:
+                # 画出物料
+                res_img = draw_material(position, res_img, color)
+
             # 画出位号
             cv2.rectangle(
                 res_img,
@@ -155,10 +155,6 @@ class Solution:
         # 将坐标转换成位号，在后面排除了now_color_position_id_dict中有None的情况
         now_color_position_id_dict: dict[str, int|None] = self.position2area(color_position_dict)     # type:ignore
 
-        # 如果有某个物料不在规定区域内，认为运动还没停止，返回none
-        if None in now_color_position_id_dict.values():
-            return None, res_img
-
         # 上一次的颜色位号
         last_color_position_id_dict: dict[str, int] = (
             self.position_id_stack.pop()
@@ -170,8 +166,11 @@ class Solution:
         self.position_id_stack.append(now_color_position_id_dict)
 
         # 如果两个字典不相等，说明物料运动了
-        if now_color_position_id_dict != last_color_position_id_dict:
-            return "1", res_img
+        if now_color_position_id_dict != last_color_position_id_dict\
+        and (len(set(now_color_position_id_dict.values())) == 3\
+            or list(now_color_position_id_dict.values()).count(None) == 2):
+            res, res_img = self.get_material(_img)
+            return res, res_img
         else:
             return None, res_img
 
@@ -213,7 +212,7 @@ class Solution:
 
         res = "".join(
             [
-                f"{color}{area if area else '0'}"
+                f"{area if area else '0'}"
                 for color, area in color_position_id_dict.items()
             ]
         )

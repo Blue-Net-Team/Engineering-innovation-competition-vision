@@ -48,7 +48,7 @@ class Uart(serial.Serial):
     * 发送数据的时候可以指定包头包尾
     """
 
-    def __init__(self, port:str|None, baudrate:int=115200, timeout:float=0.05):
+    def __init__(self, port:str|None, baudrate:int=115200, timeout:float=0.04):
         """
         初始化串口通信对象
         ----
@@ -61,7 +61,7 @@ class Uart(serial.Serial):
         self.read_falg = True
 
 
-    def new_read(self, head: str, tail: str = "\n") -> str:
+    def new_read(self, head: str, tail: str = "\n") -> str|None:
         """
         读取数据
         ----
@@ -78,7 +78,7 @@ class Uart(serial.Serial):
             while self.read_falg:
                 byte = super().read(1)
                 if not byte:
-                    continue
+                    return None
                 data += byte
                 if data.endswith(HEAD):
                     break
@@ -152,3 +152,6 @@ class Uart(serial.Serial):
         """
         super().reset_input_buffer()
         super().reset_output_buffer()
+
+    def old_write(self, data:bytes):
+        return super().write(data)

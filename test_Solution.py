@@ -47,7 +47,7 @@ class Test_solution(Solution):
         super().__init__(ser_port)
         # 顶层方法字典
         self.TOP_FUNC_DICT = {
-            "1": self.annulus_top,  # 物料位置检测
+            "1": self.annulus_top,  # 圆环检测
             "2": self.right_angle_detect,  # 直角检测
             "3": self.material_moving_detect,  # 物料运动检测
             "4": self.get_material,  # 获取物料位号
@@ -123,17 +123,17 @@ class Test_solution(Solution):
                     print(
                         Fore.YELLOW + f"[{now_time}]" + Style.RESET_ALL,
                         "res:",
-                        Fore.RED + f"{res[1:3]}" + Style.RESET_ALL,
-                        Fore.GREEN + f"{res[3:5]}" + Style.RESET_ALL,
-                        Fore.BLUE + f"{res[5:7]}" + Style.RESET_ALL,
+                        Fore.RED + f"{res[1]}" + Style.RESET_ALL,
+                        Fore.GREEN + f"{res[2]}" + Style.RESET_ALL,
+                        Fore.BLUE + f"{res[3]}" + Style.RESET_ALL,
                         "\t detect time(ms):",
                         color + f"{detect_time * 1000:.2f}" + Style.RESET_ALL
                     )
 
 
-            if self.sender is None:
-                if cv2.waitKey(1) & 0xFF == ord("q"):
-                    break
+            # if self.sender is None:
+            #     if cv2.waitKey(1) & 0xFF == ord("q"):
+            #         break
 
     def test_usart_read(self, head: str, tail: str):
         """
@@ -145,9 +145,9 @@ class Test_solution(Solution):
             None
         """
         while True:
-            data = self.uart.new_read(head, tail)
-            now = datetime.now()
-            now_time = now.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+            data1 = self.uart.new_read(head, tail)
+            data = data1
+            now_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
             print(f"{now_time} readed {data}")
 
 
@@ -256,24 +256,26 @@ class Test_solution(Solution):
         Args:
             cap_id (int): 摄像头编号
         """
-        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        # cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         while True:
             _, img = cap.read()
             if img is None:
                 continue
             res_dict, res = self.detect_material_positions(img)
-            cv2.imshow("img", res)
+            # cv2.imshow("img", res)
+            self.sender.send(res)
             print(res_dict)
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
+            # if cv2.waitKey(1) & 0xFF == ord("q"):
+            #     break
 
         cap.release()
 
 if __name__ == "__main__":
-    # sender = SendImg("169.254.60.115", 4444)
-    cap = ReceiveImg("169.254.60.115", 4444)
-    test = Test_solution(sender=None)
+    sender = SendImg("169.254.60.115", 4444)
+    cap = Cap()
+    test = Test_solution(sender=sender)
     test.test_func(cap, "2")
     # test.test_material_positions(0)
     # test.test_annulus_color(0, "G")
+    # test.test_usart_read("@","#")
 # end main

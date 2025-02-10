@@ -54,7 +54,7 @@ class CircleDetector(Detect):
     param2 = 20  # 累加器的阈值，值越小，检测到的圆越多
     minRadius = 35  # 圆的最小半径
     maxRadius = 45  # 圆的最大半径
-    sigma = 0  # 高斯滤波器的标准差
+    sigma:int = 0  # 高斯滤波器的标准差
     odd_index = 3   # 奇数索引
 
     @property
@@ -90,7 +90,7 @@ class CircleDetector(Detect):
         self.minRadius = cv2.getTrackbarPos("minRadius", "Trackbar")
         self.maxRadius = cv2.getTrackbarPos("maxRadius", "Trackbar")
         self.odd_index = cv2.getTrackbarPos("odd_index", "Trackbar")
-        self.sigma = cv2.getTrackbarPos("sigma", "Trackbar") / 10
+        self.sigma = cv2.getTrackbarPos("sigma", "Trackbar") // 10
 
     def detect_circle(self, _img) -> tuple[list[tuple[int,int]]|None,list[int]|None, cv2.typing.MatLike]:
         """

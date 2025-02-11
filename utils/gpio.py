@@ -93,7 +93,61 @@ if check_raspberry_pi():
             if self.PowPin:
                 GPIO.cleanup(self.PowPin)
 else:
-    ...
+    from periphery import GPIO
+
+    def get_line_id(str_id:str):
+        """
+        从端口索引号得到总线id
+        ----
+        Args:
+            str_id(str): 端口索引号,如"B1"
+        """
+        port = str_id[0]
+        port_id = {
+            "A": 0,
+            "B": 1,
+            "C": 2,
+            "D": 3
+        }[port]
+        pin = int(str_id[1])
+        return port_id*8 + pin
+
+    class LED:
+        def __init__(self, str_pin) -> None:
+            """
+            初始化LED
+            ----
+            Args:
+                str_pin(str): 端口索引号,如"GPIO1-A2"
+            """
+            self.chip = {
+                "GPIO0": "/dev/gpiochip0",
+                "GPIO1": "/dev/gpiochip1",
+                "GPIO2": "/dev/gpiochip2",
+                "GPIO3": "/dev/gpiochip3",
+                "GPIO4": "/dev/gpiochip4",
+            }[str_pin.split("-")[0]]
+            self.line = get_line_id(str_pin.split("-")[1])
+
+            self.led = GPIO(self.chip, self.line, "out")
+
+        def on(self):
+            """开启LED"""
+            self.led.write(1)
+
+        def off(self):
+            """关闭LED"""
+            self.led.write(0)
+
+        def close(self):
+            """关闭LED"""
+            self.led.write(0)
+            self.led.close()
+
+        def __del__(self):
+            """析构函数"""
+            self.close()
+
 
 class OLED_I2C:
     def __init__(self, port:int=1, add:int=0x3c) -> None:

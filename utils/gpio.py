@@ -71,24 +71,8 @@ if check_raspberry_pi():
             self.status = GPIO.input(self.InPin)
             return self.status if not self.reverse else not self.status
 
-        def __read_statusAlway(self) -> None:
-            """一直读取开关状态"""
-            while self.readFlag:
-                self.status = GPIO.input(self.InPin)
-
-        def read_statusAlway(self) -> None:
-            """一直读取开关状态"""
-            self.t = threading.Thread(target=self.__read_statusAlway)
-            self.t.start()
-
-        def stop_read(self) -> None:
-            """停止读取开关状态"""
-            self.readFlag = False
-            self.t.join()
-
         def __del__(self) -> None:
             """析构函数"""
-            self.stop_read()
             GPIO.cleanup(self.InPin)
             if self.PowPin:
                 GPIO.cleanup(self.PowPin)
@@ -147,6 +131,56 @@ else:
         def __del__(self):
             """析构函数"""
             self.close()
+
+
+    class Switch:
+        """开关类 - 适用于非树莓派设备"""
+
+        status: bool = False
+        readFlag: bool = True
+
+        def __init__(
+            self,
+            str_pin: str,
+            pull_up_down: str = "pullup",  # "pullup" 或 "pulldown"
+            reverse: bool = False
+        ) -> None:
+            """
+            初始化开关
+            ----
+            Args:
+                str_pin: 端口索引号，如"GPIO1-A2"
+                pull_up_down: 上拉或下拉，可选值："pullup"/"pulldown"
+                reverse: 是否反转开关状态
+            """
+            self.chip = {
+                "GPIO0": "/dev/gpiochip0",
+                "GPIO1": "/dev/gpiochip1",
+                "GPIO2": "/dev/gpiochip2",
+                "GPIO3": "/dev/gpiochip3",
+                "GPIO4": "/dev/gpiochip4",
+            }[str_pin.split("-")[0]]
+
+            self.line = get_line_id(str_pin.split("-")[1])
+            self.reverse = reverse
+
+            # 设置输入引脚和上下拉
+            bias = "pull_up" if pull_up_down == "pullup" else "pull_down"
+            self.switch = GPIO(self.chip, self.line, "in", bias=bias)
+
+        def read_status(self) -> bool:
+            """
+            读取开关状态
+            ----
+            Returns:
+                status: 开关状态
+            """
+            self.status = self.switch.read()
+            return self.status if not self.reverse else not self.status
+
+        def __del__(self) -> None:
+            """析构函数"""
+            self.switch.close()
 
 
 class OLED_I2C:

@@ -1,80 +1,99 @@
 import threading
-import RPi.GPIO as GPIO
 from luma.core.interface.serial import i2c
 from luma.oled.device import sh1106
 from PIL import ImageFont, ImageDraw, Image
 
+def check_raspberry_pi():
+    """检查是否为树莓派"""
+    try:
+        with open('/proc/device-tree/model', 'r') as file:
+            model = file.read().strip()
+            print(f"设备型号: {model}")
+            if "Raspberry Pi" in model:
+                return True
+            else:
+                return False
+    except FileNotFoundError:
+        print("无法访问设备树信息")
+        return False
+    except Exception as e:
+        print(f"发生错误: {str(e)}")
+        return False
 
-# 设置GPIO模式为BCM
-GPIO.setmode(GPIO.BCM)
+if check_raspberry_pi():
+    import RPi.GPIO as GPIO
+
+    # 设置GPIO模式为BCM
+    GPIO.setmode(GPIO.BCM)
 
 
-class Switch:
-    """开关类"""
+    class Switch:
+        """开关类"""
 
-    status: bool = False
-    readFlag: bool = True
+        status: bool = False
+        readFlag: bool = True
 
-    def __init__(
-        self,
-        _InPin: int,
-        pull_up_down: int = 22,
-        _PowPin: int | None = None,
-        reverse: bool = False
-    ) -> None:
-        """
-        初始化开关
-        ----
-        Args:
-            _InPin: 输入引脚，该类回读取这个引脚的电平作为开关状态
-            pull_up_down: 上下拉电阻
-            _PowPin: 电源引脚,设置了的话,将会在初始化时将其设置为高电平
-            reverse: 是否反转开关状态
-        """
-        self.InPin = _InPin
-        self.PowPin = _PowPin
-        self.reverse = reverse
+        def __init__(
+            self,
+            _InPin: int,
+            pull_up_down: int = 22,
+            _PowPin: int | None = None,
+            reverse: bool = False
+        ) -> None:
+            """
+            初始化开关
+            ----
+            Args:
+                _InPin: 输入引脚，该类回读取这个引脚的电平作为开关状态
+                pull_up_down: 上下拉电阻
+                _PowPin: 电源引脚,设置了的话,将会在初始化时将其设置为高电平
+                reverse: 是否反转开关状态
+            """
+            self.InPin = _InPin
+            self.PowPin = _PowPin
+            self.reverse = reverse
 
-        # 设置输入引脚
-        GPIO.setup(self.InPin, GPIO.IN, pull_up_down=pull_up_down)
+            # 设置输入引脚
+            GPIO.setup(self.InPin, GPIO.IN, pull_up_down=pull_up_down)
 
-        # 设置电源引脚
-        if self.PowPin:
-            GPIO.setup(self.PowPin, GPIO.OUT)
-            GPIO.output(self.PowPin, GPIO.HIGH)
+            # 设置电源引脚
+            if self.PowPin:
+                GPIO.setup(self.PowPin, GPIO.OUT)
+                GPIO.output(self.PowPin, GPIO.HIGH)
 
-    def read_status(self) -> bool:
-        """
-        读取开关状态
-        ----
-        Returns:
-            status: 开关状态
-        """
-        self.status = GPIO.input(self.InPin)
-        return self.status if not self.reverse else not self.status
-
-    def __read_statusAlway(self) -> None:
-        """一直读取开关状态"""
-        while self.readFlag:
+        def read_status(self) -> bool:
+            """
+            读取开关状态
+            ----
+            Returns:
+                status: 开关状态
+            """
             self.status = GPIO.input(self.InPin)
+            return self.status if not self.reverse else not self.status
 
-    def read_statusAlway(self) -> None:
-        """一直读取开关状态"""
-        self.t = threading.Thread(target=self.__read_statusAlway)
-        self.t.start()
+        def __read_statusAlway(self) -> None:
+            """一直读取开关状态"""
+            while self.readFlag:
+                self.status = GPIO.input(self.InPin)
 
-    def stop_read(self) -> None:
-        """停止读取开关状态"""
-        self.readFlag = False
-        self.t.join()
+        def read_statusAlway(self) -> None:
+            """一直读取开关状态"""
+            self.t = threading.Thread(target=self.__read_statusAlway)
+            self.t.start()
 
-    def __del__(self) -> None:
-        """析构函数"""
-        self.stop_read()
-        GPIO.cleanup(self.InPin)
-        if self.PowPin:
-            GPIO.cleanup(self.PowPin)
+        def stop_read(self) -> None:
+            """停止读取开关状态"""
+            self.readFlag = False
+            self.t.join()
 
+        def __del__(self) -> None:
+            """析构函数"""
+            self.stop_read()
+            GPIO.cleanup(self.InPin)
+            if self.PowPin:
+                GPIO.cleanup(self.PowPin)
+else:
+    ...
 
 class OLED_I2C:
     def __init__(self, port:int=1, add:int=0x3c) -> None:

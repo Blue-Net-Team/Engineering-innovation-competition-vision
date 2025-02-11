@@ -128,4 +128,3 @@ class OLED_I2C:
     def clear(self):
         """清空画面"""
         self.draw.rectangle(self.device.bounding_box, fill="black")
-        self.display()

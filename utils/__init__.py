@@ -3,6 +3,7 @@ from .ImgTrans import SendImg, ReceiveImg, LoadWebCam
 from .UART import Uart
 from .typingCheck import check_args
 from .gpio import Switch, OLED_I2C
+from .tspi_board_info import get_CPU_temp, get_GPU_temp
 
 __all__ = [
     "Cap",
@@ -15,4 +16,6 @@ __all__ = [
     "check_args",
     "Switch",
     "OLED_I2C",
+    "get_CPU_temp",
+    "get_GPU_temp",
 ]

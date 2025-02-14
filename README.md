@@ -215,13 +215,18 @@ utils                       用于存放工具代码的文件夹
     |___ typingCheck.py     用于检查函数的的形参和实参是否匹配
     |___ UART.py            串口通信的代码
     |___ ImgTrans.py        用于远程图传的代码
-    |___ gpio.py            有关于GPIO的代码，主要是开关的抽象
+    |___ gpio.py            有关于GPIO的代码，主要是开关,LED,OLED的抽象
+    |___ tspi_boaed_info.py 用于获取泰山派的信息
+    |___ wifi_connect.py    用于连接wifi的代码
 
 AdjustConfig.py             用于调整配置的调试代码
 Solution.py                 用于存放解决方案的代码，包括颜色识别，圆环识别，直线识别以及串口等使用的函数
 test_Solution.py            用于测试Solution或者detector的功能
 img_trans.py                用于远程图传的代码，主要用于调试过程方便在电脑上得到图像
 main.py                     主程序，直接在Jetson或者树莓派上运行的代码
+requirements.txt            依赖的库,可以使用pip install -r requirements.txt一键安装依赖
+config.json                 用于存放参数的文件
+environment.sh              用于一键配置泰山派环境的脚本，还没用过，不建议使用，可以参考里面的内容，手动配置
 ```
 
 ## 当前电控可以直接调用的接口

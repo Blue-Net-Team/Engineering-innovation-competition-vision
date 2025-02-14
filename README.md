@@ -5,6 +5,199 @@
 - 不再提供圆环的定位，而是使用圆环旁边的T型路口的直角进行定位，全场的定位可以完全依赖这个。
 - 函数设计上，将所有的顶层需求都使用固定参数传入，固定类型传出，从而实现顶层的多态，底层的单一职责，这样可以保证代码的可维护性和可扩展性。
 
+## 泰山派的环境配置
+
+### 系统烧录
+参考嘉立创官方，烧录提供的Ubuntu固件（镜像）。
+
+[泰山派系统烧录](https://wiki.lckfb.com/zh-hans/tspi-rk3566/system-usage/img-download.html#loader%E5%8D%87%E7%BA%A7%E6%A8%A1%E5%BC%8F)
+
+### ADB的使用
+
+完成了系统烧录，应该也知道了loader和adb模式，直接用typeC将泰山派连接到电脑，连接后直接用adb连接
+
+```shell
+adb shell su lckfb
+```
+
+后面的`su lckfb`是以lckfb的身份登录，如果不用，就是以root的身份登录
+
+### wifi连接
+
+使用命令`nmcli`连接wifi
+
+```bash
+nmcli device wifi connect "wifi名" password "密码"
+```
+
+使用`ifconfig`查看ip地址
+
+其中，wlan0是无线网卡，eth0是有线网卡，没有使用底部扩展板是没有eth0的。此外，lo是本地回环接口，不用管。
+
+### apt更新
+
+板子默认使用了清华源，**一般来说是不用改的**，但是如果遇到无法使用，可以换成阿里源。使用编辑器编辑`/etc/apt/sources.list`文件，将清华源注释掉，加入阿里源。如果是**adb只能使用vim**，要使用nano需要配置好ssh，并且额外安装。
+
+```bash
+# 默认注释了源码仓库，如有需要可自行取消注释
+deb http://mirrors.aliyun.com/ubuntu-ports/ focal main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu-ports/ focal main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu-ports/ focal-security main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu-ports/ focal-security main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu-ports/ focal-updates main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu-ports/ focal-updates main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu-ports/ focal-backports main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu-ports/ focal-backports main restricted universe multiverse
+
+# 预发布软件源，不建议启用
+# deb http://mirrors.aliyun.com/ubuntu-ports/ focal-proposed main restricted universe multiverse
+# deb-src http://mirrors.aliyun.com/ubuntu-ports/ focal-proposed main restricted universe multiverse
+```
+
+然后使用`apt update`更新源
+
+在使用`apt upgrade`升级软件的时候会提示有217个软件包保持了原来的版本(hold back)，是因为嘉立创的系统将这些软件进行了锁定，不允许升级，如果需要升级，可以使用`apt-mark unhold`命令解锁。**这一步也可以不做**，因为这些软件的版本是没有问题的。
+
+```bash
+sudo apt-mark unhold accountsservice apparmor base-files bind9-host bind9-libs bluez bluez-cups bluez-obexd bsdutils bubblewrap ca-certificates cpp-9 cups cups-browsed cups-bsd cups-client cups-common cups-core-drivers cups-daemon cups-filters cups-filters-core-drivers cups-ipp-utils cups-ppdc cups-server-common distro-info-data dns-root-data dnsmasq-base e2fsprogs fdisk ffmpeg fonts-opensymbol gcc-9-base ghostscript ghostscript-x gir1.2-accountsservice-1.0 gir1.2-gdkpixbuf-2.0 gir1.2-gtk-3.0 gir1.2-nm-1.0 gir1.2-soup-2.4 gir1.2-vte-2.91 gnome-control-center gnome-control-center-data gnome-control-center-faces gnome-shell gnome-shell-common gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-plugins-bad gstreamer1.0-plugins-base gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-good gstreamer1.0-pulseaudio gstreamer1.0-tools gstreamer1.0-x gtk-update-icon-cache gtk2-engines-pixbuf hplip hplip-data krb5-locales libaccountsservice0 libapparmor1 libarchive13 libavcodec-dev libavcodec58 libavdevice-dev libavdevice58 libavfilter-dev libavfilter7 libavformat-dev libavformat58 libavresample-dev libavresample4 libavutil-dev libavutil56 libblkid1 libbluetooth3 libc-bin libc6 libcdio18 libcom-err2 libcups2 libcupsfilters1 libcupsimage2 libcurl3-gnutls libde265-0 libdvbv5-0 libexpat1 libext2fs2 libfdisk1 libfontembed1 libgail-common libgail18 libgd3 libgdk-pixbuf2.0-0 libgdk-pixbuf2.0-bin libgdk-pixbuf2.0-common libglib2.0-0 libglib2.0-bin libglib2.0-data libgnutls30 libgs9 libgs9-common libgssapi-krb5-2 libgstreamer-gl1.0-0 libgstreamer-plugins-bad1.0-0 libgstreamer-plugins-base1.0-0 libgstreamer-plugins-good1.0-0 libgstreamer1.0-0 libgtk-3-0 libgtk-3-bin libgtk-3-common libgtk2.0-0 libgtk2.0-bin libgtk2.0-common libharfbuzz-icu0 libharfbuzz0b libhpmud0 libk5crypto3 libkrb5-3 libkrb5support0 libldap-2.4-2 libldap-common libmount1 libmpg123-0 libmpv1 libmysqlclient21 libndp0 libnghttp2-14 libnm0 libnspr4 libnss-systemd libnss3 libopenjp2-7 liborc-0.4-0 libpam-modules libpam-modules-bin libpam-runtime libpam-s
+```
+
+解锁后再次使用`apt upgrade`升级软件
+
+如果这一步没有做的话，后续使用apt安装的时候使用 `--allow-change-held-packages`参数。
+
+### 安装必要的软件包
+
+安装gcc的原因是luma.oled库依赖于RPi.GPIO库，这个需要gcc编译，所以需要安装gcc。
+
+```bash
+# --allow-change-held-packages是没有解锁软件包的时候使用的参数
+sudo apt install git nano openssh-server openssh-client gcc g++ cmake make -y # --allow-change-held-packages
+```
+
+**安装openssh-server、openssh-client之前需要使用adb连接泰山派**
+
+### 使用sd卡，扩展根目录
+
+sd卡速度慢的话无法把miniconda装进去，这边指定使用[闪迪32G V30红黑卡](https://item.taobao.com/item.htm?id=853736888042&pisk=gxQb1ST9cxDj1ODli-FyNJkUK6T6lOaUWfOOt13q6ELvfVCVdCuwboAs5L1LiKrgmOs5BTx2Hd-w5C6eEsuaisP_51CpHFS23CBPCTmV3NJNUP1hdnuV6Nlcq95KuZrD7VTDSFeULyzUisYMWNPaABHm2IAY7V39BEY-LKG4vyzFi_G2MW588ZWBzAOnXVB9D3nJsLdxkVdTN3de6F3vXqn-eLA9WFKtWbCJ1IOxHd3YNbdesx3v6Vh-wCAp6FLOB3FWsvVgFQqXHsNxJh4FrcThMLgtWZUMcpGkeQAPPatvpn9oW_7WGn9dMZPM-cRRzate4frHy6jPHQTQzmLdNGBCvOqEqE1ODOx5n8mWUgQc6dKj6215OsIpyNPtt36J1HL9Vf3ONEv1dZTLJYOl2sSOotGsWIbV8h9HV53MbUQevMBjsWfJkCBMxNynoKCOtwjeRzovJ_sOdGszb2JBGbisNH06NpP7NcmGzvn16eRV2nxvZQ7UN7MjjndkNp7aN0iMDQAyY7NShcf..&spm=tbpc.boughtlist.suborder_itemtitle.1.16822e8doOytxb&skuId=5654524389321)
+
+插入卡后，使用`dmesg | grep mmc`查看系统日志中包含`mmc`的信息，找到对应的设备名，会找到类似于`mmcblk1`的设备名，这个就是sd卡的设备名。使用`lsblk`可以查看这个sd卡下有没有分区，如果类似于以下情况，说明没有分区。
+
+```bash
+mmcblk1     179:0    0  29.7G  0 disk
+```
+
+如果是以下情况，说明有分区
+
+```bash
+mmcblk1     179:0    0  29.7G  0 disk
+└─mmcblk1p1 179:1    0  29.7G  0 part
+```
+
+如果没有分区需要创建分区，使用`fdisk`命令，输入`n`，然后输入`p`，然后输入`1`，然后两次回车，最后输入`w`保存。
+
+fdisk是一个交互式的命令行工具，所以需要输入`fdisk /dev/mmcblk1`进入交互模式。
+
+```bash
+sudo fdisk /dev/mmcblk1
+```
+
+- 输入n：新建分区
+- 输入p：新建主分区(primary)
+- 输入1：分区号
+- 两次回车：默认起始扇区和结束扇区
+- w：保存。
+
+然后使用`lsblk`查看分区是否创建成功。
+
+```bash
+mmcblk1     179:0    0  29.7G  0 disk
+└─mmcblk1p1 179:1    0  29.7G  0 part
+```
+
+然后需要格式化分区，使用`mkfs.ntfs`命令，将sd卡格式化为ntfs格式。
+
+```bash
+sudo mkfs.ntfs /dev/mmcblk1p1
+```
+
+等待完成，然后将sd卡挂在到泰山派上。
+
+创建`/media/sdcard`文件夹，使用mkdir命令创建。
+
+```bash
+sudo mkdir /media/sdcard
+```
+
+使用`mount`命令挂载。
+
+```bash
+sudo mount /dev/mmcblk1p1 /media/sdcard
+```
+
+但是这个方法并不会开机自动挂载，需要将挂载信息写入`/etc/fstab`文件中。
+
+1. 方法1 可以使用编辑器
+    ```bash
+    sudo nano /etc/fstab
+    ```
+
+    然后再文件末尾添加以下内容。
+
+    ```bash
+    /dev/mmcblk1p1 /media/sdcard auto defaults,uid=1000,gid=1000 0 0
+    ```
+
+2. 方法2 可以使用echo
+
+    ```bash
+    sudo echo "/dev/mmcblk1p1 /media/sdcard auto defaults,uid=1000,gid=1000 0 0" >> /etc/fstab
+    ```
+
+修改了`/etc/fstab`文件之后，使用`mount -a`命令重新挂载。
+
+```bash
+sudo mount -a
+```
+
+### 安装miniconda3
+
+可以先下载了安装包后使用sftp将文件传到泰山派（需要ssh），也可以直接下载
+
+使用`wget`命令下载安装包
+
+```bash
+# 创建Downloads文件夹，并且将安装包放在里面
+mkdir Downloads && cd Downloads
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-aarch64.sh
+```
+
+下载完成后，运行安装脚本
+
+```bash
+# -p后面的参数是安装目录
+bash Miniconda3-latest-Linux-aarch64.sh -b -p /media/sdcard/miniconda3
+```
+
+完成安装之后，要对conda进行初始化
+
+```bash
+/media/sdcard/miniconda3 init
+source ~/.bashrc
+```
+
+建议关掉自动base环境激活
+
+```bash
+conda config --set auto_activate_base false
+```
+
+然后修改全局pip源，这边采用阿里源
+
+```bash
+pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+```
+
 ## 项目结构
 
 下面不会在讲到非必要文件，例如.gitignore，LICENSE等文件

@@ -54,7 +54,7 @@ class CircleDetector(Detect):
     param2 = 20  # 累加器的阈值，值越小，检测到的圆越多
     minRadius = 35  # 圆的最小半径
     maxRadius = 45  # 圆的最大半径
-    sigma:int = 0  # 高斯滤波器的标准差
+    sigma:float = 0  # 高斯滤波器的标准差
     odd_index = 3   # 奇数索引
 
     @property
@@ -90,7 +90,7 @@ class CircleDetector(Detect):
         self.minRadius = cv2.getTrackbarPos("minRadius", "Trackbar")
         self.maxRadius = cv2.getTrackbarPos("maxRadius", "Trackbar")
         self.odd_index = cv2.getTrackbarPos("odd_index", "Trackbar")
-        self.sigma = cv2.getTrackbarPos("sigma", "Trackbar") // 10
+        self.sigma = cv2.getTrackbarPos("sigma", "Trackbar") / 10
 
     def detect_circle(self, _img) -> tuple[list[tuple[int,int]]|None,list[int]|None, cv2.typing.MatLike]:
         """
@@ -112,8 +112,6 @@ class CircleDetector(Detect):
             borderType=cv2.BORDER_REPLICATE
         )
 
-        canny_img = cv2.Canny(img, self.param1//2, self.param1)
-
         circles = cv2.HoughCircles(
             img,
             cv2.HOUGH_GRADIENT,
@@ -125,9 +123,11 @@ class CircleDetector(Detect):
             maxRadius=self.maxRadius,
         )
 
-        # 将图像和canny图像拼接
-        res_img = cv2.cvtColor(canny_img, cv2.COLOR_GRAY2BGR)
-        res_img = np.vstack([_img, res_img])
+        # 将原始图像和滤波后的图像拼接在一起
+        res_img = np.vstack([
+            _img,
+            cv2.cvtColor(img, cv2.COLOR_GRAY2BGR),
+        ])
 
         if circles is not None:
             circles = circles[0]

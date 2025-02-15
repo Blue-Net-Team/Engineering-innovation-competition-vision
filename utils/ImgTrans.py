@@ -102,6 +102,9 @@ class SendImg(object):
         except:
             return ""
 
+    def update_host(self):
+        self._host = self.get_ip_address(self.interface)
+
     def connecting(self):
         """
         连接客户端

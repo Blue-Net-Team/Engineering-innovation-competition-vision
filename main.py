@@ -26,7 +26,7 @@ import time
 from colorama import Fore, Style, init
 import cv2
 import Solution
-from utils import SendImg, Cap, Switch, LED, OLED_I2C
+from utils import SendImg, Cap, Switch, LED, OLED_I2C, connect_to_wifi
 import numpy as np
 
 from utils.ImgTrans import NeedReConnect
@@ -70,6 +70,42 @@ class MainSystem:
         self.DEAL_IMG_DICT = {"show": Solution.show, "hide": lambda x: None}
         if self.sender:
             self.DEAL_IMG_DICT["send"] = self.sender.send
+            if self.sender.host == "":
+                print(
+                    Fore.RED + f"[{getTimeStamp()}]:" + Fore.RESET,
+                    Fore.RED + "未连接到图传网络,尝试连接" + Fore.RESET
+                )
+
+                self.oled.clear()
+                self.oled.text("未连接到图传网络", (1,1))
+                self.oled.text("尝试连接...", (4,1))
+                self.oled.display()
+
+                while True:
+                    conn_res = connect_to_wifi("EIC-FF", "lckfb666")
+                    if conn_res[0]:
+                        print(
+                            Fore.GREEN + f"[{getTimeStamp()}]:" + Fore.RESET,
+                            Fore.GREEN + "连接成功" + Fore.RESET
+                        )
+
+                        self.oled.clear()
+                        self.oled.text("连接成功", (1,1))
+                        self.oled.display()
+
+                        # 更新host
+                        self.sender.update_host()
+                        break
+                    else:
+                        print(
+                            Fore.RED + f"[{getTimeStamp()}]:" + Fore.RESET,
+                            Fore.RED + f"连接失败，{conn_res[1]}" + Fore.RESET
+                        )
+
+                        self.oled.clear()
+                        self.oled.text("连接失败", (1,1))
+                        self.oled.text(f"{conn_res[1]}", (4,1))
+                        self.oled.display()
 
         self.TASK_DICT = {
             "1": self.solution.material_moving_detect,  # 物料运动检测
@@ -347,11 +383,13 @@ def getTimeStamp():
 
 
 if __name__ == "__main__":
+    sender = SendImg("wlan1", 4444)
+
     mainsystem = MainSystem(
         ser_port="/dev/ttyUSB0",
         pkgHEAD="@",
         pgkTAIL="#",
-        sender=SendImg("wlan1", 4444),
+        sender=sender,
         deal_img_method="send"
     )
     mainsystem.main()

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # 如果有sd卡并且插上，设置自动挂载
 # uid和gid可以用id -u和id -g查看
 sudo mkdir -p /media/sdcard
@@ -18,9 +20,11 @@ sudo apt-get update
 # 如果没有解锁包禁止更新，要在后面添加参数--allow-change-held-packages
 sudo apt-get install openssh-client openssh-server -y
 # 安装nano
-sudo apt-get install nano
+sudo apt-get install nano -y
 # 安装git
-sudo apt-get install git
+sudo apt-get install git -y
+# 安装ifupdown，用于配置静态ip
+sudo apt-get install ifupdown -y
 
 # ------------------安装miniconda------------------
 # 下载miniconda到Download文件夹
@@ -34,3 +38,28 @@ source ~/.bashrc
 conda config --set auto_activate_base false
 # 修改全局pip源
 pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+
+# ------------------ 配置github ssh ------------------
+# 生成ssh key
+ssh-keygen -t rsa -b 4096 -C "13377529851@qq.com" -f ~/.ssh/id_rsa -P ""
+# 生成config文件
+touch ~/.ssh/config
+echo "Host github.com" >> ~/.ssh/config
+echo "  HostName ssh.github.com" >> ~/.ssh/config
+echo "  Port 22" >> ~/.ssh/config
+echo "  User git" >> ~/.ssh/config
+
+# ------------------ 配置静态ip ------------------
+sudo echo "auto eth0" >> /etc/network/interfaces
+sudo echo "iface eth0 inet static" >> /etc/network/interfaces
+sudo echo "address 169.254.133.100" >> /etc/network/interfaces
+sudo echo "netmask 255.255.0.0" >> /etc/network/interfaces
+
+# 重启服务
+sudo systemctl restart networking
+# ------------------ 串口配置 ------------------
+sudo usermod -a -G dialout $USER
+sudo groupadd gpio
+sudo usermod -a -G gpio $USER
+sudo chown root:gpio /dev/gpiochip1
+sudo chmod 660 /dev/gpiochip1

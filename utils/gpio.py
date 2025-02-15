@@ -226,8 +226,15 @@ try:
             """
             self.draw.text(position, data, font=self._font, fill=255)
 
-        def display(self):
-            """在屏幕上显示画面"""
+        def display(self,reverse:bool = False):
+            """
+            在屏幕上显示画面
+            ----
+            Args:
+                reverse(bool):是否旋转180度
+            """
+            if reverse:
+                self.image = self.image.rotate(180)
             self.device.display(self.image)
 
         def clear(self):

@@ -70,9 +70,11 @@ sudo apt-mark unhold accountsservice apparmor base-files bind9-host bind9-libs b
 
 安装gcc的原因是luma.oled库依赖于RPi.GPIO库，这个需要gcc编译，所以需要安装gcc。
 
+ifupdown是用于配置静态ip的软件包，修改interfaces修改静态ip依赖于这个软件包
+
 ```bash
 # --allow-change-held-packages是没有解锁软件包的时候使用的参数
-sudo apt install git nano openssh-server openssh-client gcc g++ cmake make -y # --allow-change-held-packages
+sudo apt install git nano openssh-server openssh-client gcc g++ cmake make ifupdown -y # --allow-change-held-packages
 ```
 
 **安装openssh-server、openssh-client之前需要使用adb连接泰山派**
@@ -196,6 +198,65 @@ conda config --set auto_activate_base false
 
 ```bash
 pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+```
+
+### github的ssh配置
+
+在泰山派中生成ssh密钥对
+
+```bash
+ssh-keygen -t rsa -b 4096 -C "邮箱@qq.com" -f ~/.ssh/id_rsa -P ""
+```
+
+然后查看公钥内容，在github中添加公钥
+
+```bash
+cat ~/.ssh/id_rsa.pub
+```
+
+生成config，并且添加github的ssh代理
+
+```bash
+touch ~/.ssh/config
+echo "Host github.com" >> ~/.ssh/config
+echo "  HostName ssh.github.com" >> ~/.ssh/config
+echo "  Port 22" >> ~/.ssh/config
+echo "  User git" >> ~/.ssh/config
+```
+
+然后测试ssh是否可以连接到github
+
+```bash
+ssh git@github.com -vT
+```
+
+如果出现`Hi xxx! You've successfully authenticated, but GitHub does not provide shell access.`说明连接成功。如果卡住，可以考虑用`nano`编辑`~/.ssh/config`文件，将`Port 22`改为`Port 443`。
+
+### 解决普通用户无法访问串口和gpio的问题
+
+在泰山派中，普通用户无法访问串口和gpio，需要将用户加入到`dialout`组中。
+
+```bash
+sudo usermod -a -G dialout lckfb
+```
+
+gpio的芯片是root组，我们需要将gpio芯片转交到`gpio`组中。
+
+先新建`gpio`组
+
+```bash
+sudo groupadd gpio
+# 把用户加入到gpio组
+sudo usermod -a -G gpio $USER
+# 重新登录，这里要输入密码
+su lckfb
+```
+
+然后将`gpiochip0`转交给`gpio`组，这里的`gpiochip0`对应GPIO0参考，[泰山派40脚排针接口](https://wiki.lckfb.com/zh-hans/tspi-rk3566/system-usage/buildroot-system-usage.html#_40pin%E6%8E%92%E9%92%88%E6%8E%A5%E5%8F%A3)
+
+```bash
+sudo chown root:gpio /dev/gpiochip0
+sudo chmod 660 /dev/gpiochip0
 ```
 
 ## 项目结构

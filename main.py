@@ -404,5 +404,12 @@ if __name__ == "__main__":
         sender=sender,
         deal_img_method="send"
     )
-    mainsystem.main()
+    try:
+        mainsystem.main()
+    except KeyboardInterrupt:
+        print(
+            Fore.RED + f"[{getTimeStamp()}]:" + Fore.RESET,
+            Fore.RED + "程序被中断（用户终止）" + Fore.RESET
+        )
+        mainsystem.start_LED.off()
 # end main

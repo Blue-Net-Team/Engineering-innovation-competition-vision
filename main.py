@@ -314,6 +314,9 @@ class MainSystem:
 
                     # 执行任务
                     self.detecting_LED.on()
+                    self.oled.clear()
+                    self.oled.text(f"收到信号{sign}", (1,1))
+                    self.oled.display()
                     t0 = time.perf_counter()
                     num = 0
                     while self.task_running_flag:

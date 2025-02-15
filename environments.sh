@@ -61,5 +61,3 @@ sudo systemctl restart networking
 sudo usermod -a -G dialout $USER
 sudo groupadd gpio
 sudo usermod -a -G gpio $USER
-sudo chown root:gpio /dev/gpiochip1
-sudo chmod 660 /dev/gpiochip1

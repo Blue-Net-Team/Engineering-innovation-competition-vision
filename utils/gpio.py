@@ -27,14 +27,14 @@ try:
         GPIO.setmode(GPIO.BCM)
 
         class LED:
-            def __init__(self, _OutPin: int) -> None:
+            def __init__(self, _OutPin: str) -> None:
                 """
                 初始化LED
                 ----
                 Args:
                     _OutPin: 输出引脚(BCM编号)，该类会将这个引脚设置为输出模式
                 """
-                self.OutPin = _OutPin
+                self.OutPin = int(_OutPin)
                 GPIO.setup(self.OutPin, GPIO.OUT)
 
             def on(self):
@@ -53,7 +53,7 @@ try:
 
             def __init__(
                 self,
-                _InPin: int,
+                _InPin: str,
                 pull_up_down: int = 22,
                 _PowPin: int | None = None,
                 reverse: bool = False
@@ -67,7 +67,7 @@ try:
                     _PowPin: 电源引脚,设置了的话,将会在初始化时将其设置为高电平
                     reverse: 是否反转开关状态
                 """
-                self.InPin = _InPin
+                self.InPin = int(_InPin)
                 self.PowPin = _PowPin
                 self.reverse = reverse
 
@@ -115,7 +115,7 @@ try:
             return port_id*8 + pin
 
         class LED:
-            def __init__(self, str_pin) -> None:
+            def __init__(self, str_pin:str) -> None:
                 """
                 初始化LED
                 ----
@@ -135,15 +135,15 @@ try:
 
             def on(self):
                 """开启LED"""
-                self.led.write(1)
+                self.led.write(True)
 
             def off(self):
                 """关闭LED"""
-                self.led.write(0)
+                self.led.write(False)
 
             def close(self):
                 """关闭LED"""
-                self.led.write(0)
+                self.led.write(False)
                 self.led.close()
 
             def __del__(self):
@@ -160,15 +160,15 @@ try:
             def __init__(
                 self,
                 str_pin: str,
-                pull_up_down: str = "pullup",  # "pullup" 或 "pulldown"
                 reverse: bool = False
             ) -> None:
                 """
                 初始化开关
                 ----
+                泰山派只能设置为下拉电阻
+
                 Args:
                     str_pin: 端口索引号，如"GPIO1-A2"
-                    pull_up_down: 上拉或下拉，可选值："pullup"/"pulldown"
                     reverse: 是否反转开关状态
                 """
                 self.chip = {
@@ -183,8 +183,7 @@ try:
                 self.reverse = reverse
 
                 # 设置输入引脚和上下拉
-                bias = "pull_up" if pull_up_down == "pullup" else "pull_down"
-                self.switch = GPIO(self.chip, self.line, "in", bias=bias)
+                self.switch = GPIO(self.chip, self.line, "in")
 
             def read_status(self) -> bool:
                 """

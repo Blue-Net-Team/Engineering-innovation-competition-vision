@@ -250,6 +250,9 @@ class MainSystem:
                 self.ori_imgTrans_running_flag = False
                 self.task_running_flag = True
 
+                # 加载参数
+                self.solution.load_config()
+
                 # 连接图传
                 if self.deal_img_method == "send" and self.sender:
                     print(

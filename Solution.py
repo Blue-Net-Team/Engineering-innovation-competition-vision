@@ -80,7 +80,14 @@ class Solution:
         self.uart = Uart(ser_port)
         self.position_id_stack:list[dict[str,int|None]] = []     # 用于存放上一帧图像的物料位号的栈
 
-        # region 读取配置文件
+        # 读取配置文件
+        self.load_config()
+
+    def load_config(self):
+        """
+        读取配置文件
+        ----
+        """
         try:
             with open("config.json", "r") as f:
                 config = json.load(f)
@@ -110,7 +117,6 @@ class Solution:
                 if e:
                     print(Fore.RED + e)
 
-        # endregion
 
     # region 物料运动检测
     def material_moving_detect(self, _img:cv2.typing.MatLike) -> tuple[str|None, cv2.typing.MatLike]:

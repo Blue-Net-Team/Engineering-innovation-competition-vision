@@ -26,7 +26,7 @@ import time
 from colorama import Fore, Style, init
 import cv2
 import Solution
-from utils import SendImg, Cap, Switch, LED, OLED_I2C, connect_to_wifi
+from utils import SendImg, Cap, Switch, LED, OLED_I2C, connect_to_wifi, get_CPU_temp, get_GPU_temp
 import numpy as np
 
 from utils.ImgTrans import NeedReConnect
@@ -374,6 +374,12 @@ class MainSystem:
 
                         # 每30帧检查一次开关
                         if num % 30 == 0:
+                            # 检查核心温度
+                            temp_cup = get_CPU_temp()
+                            temp_gpu = get_GPU_temp()
+                            self.oled.text(f"CPU温度:{temp_cup}", (3,1))
+                            self.oled.text(f"GPU温度:{temp_gpu}", (4,1))
+                            self.oled.display()
                             if not self.switch.read_status():
                                 self.task_running_flag = False
                                 break

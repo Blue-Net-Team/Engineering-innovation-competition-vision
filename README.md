@@ -198,6 +198,38 @@ conda config --set auto_activate_base false
 pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 ```
 
+### 自启动的脚本
+
+**下面的内容需要创建了gpio组，并且将当前用户(这里是`lckfb`)添加到gpio组中在运行**
+
+```bash
+sudo groupadd gpio
+sudo usermod -a -G gpio $USER
+```
+
+可以使用`groups`命令查看当前用户所在的用户组，**确保当前用户在`gpio`用户组中**
+
+环境配置的时候我提供了一个开机自动配置GPIO的脚本，用于修改GPIO芯片的权限，位于目录`run_auto`下，里面的`gpio-setup.service`需要复制到`/etc/systemd/system/`下，然后使用`systemctl enable gpio-setup.service`命令开机自启动。
+
+```bash
+# 确保脚本有执行权限
+sudo chmod +x run_auto/gpio-setup.sh
+# 复制服务文件到systemd目录
+sudo cp run_auto/gpio-setup.service /etc/systemd/system/
+# 修改权限
+sudo chmod 644 /etc/systemd/system/gpio-setup.service
+# 重新加载服务
+sudo systemctl daemon-reload
+# 开机自启动
+sudo systemctl enable gpio-setup.service
+# 启动服务
+sudo systemctl start gpio-setup.service
+# 检查服务状态
+sudo systemctl status gpio-setup.service
+```
+
+**`gpio-setup.service`里面的`ExecStart`需要修改到`run_auto`文件夹下`gpio-setup.sh`文件的绝对路径**
+
 ## 项目结构
 
 下面不会在讲到非必要文件，例如.gitignore，LICENSE等文件

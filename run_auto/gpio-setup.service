@@ -1,0 +1,11 @@
+[Unit]
+Description=GPIO Setup Service
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/media/sdcard/code/Engineering-innovation-competition-vision/run_auto/run_before_use_GPIO.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -76,7 +76,7 @@ ifupdown是用于配置静态ip的软件包，修改interfaces修改静态ip依�
 
 ```bash
 # --allow-change-held-packages是没有解锁软件包的时候使用的参数
-sudo apt install git nano openssh-server openssh-client gcc g++ cmake make ifupdown -y # --allow-change-held-packages
+sudo apt install git nano openssh-server openssh-client gcc g++ cmake make ifupdown i2c-tools -y # --allow-change-held-packages
 ```
 
 **安装openssh-server、openssh-client之前需要使用adb连接泰山派**

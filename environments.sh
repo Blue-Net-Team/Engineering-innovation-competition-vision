@@ -25,6 +25,8 @@ sudo apt-get install nano -y
 sudo apt-get install git -y
 # 安装ifupdown，用于配置静态ip
 sudo apt-get install ifupdown -y
+# 安装i2c-tools
+sudo apt-get install i2c-tools -y
 # 安装中文字体
 sudo apt-get install fonts-wqy-microhei -y
 
@@ -63,3 +65,4 @@ sudo systemctl restart networking
 sudo usermod -a -G dialout $USER
 sudo groupadd gpio
 sudo usermod -a -G gpio $USER
+sudo usermod -a -G i2c $USER

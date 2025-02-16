@@ -349,9 +349,13 @@ class Solution:
         res_img = _img.copy()
         annulus_dict:dict[str,tuple[int,int]|None] = {}
 
+        # 三个颜色的二值化图
+        res_bit_and = np.zeros_like(_img)
+
         for color in COLOR_DIC.values():
             bit_with_and_img = self.get_with_and_img(_img, color)
-            avg_point, avg_r = self.annulus_detect_only(bit_with_and_img)
+            res_bit_and = cv2.bitwise_or(res_bit_and, bit_with_and_img)
+            avg_point, avg_r, _ = self.annulus_detect_only(bit_with_and_img)
 
             if avg_point and avg_r:
                 # 画出圆环
@@ -378,6 +382,8 @@ class Solution:
                 annulus_dict[color] = avg_point
             else:
                 annulus_dict[color] = None
+        # 将res_bit_and和原图拼接
+        res_img = np.vstack((res_img, cv2.cvtColor(res_bit_and, cv2.COLOR_GRAY2BGR)))
         return annulus_dict, res_img
 
     def annulus_color_top(self, _img:cv2.typing.MatLike) -> tuple[str|None,cv2.typing.MatLike]:
@@ -412,7 +418,7 @@ class Solution:
                     ],
                 ]
                 if annulus_dict[color]
-                else [color, None]
+                else [color, ["FFF", "FFF"]]
             )
             for color in annulus_dict
         ]
@@ -458,7 +464,7 @@ class Solution:
         Args:
             _img (cv2.typing.MatLike): 图片
         Returns:
-            res (tuple|None): 圆环的位置和半径
+            res (tuple|None): 圆环的位置和半径以及滤波之后的灰度图
         """
         img = _img.copy()
         points, rs, new_img = self.annulus_circle_detector.detect_circle(img)
@@ -483,6 +489,9 @@ class Solution:
             _img (cv2.typing.MatLike): 图片
         Returns:
             res (str|None): 圆环的位置和半径
+
+        * str的结果会表示为
+        'L0000xxxyyyE'，其中：LE代表包头包尾，xxx和yyy代表圆心的坐标
         """
         img = _img.copy()
         avg_point, avg_r, new_img = self.annulus_detect_only(img)
@@ -508,7 +517,7 @@ class Solution:
         # 拼接canny和原图
         res_img = np.vstack((
             new_img,
-            canny_img
+            cv2.cvtColor(canny_img, cv2.COLOR_GRAY2BGR)
         ))
 
         if avg_point is None or avg_r is None:

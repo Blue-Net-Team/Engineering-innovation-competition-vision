@@ -201,20 +201,26 @@ try:
 
 
     class OLED_I2C:
-        def __init__(self, port:int=1, add:int=0x3c) -> None:
+        def __init__(self, port:int=1, add:int=0x3c, lang:str="zh-cn") -> None:
             """
             OLED初始化
             ----
             Args:
                 port(int):i2c的总线编号，即i2cdetect -y 1的1
                 add(int):16进制的i2c地址
+                lang(str):语言,默认为zh-cn,可以改为us-en
             """
             ser = i2c(port=port, address=add)
             self.device = sh1106(ser)
             # 创建一个空白图像
             self.image = Image.new('1', (self.device.width, self.device.height))
             self.draw = ImageDraw.Draw(self.image)
-            self._font = ImageFont.load_default()
+            if lang == "zh-cn":
+                self._font = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 12)
+            elif lang == "us-en":
+                self._font = ImageFont.load_default()
+            else:
+                raise ValueError("不支持的语言")
 
         def text(self, data:str, position:tuple[int, int]):
             """

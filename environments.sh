@@ -25,6 +25,8 @@ sudo apt-get install nano -y
 sudo apt-get install git -y
 # 安装ifupdown，用于配置静态ip
 sudo apt-get install ifupdown -y
+# 安装中文字体
+sudo apt-get install fonts-wqy-microhei -y
 
 # ------------------安装miniconda------------------
 # 下载miniconda到Download文件夹

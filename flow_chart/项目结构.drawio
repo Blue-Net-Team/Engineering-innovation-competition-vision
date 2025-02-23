@@ -1,0 +1,64 @@
+<mxfile host="65bd71144e">
+    <diagram id="ukSwewYxG6Y1HIMi8fQD" name="第 1 页">
+        <mxGraphModel dx="1055" dy="593" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="4" value="" style="edgeStyle=none;html=1;strokeWidth=3;" edge="1" parent="1" source="2" target="3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="main.py" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=3;" vertex="1" parent="1">
+                    <mxGeometry x="340" y="90" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="" style="edgeStyle=none;html=1;strokeWidth=3;" edge="1" parent="1" source="3" target="6">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="" style="edgeStyle=none;html=1;strokeWidth=3;" edge="1" parent="1" source="3" target="8">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="" style="edgeStyle=none;html=1;strokeWidth=3;" edge="1" parent="1" source="3" target="10">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="" style="edgeStyle=none;html=1;strokeWidth=3;" edge="1" parent="1" source="3" target="12">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="Solution 解决方案" style="whiteSpace=wrap;html=1;rounded=0;strokeWidth=3;" vertex="1" parent="1">
+                    <mxGeometry x="340" y="230" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" style="edgeStyle=none;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeWidth=3;" edge="1" parent="1" source="6" target="15">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="物料运动检测" style="whiteSpace=wrap;html=1;rounded=0;strokeWidth=3;" vertex="1" parent="1">
+                    <mxGeometry x="60" y="370" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" style="edgeStyle=none;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeWidth=3;" edge="1" parent="1" source="8" target="15">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="物料位号识别" style="whiteSpace=wrap;html=1;rounded=0;strokeWidth=3;" vertex="1" parent="1">
+                    <mxGeometry x="620" y="370" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" style="edgeStyle=none;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeWidth=3;" edge="1" parent="1" source="10" target="16">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="直角定位" style="whiteSpace=wrap;html=1;rounded=0;strokeWidth=3;" vertex="1" parent="1">
+                    <mxGeometry x="433" y="370" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="19" style="edgeStyle=none;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeWidth=3;" edge="1" parent="1" source="12" target="14">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="圆环定位" style="whiteSpace=wrap;html=1;rounded=0;strokeWidth=3;" vertex="1" parent="1">
+                    <mxGeometry x="247" y="370" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="圆形识别器" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=3;" vertex="1" parent="1">
+                    <mxGeometry x="340" y="540" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="颜色识别器" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=3;" vertex="1" parent="1">
+                    <mxGeometry x="150" y="540" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="直线识别器&lt;div&gt;(兼直角识别器)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=3;" vertex="1" parent="1">
+                    <mxGeometry x="530" y="540" width="120" height="60" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

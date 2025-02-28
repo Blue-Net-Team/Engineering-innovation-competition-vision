@@ -1,10 +1,10 @@
 import cv2
-from utils import LoadWebCam, SendImg
+from utils import LoadWebCam, SendImg, Cap
 from utils.ImgTrans import NeedReConnect
 
 if __name__ == "__main__":
     stream = SendImg("wlan0", 4444)
-    cap = cv2.VideoCapture(0)
+    cap = Cap()
     while True:
         if stream.connecting():
             break

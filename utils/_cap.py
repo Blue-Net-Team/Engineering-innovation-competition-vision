@@ -1,9 +1,33 @@
 import cv2
 from collections import deque
+import subprocess
+import re
 
 
 class Cap(cv2.VideoCapture):
-    def __init__(self, _id: int = 0, w: int = 640, h: int = 480, fps: int = 60) -> None:
+    @staticmethod
+    def getCapIndex():
+        try:
+            result = subprocess.run(['v4l2-ctl', '--list-devices'], capture_output=True, text=True, check=True)
+            pattern = r"USB Camera:.*?\n\s*(/dev/video\d+)\n\s*(/dev/video\d+)"
+            match = re.search(pattern, result.stdout, re.DOTALL)
+            if match:
+                video1 = match.group(1)
+                video2 = match.group(2)
+                video1_num = re.search(r'\d+', video1).group()
+                video2_num = re.search(r'\d+', video2).group()
+                return video1_num, video2_num
+        except subprocess.CalledProcessError as e:
+            print(f"Error occurred: {e}")
+            return None
+
+    def __init__(self, _id: int|None = None, w: int = 640, h: int = 480, fps: int = 60) -> None:
+        if _id is None:
+            caps = Cap.getCapIndex()
+            if caps:
+                _id = int(caps[0])
+            else:
+                _id = 0
         super().__init__(_id)
         self.set(3, w)
         self.set(4, h)
@@ -12,7 +36,7 @@ class Cap(cv2.VideoCapture):
 
 
 class LoadCap:
-    def __init__(self, _id: int = 0, cap_method: str = "opencv") -> None:
+    def __init__(self, _id: int|None = None, cap_method: str = "opencv") -> None:
         """
         初始化
         ----
@@ -55,7 +79,7 @@ class InterpolatedCap(Cap):
     运用插值补帧方法的Cap类
     """
 
-    def __init__(self, _id: int = 0) -> None:
+    def __init__(self, _id: int|None = None) -> None:
         super().__init__(_id)
         self.set(3, 640)
         self.set(4, 480)

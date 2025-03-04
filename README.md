@@ -293,6 +293,16 @@ sudo systemctl status gpio-setup.service
 
 **`gpio-setup.service`里面的 `ExecStart`需要修改到 `run_auto`文件夹下 `gpio-setup.sh`文件的绝对路径**
 
+### 摄像头索引查询
+
+使用以下命令查看可用的摄像头
+
+```bash
+v4l2-ctl --list-devices
+```
+
+找到usb那个，泰山派比较特殊，摄像头的索引不是0
+
 ## 项目结构
 
 下面不会在讲到非必要文件，例如.gitignore，LICENSE等文件

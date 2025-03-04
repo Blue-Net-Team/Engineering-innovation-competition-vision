@@ -29,6 +29,8 @@ sudo apt-get install ifupdown -y
 sudo apt-get install i2c-tools -y
 # 安装中文字体
 sudo apt-get install fonts-wqy-microhei -y
+# 安装v4l-utils
+sudo apt-get install v4l-utils -y
 
 # ------------------安装miniconda------------------
 # 下载miniconda到Download文件夹

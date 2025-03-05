@@ -60,7 +60,7 @@ class MainSystem:
         """
         self.cap = Cap()
         self.solution = Solution.Solution(ser_port)
-        self.switch = Switch("GPIO3-A3")
+        self.switch = Switch("GPIO3-A3", True)
         self.start_LED = LED("GPIO3-A2")
         self.detecting_LED = LED("GPIO3-A4")
         self.oled = OLED_I2C(2,0x3c)
@@ -158,8 +158,9 @@ class MainSystem:
                 )
 
                 self.oled.clear()
-                self.oled.text("等待图传连接", (1,1))
-                self.oled.text(f"IP:{self.sender.host}", (4,1))
+                self.oled.text("图传模式", (1,1))
+                self.oled.text("等待图传连接", (1,14))
+                self.oled.text(f"IP:{self.sender.host}", (1,30))
                 self.oled.display()
 
                 while self.ori_imgTrans_running_flag:
@@ -169,6 +170,9 @@ class MainSystem:
                         # 开关状态2，关闭图传
                         self.ori_imgTrans_running_flag = False
                         break
+
+                if not self.ori_imgTrans_running_flag:
+                    continue
 
                 print(
                     Fore.YELLOW + f"[{getTimeStamp()}]:" + Fore.RESET,
@@ -244,6 +248,9 @@ class MainSystem:
 
                 self.oled.clear()
                 self.oled.text("任务模式", (1,1))
+                if self.deal_img_method == "send" and self.sender:
+                    self.oled.text("等待图传连接", (1,14))
+                    self.oled.text(f"IP:{self.sender.host}", (1,30))
                 self.oled.display()
 
                 # 设置标志
@@ -260,11 +267,6 @@ class MainSystem:
                         Fore.WHITE + "等待图传连接\tIP:" + Fore.RESET,
                         Fore.CYAN + f"{self.sender.host}" + Fore.RESET,
                     )
-
-                    self.oled.clear()
-                    self.oled.text("等待图传连接", (1,1))
-                    self.oled.text(f"IP:{self.sender.host}", (4,1))
-                    self.oled.display()
 
                     while self.task_running_flag:
                         if self.sender.connecting():
@@ -377,8 +379,8 @@ class MainSystem:
                             # 检查核心温度
                             temp_cup = get_CPU_temp()
                             temp_gpu = get_GPU_temp()
-                            self.oled.text(f"CPU温度:{temp_cup}", (3,1))
-                            self.oled.text(f"GPU温度:{temp_gpu}", (4,1))
+                            self.oled.text(f"CPU温度:{temp_cup}", (1,30))
+                            self.oled.text(f"GPU温度:{temp_gpu}", (1,14))
                             self.oled.display()
                             if not self.switch.read_status():
                                 self.task_running_flag = False
@@ -395,10 +397,10 @@ def getTimeStamp():
 
 
 if __name__ == "__main__":
-    sender = SendImg("wlan1", 4444)
+    sender = SendImg("wlan0", 4444)
 
     mainsystem = MainSystem(
-        ser_port="/dev/ttyUSB0",
+        ser_port="/dev/ttyS3",
         pkgHEAD="@",
         pgkTAIL="#",
         sender=sender,

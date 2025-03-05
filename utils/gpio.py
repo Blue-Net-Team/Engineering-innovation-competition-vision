@@ -210,17 +210,24 @@ try:
                 add(int):16进制的i2c地址
                 lang(str):语言,默认为zh-cn,可以改为us-en
             """
-            ser = i2c(port=port, address=add)
-            self.device = sh1106(ser)
-            # 创建一个空白图像
-            self.image = Image.new('1', (self.device.width, self.device.height))
-            self.draw = ImageDraw.Draw(self.image)
-            if lang == "zh-cn":
-                self._font = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 12)
-            elif lang == "us-en":
-                self._font = ImageFont.load_default()
-            else:
-                raise ValueError("不支持的语言")
+            self.Opened = False
+
+            try:
+                ser = i2c(port=port, address=add)
+                self.device = sh1106(ser)
+                # 创建一个空白图像
+                self.image = Image.new('1', (self.device.width, self.device.height))
+                self.draw = ImageDraw.Draw(self.image)
+                if lang == "zh-cn":
+                    self._font = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 12)
+                elif lang == "us-en":
+                    self._font = ImageFont.load_default()
+                else:
+                    raise ValueError("不支持的语言")
+                self.Opened = True
+            except:
+                self.Opened = False
+
 
         def text(self, data:str, position:tuple[int, int]):
             """
@@ -230,7 +237,8 @@ try:
                 data(str):需要绘制的文字数据
                 position(tuple[int,int]):绘制文字的位置
             """
-            self.draw.text(position, data, font=self._font, fill=255)
+            if self.Opened:
+                self.draw.text(position, data, font=self._font, fill=255)
 
         def display(self,reverse:bool = False):
             """
@@ -239,13 +247,15 @@ try:
             Args:
                 reverse(bool):是否旋转180度
             """
-            if reverse:
-                self.image = self.image.rotate(180)
-            self.device.display(self.image)
+            if self.Opened:
+                if reverse:
+                    self.image = self.image.rotate(180)
+                self.device.display(self.image)
 
         def clear(self):
             """清空画面"""
-            self.draw.rectangle(self.device.bounding_box, fill="black")
+            if self.Opened:
+                self.draw.rectangle(self.device.bounding_box, fill="black")
 except:
     print("无法使用GPIO相关的库")
 

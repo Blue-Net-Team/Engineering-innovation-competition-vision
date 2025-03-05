@@ -17,6 +17,7 @@ from utils import Uart
 import detector
 from colorama import Fore, Style, init
 import math
+import datetime
 
 # 初始化 colorama
 init(autoreset=True)
@@ -25,6 +26,13 @@ COLOR_DIC = {0: "R", 1: "G", 2: "B"}
 COLOR_DIC_INV = {v: k for k, v in COLOR_DIC.items()}
 COLOR_DIC_CV = {"R": (0, 0, 255), "G": (0, 255, 0), "B": (255, 0, 0)}
 
+
+def getTimeStamp():
+    """
+    获取时间戳(包含毫秒)
+    ----
+    """
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")[:-3]
 
 def show(img):
     return cv2.imshow("img", img)
@@ -112,10 +120,16 @@ class Solution:
 
         err = [load_err1, load_err2, load_err3]
         if any(err):
-            print(Fore.RED + "加载配置文件失败")
+            print(
+                Fore.YELLOW + f"[{getTimeStamp()}]:" + Fore.RESET,
+                Fore.RED + "加载配置文件失败" + Fore.RESET
+            )
             for e in err:
                 if e:
-                    print(Fore.RED + e)
+                    print(
+                        Fore.YELLOW + f"[{getTimeStamp()}]:" + Fore.RESET,
+                        Fore.RED + e + Fore.RESET
+                    )
 
 
     # region 物料运动检测

@@ -71,7 +71,7 @@ class CircleDetector(Detect):
         cv2.createTrackbar("minRadius", "Trackbar", self.minRadius, 100, self.__callback)
         cv2.createTrackbar("maxRadius", "Trackbar", self.maxRadius, 100, self.__callback)
         cv2.createTrackbar("odd_index", "Trackbar", self.odd_index, 20, self.__callback)
-        cv2.createTrackbar("sigma", "Trackbar", self.sigma * 10, 100, self.__callback)
+        cv2.createTrackbar("sigma", "Trackbar", int(self.sigma * 10), 100, self.__callback)
 
         cv2.setTrackbarPos("dp", "Trackbar", self.dp)
         cv2.setTrackbarPos("minDist", "Trackbar", self.minDist)
@@ -80,7 +80,7 @@ class CircleDetector(Detect):
         cv2.setTrackbarPos("minRadius", "Trackbar", self.minRadius)
         cv2.setTrackbarPos("maxRadius", "Trackbar", self.maxRadius)
         cv2.setTrackbarPos("odd_index", "Trackbar", self.odd_index)
-        cv2.setTrackbarPos("sigma", "Trackbar", self.sigma * 10)
+        cv2.setTrackbarPos("sigma", "Trackbar", int(self.sigma * 10))
 
     def __callback(self, x):
         self.dp = cv2.getTrackbarPos("dp", "Trackbar")

@@ -21,7 +21,7 @@ class Cap(cv2.VideoCapture):
             print(f"Error occurred: {e}")
             return None
 
-    def __init__(self, _id: int|None = None, w: int = 640, h: int = 480, fps: int = 60) -> None:
+    def __init__(self, _id: int|None = None, w: int = 320, h: int = 240, fps: int = 60) -> None:
         if _id is None:
             caps = Cap.getCapIndex()
             if caps:

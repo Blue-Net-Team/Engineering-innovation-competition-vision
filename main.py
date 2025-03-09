@@ -413,8 +413,15 @@ if __name__ == "__main__":
         default="send",
         help="处理图像的方法,包含show(显示)、hide(隐藏)、send(发送)",
     )
+    parser.add_argument(
+        "--config_path",
+        type=str,
+        default="config.json",
+        help="配置文件路径",
+    )
     args = parser.parse_args()
     deal_method = args.deal_method
+    config_path = args.config_path
 
     # 设置图传发送器
     sender = SendImg("wlan0", 4444)
@@ -425,7 +432,7 @@ if __name__ == "__main__":
         pgkTAIL="#",
         sender=sender,
         deal_img_method=deal_method,
-        config_path="config.json",
+        config_path=config_path,
     )
     try:
         mainsystem.main()

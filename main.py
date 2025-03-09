@@ -46,20 +46,22 @@ class MainSystem:
         pkgHEAD:str,
         pgkTAIL:str,
         sender: SendImg | None = None,
-        deal_img_method: str = "hide"
+        deal_img_method: str = "hide",
+        config_path: str = "config.json",
     ) -> None:
         """
         主系统
         ----
         Args:
             ser_port (str): 串口号
-            pakHEAD (str): 包头
+            pkgHEAD (str): 包头
             pgkTAIL (str): 包尾
             sender (SendImg): 图传发送器
             deal_img_method (str): 处理图像的方法,包含"show"(显示)、"hide"(隐藏)、"send"(发送)
+            config_path (str): 配置文件路径
         """
         self.cap = Cap()
-        self.solution = Solution.Solution(ser_port)
+        self.solution = Solution.Solution(ser_port, config_path)
         self.switch = Switch("GPIO3-A3", True)
         self.start_LED = LED("GPIO3-A2")
         self.detecting_LED = LED("GPIO3-A4")
@@ -404,7 +406,8 @@ if __name__ == "__main__":
         pkgHEAD="@",
         pgkTAIL="#",
         sender=sender,
-        deal_img_method="send"
+        deal_img_method="send",
+        config_path="config.json",
     )
     try:
         mainsystem.main()

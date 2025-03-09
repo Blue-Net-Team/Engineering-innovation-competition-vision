@@ -397,6 +397,19 @@ def getTimeStamp():
 
 
 if __name__ == "__main__":
+    # 获取命令行参数deal_method
+    import argparse
+    parser = argparse.ArgumentParser(description="MainSystem")
+    parser.add_argument(
+        "--deal_method",
+        type=str,
+        default="send",
+        help="处理图像的方法,包含show(显示)、hide(隐藏)、send(发送)",
+    )
+    args = parser.parse_args()
+    deal_method = args.deal_method
+
+    # 设置图传发送器
     sender = SendImg("wlan1", 4444)
 
     mainsystem = MainSystem(
@@ -404,7 +417,7 @@ if __name__ == "__main__":
         pkgHEAD="@",
         pgkTAIL="#",
         sender=sender,
-        deal_img_method="send",
+        deal_img_method=deal_method,
         config_path="config.json",
     )
     try:

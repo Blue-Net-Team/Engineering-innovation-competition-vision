@@ -117,6 +117,11 @@ class MainSystem:
         }
 
         self.deal_img_method = deal_img_method
+        print(
+            Fore.YELLOW + f"[{getTimeStamp()}]:" + Fore.RESET,
+            Fore.WHITE + "deal_img_method为" + Fore.RESET,
+            Fore.CYAN + deal_img_method + Fore.RESET
+        )
 
         # 先读取20帧，打开摄像头
         for i in range(20):

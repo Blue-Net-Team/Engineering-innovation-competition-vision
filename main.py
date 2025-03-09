@@ -188,7 +188,7 @@ class MainSystem:
                             )
 
                             self.oled.clear()
-                            self.oled.text("连接失败\n{conn_res[1]}", (1, 1))
+                            self.oled.text(f"连接失败\n{conn_res[1]}", (1, 1))
                             self.oled.display()
                             if not self.switch.read_status():
                                 break
@@ -209,7 +209,7 @@ class MainSystem:
                 )
 
                 self.oled.clear()
-                self.oled.text("图传模式\n等待图传连接\nIP:{self.sender.host}", (1,1))
+                self.oled.text(f"图传模式\n等待图传连接\nIP:{self.sender.host}", (1,1))
                 self.oled.display()
 
                 while self.ori_imgTrans_running_flag:

@@ -76,7 +76,7 @@ class Test_solution(Solution):
         Returns:
             None
         """
-        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        # cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         while True:
             _,img = cap.read()
             if img is None:
@@ -92,8 +92,8 @@ class Test_solution(Solution):
 
             if self.sender is not None:
                 self.sender.send(res_img)
-            else:
-                cv2.imshow("img", res_img)
+            # else:
+                # cv2.imshow("img", res_img)
 
             if res:
                 time_show = detect_time * 1000
@@ -271,10 +271,10 @@ class Test_solution(Solution):
         cap.release()
 
 if __name__ == "__main__":
-    sender = SendImg("169.254.60.115", 4444)
+    sender = SendImg("eth0", 4444)
     cap = Cap()
     test = Test_solution(sender=sender)
-    test.test_func(cap, "2")
+    test.test_func(cap, "1")
     # test.test_material_positions(0)
     # test.test_annulus_color(0, "G")
     # test.test_usart_read("@","#")

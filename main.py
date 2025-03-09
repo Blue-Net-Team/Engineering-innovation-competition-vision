@@ -79,8 +79,7 @@ class MainSystem:
                 )
 
                 self.oled.clear()
-                self.oled.text("未连接到图传网络", (1,1))
-                self.oled.text("尝试连接...", (1,14))
+                self.oled.text("未连接到图传网络\n尝试连接...", (1,1))
                 self.oled.display()
 
                 while True:
@@ -105,11 +104,12 @@ class MainSystem:
                         )
 
                         self.oled.clear()
-                        self.oled.text("连接失败", (1,1))
-                        self.oled.text(f"{conn_res[1]}", (1,14))
+                        self.oled.text("连接失败\n{conn_res[1]}", (1,1))
                         self.oled.display()
                         if not self.switch.read_status():
                             break
+                        else:
+                            time.sleep(0.5)
 
         self.TASK_DICT = {
             "1": self.solution.material_moving_detect,  # 物料运动检测
@@ -163,8 +163,7 @@ class MainSystem:
                     )
 
                     self.oled.clear()
-                    self.oled.text("未连接到图传网络", (1, 1))
-                    self.oled.text("尝试连接...", (1, 14))
+                    self.oled.text("未连接到图传网络\n尝试连接...", (1, 1))
                     self.oled.display()
 
                     while True:
@@ -189,11 +188,12 @@ class MainSystem:
                             )
 
                             self.oled.clear()
-                            self.oled.text("连接失败", (1, 1))
-                            self.oled.text(f"{conn_res[1]}", (1, 14))
+                            self.oled.text("连接失败\n{conn_res[1]}", (1, 1))
                             self.oled.display()
                             if not self.switch.read_status():
                                 break
+                            else:
+                                time.sleep(0.5)
                 if not self.switch.read_status():
                     continue
 
@@ -209,9 +209,7 @@ class MainSystem:
                 )
 
                 self.oled.clear()
-                self.oled.text("图传模式", (1,1))
-                self.oled.text("等待图传连接", (1,14))
-                self.oled.text(f"IP:{self.sender.host}", (1,30))
+                self.oled.text("图传模式\n等待图传连接\nIP:{self.sender.host}", (1,1))
                 self.oled.display()
 
                 while self.ori_imgTrans_running_flag:
@@ -298,10 +296,11 @@ class MainSystem:
                 )
 
                 self.oled.clear()
-                self.oled.text("任务模式", (1,1))
                 if self.deal_img_method == "send" and self.sender:
-                    self.oled.text("等待图传连接", (1,14))
-                    self.oled.text(f"IP:{self.sender.host}", (1,30))
+                    extension_txt = f"等待图传连接\nIP:{self.sender.host}"
+                else:
+                    extension_txt = ""
+                self.oled.text(f"任务模式\n{extension_txt}", (1,1))
                 self.oled.display()
 
                 # 设置标志
@@ -430,8 +429,7 @@ class MainSystem:
                             # 检查核心温度
                             temp_cup = get_CPU_temp()
                             temp_gpu = get_GPU_temp()
-                            self.oled.text(f"CPU温度:{temp_cup}", (1,30))
-                            self.oled.text(f"GPU温度:{temp_gpu}", (1,14))
+                            self.oled.text(f"CPU温度:{temp_cup}\nGPU温度:{temp_gpu}", (1,30))
                             self.oled.display()
                             if not self.switch.read_status():
                                 self.task_running_flag = False

@@ -230,10 +230,10 @@ try:
 
         def text(self, data: str, position: tuple[int, int]):
             """
-            在画面中绘制文字，并自动换行
+            在画面中绘制文字，并自动换行（支持换行符）
             ----
             Args:
-                data(str):需要绘制的文字数据
+                data(str):需要绘制的文字数据（可以包含换行符）
                 position(tuple[int,int]):绘制文字的起始位置
             """
             if not self.Opened:
@@ -241,35 +241,41 @@ try:
 
             x, y = position
             max_width = self.device.width  # 自动获取 OLED 的宽度
-            lines = []
-            words = data.split(' ')
-            current_line = ''
 
-            for word in words:
-                # 检查当前行加上新单词是否超出最大宽度
-                test_line = current_line + ' ' + word if current_line else word
-                test_width = self.draw.textlength(test_line, font=self._font)
-
-                if test_width <= max_width:
-                    current_line = test_line
-                else:
-                    # 如果超出宽度，则将当前行添加到 lines 中，并开始新的一行
-                    lines.append(current_line)
-                    current_line = word
-
-            # 添加最后一行
-            if current_line:
-                lines.append(current_line)
+            # 按换行符拆分段落
+            paragraphs = data.split('\n')
 
             # 获取字体的 ascent 和 descent
             ascent, descent = self._font.getmetrics()
 
-            # 绘制每一行
-            for line in lines:
-                self.draw.text((x, y), line, font=self._font, fill=255)
-                # 计算行高：ascent + descent + 额外的行间距（例如 2 像素）
-                line_height = ascent + descent + 2
-                y += line_height  # 移动到下一行
+            for paragraph in paragraphs:
+                lines = []
+                words = paragraph.split(' ')
+                current_line = ''
+
+                for word in words:
+                    # 检查当前行加上新单词是否超出最大宽度
+                    test_line = current_line + ' ' + word if current_line else word
+                    test_width = self.draw.textlength(test_line, font=self._font)
+
+                    if test_width <= max_width:
+                        current_line = test_line
+                    else:
+                        # 如果超出宽度，则将当前行添加到 lines 中，并开始新的一行
+                        lines.append(current_line)
+                        current_line = word
+
+                # 添加最后一行
+                if current_line:
+                    lines.append(current_line)
+
+                # 绘制每一行
+                for line in lines:
+                    # 在每行的最左侧增加 1px 的空白
+                    self.draw.text((x + 1, y), line, font=self._font, fill=255)
+                    # 计算行高：ascent + descent + 额外的行间距（例如 2 像素）
+                    line_height = ascent + descent + 2
+                    y += line_height  # 移动到下一行
 
         def display(self,reverse:bool = False):
             """

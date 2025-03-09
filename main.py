@@ -80,7 +80,7 @@ class MainSystem:
 
                 self.oled.clear()
                 self.oled.text("未连接到图传网络", (1,1))
-                self.oled.text("尝试连接...", (4,1))
+                self.oled.text("尝试连接...", (1,14))
                 self.oled.display()
 
                 while True:
@@ -106,7 +106,7 @@ class MainSystem:
 
                         self.oled.clear()
                         self.oled.text("连接失败", (1,1))
-                        self.oled.text(f"{conn_res[1]}", (4,1))
+                        self.oled.text(f"{conn_res[1]}", (1,14))
                         self.oled.display()
 
         self.TASK_DICT = {

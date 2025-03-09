@@ -366,7 +366,7 @@ class MainSystem:
 
                             print(
                                 Fore.GREEN + f"[{getTimeStamp()}]" + Fore.RESET,
-                                Fore.WHITE + "sended:" + Fore.RESET,
+                                Fore.WHITE + "sent:" + Fore.RESET,
                                 Fore.MAGENTA + f"{res}\t" + Fore.RESET,
                                 Fore.WHITE + "used time:" + Fore.RESET,
                                 color + f"{used_time_ms:.2f}ms" + Fore.RESET,

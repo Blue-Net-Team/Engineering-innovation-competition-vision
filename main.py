@@ -70,7 +70,7 @@ class MainSystem:
         self.HEAD = pkgHEAD
         self.TAIL = pgkTAIL
         self.DEAL_IMG_DICT = {"show": Solution.show, "hide": lambda x: None}
-        if self.sender:
+        if self.sender and self.switch.read_status():
             self.DEAL_IMG_DICT["send"] = self.sender.send
             if self.sender.host == "":
                 print(
@@ -108,6 +108,8 @@ class MainSystem:
                         self.oled.text("连接失败", (1,1))
                         self.oled.text(f"{conn_res[1]}", (1,14))
                         self.oled.display()
+                        if not self.switch.read_status():
+                            break
 
         self.TASK_DICT = {
             "1": self.solution.material_moving_detect,  # 物料运动检测
@@ -152,6 +154,46 @@ class MainSystem:
                         Fore.RED + "没有设置图传发送器对象" + Fore.RESET
                     )
                     break
+
+                # 检查wlan
+                if self.sender.host == "":
+                    print(
+                        Fore.RED + f"[{getTimeStamp()}]:" + Fore.RESET,
+                        Fore.RED + "未连接到图传网络,尝试连接" + Fore.RESET
+                    )
+
+                    self.oled.clear()
+                    self.oled.text("未连接到图传网络", (1, 1))
+                    self.oled.text("尝试连接...", (1, 14))
+                    self.oled.display()
+
+                    while True:
+                        conn_res = connect_to_wifi("EIC-FF", "lckfb666")
+                        if conn_res[0]:
+                            print(
+                                Fore.GREEN + f"[{getTimeStamp()}]:" + Fore.RESET,
+                                Fore.GREEN + "连接成功" + Fore.RESET
+                            )
+
+                            self.oled.clear()
+                            self.oled.text("连接成功", (1, 1))
+                            self.oled.display()
+
+                            # 更新host
+                            self.sender.update_host()
+                            break
+                        else:
+                            print(
+                                Fore.RED + f"[{getTimeStamp()}]:" + Fore.RESET,
+                                Fore.RED + f"连接失败，{conn_res[1]}" + Fore.RESET
+                            )
+
+                            self.oled.clear()
+                            self.oled.text("连接失败", (1, 1))
+                            self.oled.text(f"{conn_res[1]}", (1, 14))
+                            self.oled.display()
+                            if not self.switch.read_status():
+                                break
 
                 # 设置标志
                 self.ori_imgTrans_running_flag = True

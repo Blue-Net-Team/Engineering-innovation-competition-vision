@@ -11,6 +11,14 @@ def connect_to_wifi(ssid:str, password:str) -> tuple[bool, str]:
         tuple[bool, str]: 返回一个元组，第一个元素为bool类型，表示是否连接成功，第二个元素为str类型，表示错误信息
     """
     try:
+        # 强制刷新WiFi列表
+        subprocess.run(
+            ["sudo", "nmcli", "device", "wifi", "rescan"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
         # 连接到指定的SSID
         res = subprocess.run(
             ["sudo", "nmcli", "device", "wifi", "connect", ssid, "password", password],

@@ -413,6 +413,7 @@ if __name__ == "__main__":
         mainsystem.main()
     except KeyboardInterrupt:
         print(
+            "\n\b",
             Fore.RED + f"[{getTimeStamp()}]:" + Fore.RESET,
             Fore.RED + "程序被中断（用户终止）" + Fore.RESET
         )

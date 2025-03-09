@@ -21,14 +21,13 @@ r"""
                              工创国一！！
 """
 import datetime
-import threading
 import time
-from colorama import Fore, Style, init
+
 import cv2
+from colorama import Fore, init
+
 import Solution
 from utils import SendImg, Cap, Switch, LED, OLED_I2C, connect_to_wifi, get_CPU_temp, get_GPU_temp
-import numpy as np
-
 from utils.ImgTrans import NeedReConnect
 
 init(autoreset=True)

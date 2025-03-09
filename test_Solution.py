@@ -22,13 +22,15 @@ Test_Line_detect
     - `test(self):` 测试方法，显示检测结果
 """
 
-from datetime import datetime
 import time
+from datetime import datetime
+
 import cv2
 import numpy as np
-from Solution import Solution
-from utils import LoadCap, SendImg, ReceiveImg, Cap, InterpolatedCap
 from colorama import Fore, Style, init
+
+from Solution import Solution
+from utils import SendImg, ReceiveImg, Cap
 
 init(autoreset=True)
 

@@ -1,5 +1,4 @@
-import cv2
-from utils import LoadWebCam, SendImg, Cap
+from utils import SendImg, Cap
 from utils.ImgTrans import NeedReConnect
 
 if __name__ == "__main__":

@@ -9,15 +9,16 @@
 - 直角检测，返回两直线的角度的均值和交点
 """
 
+import datetime
 import json
-import time
+import math
+
 import cv2
 import numpy as np
-from utils import Uart
+from colorama import Fore, init
+
 import detector
-from colorama import Fore, Style, init
-import math
-import datetime
+from utils import Uart
 
 # 初始化 colorama
 init(autoreset=True)

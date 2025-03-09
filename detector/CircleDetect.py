@@ -34,9 +34,9 @@ CircleDetector类
 
 """
 
-import json
 import cv2
 import numpy as np
+
 from .Detect import Detect
 
 

@@ -39,8 +39,9 @@ TraditionalColorDetector:
 
 import json
 from typing import Union
-import numpy as np
+
 import cv2
+import numpy as np
 
 COLOR_DICT: dict[Union[int, float, bool], str] = {
     0:'R',

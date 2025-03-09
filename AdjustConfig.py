@@ -1,11 +1,12 @@
 import json
 import time
+
 import cv2
 import numpy as np
-from Solution import Solution
-from detector import LineDetector
-from utils import ReceiveImg, Cap
 from colorama import Fore, init
+
+from Solution import Solution
+from utils import ReceiveImg, Cap
 
 # 初始化 colorama
 init(autoreset=True)

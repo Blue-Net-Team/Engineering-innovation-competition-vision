@@ -1,4 +1,7 @@
+#!/bin/bash
 mkdir -p /media/sdcard/code/Engineering-innovation-competition-vision/run_log
+rm /media/sdcard/code/Engineering-innovation-competition-vision/run_log/output.log
+rm /media/sdcard/code/Engineering-innovation-competition-vision/run_log/error.log
 touch /media/sdcard/code/Engineering-innovation-competition-vision/run_log/output.log
 touch /media/sdcard/code/Engineering-innovation-competition-vision/run_log/error.log
 

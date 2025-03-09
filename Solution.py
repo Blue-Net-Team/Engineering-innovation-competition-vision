@@ -67,17 +67,19 @@ def draw_material(
     return img
 
 class Solution:
-    def __init__(self, ser_port: str|None):
+    def __init__(self, ser_port: str|None, config_path:str):
         """
         解决方案
         ----
         Args:
             ser_port (str): 串口号
+            config_path (str): 配置文件路径
         """
         self.annulus_circle_detector = detector.CircleDetector()
         self.traditional_color_detector = detector.TraditionalColorDetector()
         self.line_detector = detector.LineDetector()
         self.uart = Uart(ser_port)
+        self.configPath = config_path
         self.position_id_stack:list[dict[str,int|None]] = []     # 用于存放上一帧图像的物料位号的栈
 
         # 读取配置文件
@@ -89,7 +91,7 @@ class Solution:
         ----
         """
         try:
-            with open("config.json", "r") as f:
+            with open(self.configPath, "r") as f:
                 config = json.load(f)
                 # 位号顶点
                 self.area1_points:list[list[int]] = config["area1_points"]

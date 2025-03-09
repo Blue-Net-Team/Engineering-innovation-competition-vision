@@ -194,6 +194,8 @@ class MainSystem:
                             self.oled.display()
                             if not self.switch.read_status():
                                 break
+                if not self.switch.read_status():
+                    continue
 
                 # 设置标志
                 self.ori_imgTrans_running_flag = True

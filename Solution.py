@@ -47,7 +47,7 @@ def draw_material(
     ----
     Args:
         point_wh (tuple): 物料的坐标和宽高
-        img (np.ndarray): 图片
+        _img (cv2.typing.MatLike): 图片
         color (str): 颜色
     Returns:
         img (cv2.typing.MatLike): 画出物料的图片

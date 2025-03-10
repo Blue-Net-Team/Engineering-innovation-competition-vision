@@ -22,6 +22,9 @@ r"""
 """
 import datetime
 import time
+import signal
+import sys
+import argparse
 
 import cv2
 from colorama import Fore, init
@@ -445,8 +448,7 @@ def getTimeStamp():
 
 
 if __name__ == "__main__":
-    # 获取命令行参数deal_method
-    import argparse
+    # region 获取命令行参数deal_method
     parser = argparse.ArgumentParser(description="MainSystem")
     parser.add_argument(
         "--deal_method",
@@ -463,6 +465,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     deal_method = args.deal_method
     config_path = args.config_path
+    # endregion
 
     # 设置图传发送器
     sender = SendImg("wlan0", 4444)
@@ -475,6 +478,23 @@ if __name__ == "__main__":
         deal_img_method=deal_method,
         config_path=config_path,
     )
+
+    # region 设置信号处理函数
+    def signal_handler(sig, frame):
+        print(
+            Fore.RED + f"[{getTimeStamp()}]:" + Fore.RESET,
+            Fore.RED + "程序被中断（服务停止）" + Fore.RESET
+        )
+        mainsystem.start_LED.off()
+        mainsystem.oled.clear()
+        mainsystem.oled.display()
+        sys.exit(0)
+
+    # Register the signal handler
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+    # endregion
+
     try:
         mainsystem.main()
     except KeyboardInterrupt:

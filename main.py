@@ -81,7 +81,7 @@ class MainSystem:
                 self.oled.text("未连接到图传网络\n尝试连接...", (1,1))
                 self.oled.display()
 
-                while True:
+                while self.sender.host == "":
                     conn_res = connect_to_wifi("EIC-FF", "lckfb666")
                     if conn_res[0]:
                         print(

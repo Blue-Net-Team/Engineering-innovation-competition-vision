@@ -22,8 +22,6 @@ r"""
 """
 import datetime
 import time
-import signal
-import sys
 import argparse
 
 import cv2
@@ -478,22 +476,6 @@ if __name__ == "__main__":
         deal_img_method=deal_method,
         config_path=config_path,
     )
-
-    # region 设置信号处理函数
-    def signal_handler(sig, frame):
-        print(
-            Fore.RED + f"[{getTimeStamp()}]:" + Fore.RESET,
-            Fore.RED + "程序被中断（服务停止）" + Fore.RESET
-        )
-        mainsystem.start_LED.off()
-        mainsystem.oled.clear()
-        mainsystem.oled.display()
-        sys.exit(0)
-
-    # Register the signal handler
-    signal.signal(signal.SIGTERM, signal_handler)
-    signal.signal(signal.SIGINT, signal_handler)
-    # endregion
 
     try:
         mainsystem.main()

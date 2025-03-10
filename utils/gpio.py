@@ -1,3 +1,5 @@
+import jieba
+jieba.lcut("初始化分词器")
 try:
     from luma.core.interface.serial import i2c
     from luma.oled.device import sh1106
@@ -250,7 +252,7 @@ try:
 
             for paragraph in paragraphs:
                 lines = []
-                words = paragraph.split(' ')
+                words = jieba.lcut(paragraph)  # 使用结巴分词进行中文分词
                 current_line = ''
 
                 for word in words:

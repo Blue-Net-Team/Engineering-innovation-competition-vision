@@ -3,9 +3,8 @@ Description=GPIO Setup Service
 After=multi-user.target
 
 [Service]
-Type=oneshot
+Type=simple
 ExecStart=/media/sdcard/code/Engineering-innovation-competition-vision/run_auto/run_main.sh
-ExecStop=/media/sdcard/miniconda3/envs/EIC/bin/python /media/sdcard/code/Engineering-innovation-competition-vision/cleanup.py
 RemainAfterExit=yes
 User=root
 

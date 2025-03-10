@@ -303,6 +303,30 @@ v4l2-ctl --list-devices
 
 找到usb那个，泰山派比较特殊，摄像头的索引不是0
 
+### 引脚资源释放
+
+`run_auto/cleanup.sh`脚本是用来释放引脚资源，如果程序被kill，没有关闭对应的LED灯和OLED模块，需要手动释放引脚资源
+
+#### 创建快捷方式
+
+在 `~/.bashrc`文件中添加以下内容
+
+```bash
+alias cleanup="bash /media/sdcard/code/Engineering-innovation-competition-vision/run_auto/cleanup.sh"
+```
+
+也可以使用`echo`命令添加
+
+```bash
+echo "alias cleanup=\"bash /media/sdcard/code/Engineering-innovation-competition-vision/run_auto/cleanup.sh\"" >> ~/.bashrc
+```
+
+然后使用 `source ~/.bashrc`命令使其生效
+
+```bash
+source ~/.bashrc
+```
+
 ## 项目结构
 
 下面不会在讲到非必要文件，例如.gitignore，LICENSE等文件

@@ -228,7 +228,14 @@ class MainSystem:
                                     self.ori_imgTrans_running_flag = False
                                     break
                                 if self.sender.connecting():
-                                    continue
+                                    print(
+                                        Fore.YELLOW + f"[{getTimeStamp()}]:" + Fore.RESET,
+                                        Fore.WHITE + "图传连接成功" + Fore.RESET,
+                                    )
+                                    self.oled.clear()
+                                    self.oled.text("图传连接成功", (1,1))
+                                    self.oled.display()
+                                    break
 
                     # 检查开关
                     if not self.switch.read_status():

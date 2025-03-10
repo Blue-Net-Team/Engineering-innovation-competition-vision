@@ -103,7 +103,7 @@ class MainSystem:
                         )
 
                         self.oled.clear()
-                        self.oled.text("连接失败\n{conn_res[1]}", (1,1))
+                        self.oled.text(f"连接失败\n{conn_res[1]}", (1,1))
                         self.oled.display()
                         if not self.switch.read_status():
                             break

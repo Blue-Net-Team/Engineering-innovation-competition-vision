@@ -327,6 +327,60 @@ echo "alias cleanup=\"bash /media/sdcard/code/Engineering-innovation-competition
 source ~/.bashrc
 ```
 
+### main的运行
+
+在main中添加了命令行传参，方便传递处理图像是否使用图传以及config的路径，可以使用以下命令快速执行
+
+```bash
+/media/sdcard/miniconda3/envs/EIC/bin/python /media/sdcard/code/Engineering-innovation-competition-vision/main.py --deal_method hide --config_path /media/sdcard/code/Engineering-innovation-competition-vision/config.json
+```
+
+- --deal_method hide: 表示隐藏处理过程的图像，可以选的有send和show
+- --config_path: 表示配置文件的路径，默认是当前目录下的config.json
+
+#### 快捷方式的创建
+
+同样的，也可以设置快捷命令，与上面的 `cleanup`命令类似
+
+```bash
+# 正式版的main，不显示图像
+alias run="/media/sdcard/miniconda3/envs/EIC/bin/python /media/sdcard/code/Engineering-innovation-competition-vision/main.py --deal_method hide --config_path /media/sdcard/code/Engineering-innovation-competition-vision/config.json"
+# 调试版的main，显示图像(图传)
+alias run-debug="/media/sdcard/miniconda3/envs/EIC/bin/python /media/sdcard/code/Engineering-innovation-competition-vision/main.py --deal_method send --config_path /media/sdcard/code/Engineering-innovation-competition-vision/config.json"
+```
+
+也可以使用`echo`命令添加
+
+```bash
+echo "alias run=\"/media/sdcard/miniconda3/envs/EIC/bin/python /media/sdcard/code/Engineering-innovation-competition-vision/main.py --deal_method hide --config_path /media/sdcard/code/Engineering-innovation-competition-vision/config.json\"" >> ~/.bashrc
+echo "alias run-debug=\"/media/sdcard/miniconda3/envs/EIC/bin/python /media/sdcard/code/Engineering-innovation-competition-vision/main.py --deal_method send --config_path /media/sdcard/code/Engineering-innovation-competition-vision/config.json\"" >> ~/.bashrc
+```
+
+然后使用 `source ~/.bashrc`命令使其生效
+
+```bash
+source ~/.bashrc
+```
+
+#### 自启动服务的创建
+
+在文件夹`run_auto`下，有`run-main-auto.service`以及`run_main.sh`。将`service`服务单元文件复制到`/etc/systemd/system/`下，并且修改 `ExecStart`的路径为 `run_main.sh`的绝对路径。
+
+```bash
+# 复制服务文件到systemd目录
+sudo cp run_auto/run-main-auto.service /etc/systemd/system/
+# 更新服务
+sudo systemctl daemon-reload
+# 开启服务
+sudo systemctl start run-main-auto.service
+# 关闭服务
+sudo systemctl stop run-main-auto.service
+# 开机自启动
+sudo systemctl enable run-main-auto.service
+# 关闭开机自启动
+sudo systemctl disable run-main-auto.service
+```
+
 ## 项目结构
 
 下面不会在讲到非必要文件，例如.gitignore，LICENSE等文件

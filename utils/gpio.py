@@ -220,8 +220,10 @@ try:
                 # 创建一个空白图像
                 self.image = Image.new('1', (self.device.width, self.device.height))
                 self.draw = ImageDraw.Draw(self.image)
+                self.step = ' '
                 if lang == "zh-cn":
                     self._font = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 12)
+                    self.step = ''
                 elif lang == "us-en":
                     self._font = ImageFont.load_default()
                 else:
@@ -257,7 +259,7 @@ try:
 
                 for word in words:
                     # 检查当前行加上新单词是否超出最大宽度
-                    test_line = current_line + ' ' + word if current_line else word
+                    test_line = current_line + self.step + word if current_line else word
                     test_width = self.draw.textlength(test_line, font=self._font)
 
                     if test_width <= max_width:

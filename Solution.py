@@ -112,7 +112,7 @@ class Solution:
             self.area2_points:list[list[int]] = [[0,0],[0,0]]
             self.area3_points:list[list[int]] = [[0,0],[0,0]]
             self.target_angel:int = 45
-            print(Fore.RED + "配置文件读取位号参数失败")
+            printLog(Fore.RED + "配置文件读取位号参数失败")
 
         # 加载圆环识别的圆环参数
         load_err1 = self.annulus_circle_detector.load_config(self.configPath, "annulus")
@@ -123,16 +123,10 @@ class Solution:
 
         err = [load_err1, load_err2, load_err3]
         if any(err):
-            print(
-                Fore.YELLOW + f"[{getTimeStamp()}]:" + Fore.RESET,
-                Fore.RED + "加载配置文件失败" + Fore.RESET
-            )
+            printLog(Fore.RED + "加载配置文件失败")
             for e in err:
                 if e:
-                    print(
-                        Fore.YELLOW + f"[{getTimeStamp()}]:" + Fore.RESET,
-                        Fore.RED + e + Fore.RESET
-                    )
+                    printLog(Fore.RED + e)
 
 
     # region 物料运动检测
@@ -546,3 +540,17 @@ class Solution:
 
         return res, res_img
     # endregion
+
+def printLog(logData: str, time_color:str=Fore.YELLOW) -> None:
+    """
+    打印日志信息和时间戳(包含毫秒)
+    ----
+    Args:
+        logData (str): 日志信息
+        time_color (str): 时间戳颜色，默认为黄色
+    """
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")[:-3]
+    print(
+        f"{time_color}[{timestamp}]{Style.RESET_ALL}" + logData
+    )
+

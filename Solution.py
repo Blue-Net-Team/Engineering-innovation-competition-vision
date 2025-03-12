@@ -15,7 +15,7 @@ import math
 
 import cv2
 import numpy as np
-from colorama import Fore, init
+from colorama import Fore, init, Style
 
 import detector
 from utils import Uart

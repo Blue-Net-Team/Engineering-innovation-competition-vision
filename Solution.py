@@ -549,7 +549,9 @@ def printLog(logData: str, time_color:str=Fore.YELLOW) -> None:
         logData (str): 日志信息
         time_color (str): 时间戳颜色，默认为黄色
     """
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")[:-3]
+    timestamp = datetime.datetime.now(
+        datetime.timezone(datetime.timedelta(hours=8))
+    ).strftime("%Y-%m-%d %H:%M:%S:%f")[:-3]
     print(
         f"{time_color}[{timestamp}]{Style.RESET_ALL}" + logData
     )

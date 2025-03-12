@@ -409,24 +409,31 @@ if __name__ == "__main__":
     # region 获取命令行参数deal_method
     parser = argparse.ArgumentParser(description="MainSystem")
     parser.add_argument(
-        "--deal_method",
+        "-d", "--deal_method",
         type=str,
         default="send",
         help="处理图像的方法,包含show(显示)、hide(隐藏)、send(发送)",
     )
     parser.add_argument(
-        "--config_path",
+        "-c", "--config_path",
         type=str,
         default="config.json",
         help="配置文件路径",
     )
+    parser.add_argument(
+        "-i", "--interface",
+        type=str,
+        default="wlan0",
+        help="图传发送器的网络接口",
+    )
     args = parser.parse_args()
     deal_method = args.deal_method
     config_path = args.config_path
+    interface = args.interface
     # endregion
 
     # 设置图传发送器
-    sender = SendImg("wlan0", 4444)
+    sender = SendImg(interface, 4444)
 
     mainsystem = MainSystem(
         ser_port="/dev/ttyS3",

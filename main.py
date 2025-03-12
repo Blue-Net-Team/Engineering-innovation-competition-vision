@@ -117,7 +117,7 @@ class MainSystem:
 
         self.deal_img_method = deal_img_method
         Solution.printLog(
-            Fore.WHITE + "deal_img_method为" + Fore.RESET,
+            Fore.WHITE + "deal_img_method为" + Fore.RESET +
             Fore.CYAN + deal_img_method + Fore.RESET
         )
 

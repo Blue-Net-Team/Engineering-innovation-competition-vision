@@ -20,7 +20,6 @@ r"""
                               神兽保佑
                              工创国一！！
 """
-import datetime
 import time
 import argparse
 
@@ -30,6 +29,7 @@ from colorama import Fore, init
 import Solution
 from utils import SendImg, Cap, Switch, LED, OLED_I2C, connect_to_wifi, get_CPU_temp, get_GPU_temp
 from utils.ImgTrans import NeedReConnect
+from utils.logger import printLog
 
 init(autoreset=True)
 
@@ -73,7 +73,7 @@ class MainSystem:
         if self.sender and self.switch.read_status():
             self.DEAL_IMG_DICT["send"] = self.sender.send
             if self.sender.host == "":
-                Solution.printLog(
+                printLog(
                     Fore.RED + "未连接到图传网络,尝试连接" + Fore.RESET
                 )
 
@@ -84,7 +84,7 @@ class MainSystem:
                 while self.sender.host == "":
                     conn_res = connect_to_wifi("EIC-FF", "lckfb666")
                     if conn_res[0]:
-                        Solution.printLog(
+                        printLog(
                             Fore.GREEN + "连接成功" + Fore.RESET
                         )
 
@@ -96,7 +96,7 @@ class MainSystem:
                         self.sender.update_host()
                         break
                     else:
-                        Solution.printLog(
+                        printLog(
                             Fore.RED + f"连接失败，{conn_res[1]}" + Fore.RESET
                         )
 
@@ -116,7 +116,7 @@ class MainSystem:
         }
 
         self.deal_img_method = deal_img_method
-        Solution.printLog(
+        printLog(
             Fore.WHITE + "deal_img_method为" + Fore.RESET +
             Fore.CYAN + deal_img_method + Fore.RESET
         )
@@ -137,19 +137,19 @@ class MainSystem:
 
             if switch_status:
                 # 开关状态1，开图传，关任务
-                Solution.printLog(
+                printLog(
                     Fore.WHITE + "模式切换为" + Fore.RESET +
                     Fore.CYAN + "图传" + Fore.RESET
                 )
 
                 # 检查sender
                 if self.sender is None:
-                    Solution.printLog(Fore.RED + "没有设置图传发送器对象" + Fore.RESET)
+                    printLog(Fore.RED + "没有设置图传发送器对象" + Fore.RESET)
                     break
 
                 # 检查wlan
                 if self.sender.host == "":
-                    Solution.printLog(
+                    printLog(
                         Fore.RED + "未连接到图传网络,尝试连接" + Fore.RESET
                     )
 
@@ -160,7 +160,7 @@ class MainSystem:
                     while True:
                         conn_res = connect_to_wifi("EIC-FF", "lckfb666")
                         if conn_res[0]:
-                            Solution.printLog(
+                            printLog(
                                 Fore.GREEN + "连接成功" + Fore.RESET
                             )
 
@@ -172,7 +172,7 @@ class MainSystem:
                             self.sender.update_host()
                             break
                         else:
-                            Solution.printLog(
+                            printLog(
                                 Fore.RED + f"连接失败，{conn_res[1]}" + Fore.RESET
                             )
 
@@ -191,7 +191,7 @@ class MainSystem:
                 self.task_running_flag = False
 
                 # 等待连接
-                Solution.printLog(
+                printLog(
                     Fore.WHITE + "等待图传连接\tIP:" + Fore.RESET +
                     Fore.CYAN + f"{self.sender.host}" + Fore.RESET,)
 
@@ -210,7 +210,7 @@ class MainSystem:
                 if not self.ori_imgTrans_running_flag:
                     continue
 
-                Solution.printLog(Fore.WHITE + "图传连接成功" + Fore.RESET)
+                printLog(Fore.WHITE + "图传连接成功" + Fore.RESET)
 
 
                 self.oled.clear()
@@ -234,7 +234,7 @@ class MainSystem:
                         self.sender.send(img)
                     except NeedReConnect:
                         self.sender.close()
-                        Solution.printLog(Fore.RED + "图传连接中断" + Fore.RESET)
+                        printLog(Fore.RED + "图传连接中断" + Fore.RESET)
 
                         self.oled.clear()
                         self.oled.text("图传连接中断", (1,1))
@@ -246,7 +246,7 @@ class MainSystem:
                             self.ori_imgTrans_running_flag = False
                             break
                         else:
-                            Solution.printLog(Fore.WHITE + "重新连接" + Fore.RESET)
+                            printLog(Fore.WHITE + "重新连接" + Fore.RESET)
 
                             self.oled.clear()
                             self.oled.text("等待重连", (1,1))
@@ -258,7 +258,7 @@ class MainSystem:
                                     self.ori_imgTrans_running_flag = False
                                     break
                                 if self.sender.connecting():
-                                    Solution.printLog(Fore.WHITE + "图传连接成功" + Fore.RESET,)
+                                    printLog(Fore.WHITE + "图传连接成功" + Fore.RESET,)
                                     self.oled.clear()
                                     self.oled.text("图传连接成功", (1,1))
                                     self.oled.display()
@@ -272,7 +272,7 @@ class MainSystem:
 
             else:
                 # 开关状态2，开任务线程，关图传线程
-                Solution.printLog(Fore.WHITE + "模式切换为" + Fore.RESET +
+                printLog(Fore.WHITE + "模式切换为" + Fore.RESET +
                                   Fore.CYAN + "任务模式" + Fore.RESET)
 
                 self.oled.clear()
@@ -292,12 +292,12 @@ class MainSystem:
 
                 # 连接图传
                 if self.deal_img_method == "send" and self.sender:
-                    Solution.printLog(Fore.WHITE + "等待图传连接\tIP:" + Fore.RESET +
+                    printLog(Fore.WHITE + "等待图传连接\tIP:" + Fore.RESET +
                                     Fore.CYAN + f"{self.sender.host}" + Fore.RESET)
 
                     while self.task_running_flag:
                         if self.sender.connecting():
-                            Solution.printLog(Fore.WHITE + "图传连接成功" + Fore.RESET,)
+                            printLog(Fore.WHITE + "图传连接成功" + Fore.RESET,)
 
                             self.oled.clear()
                             self.oled.text("图传连接成功", (1,1))
@@ -322,7 +322,7 @@ class MainSystem:
                             continue
 
                     if sign not in self.TASK_DICT.keys():
-                        Solution.printLog(Fore.RED + f"非法信号 {sign}" + Fore.RESET)
+                        printLog(Fore.RED + f"非法信号 {sign}" + Fore.RESET)
 
                         self.oled.clear()
                         self.oled.text(f"非法信号 {sign}", (1,1))
@@ -365,7 +365,7 @@ class MainSystem:
 
                         num += 1
 
-                        Solution.printLog(
+                        printLog(
                             Fore.WHITE + "result:" + Fore.RESET +
                             Fore.MAGENTA + f"{res}" + Fore.RESET
                         )
@@ -373,7 +373,7 @@ class MainSystem:
                         try:
                             self.DEAL_IMG_DICT[self.deal_img_method](res_img)
                         except Exception as e:
-                            Solution.printLog(Fore.RED + f"图像处理失败:{e}" + Fore.RESET, Fore.Red)
+                            printLog(Fore.RED + f"图像处理失败:{e}" + Fore.RESET, Fore.RED)
 
                         if res:
                             t1 = time.perf_counter()
@@ -385,7 +385,7 @@ class MainSystem:
                             else:
                                 color = Fore.RED
 
-                            Solution.printLog(
+                            printLog(
                                 Fore.WHITE + "sent:" + Fore.RESET +
                                 Fore.MAGENTA + f"{res}\t" + Fore.RESET +
                                 Fore.WHITE + "used time:" + Fore.RESET +
@@ -451,6 +451,6 @@ if __name__ == "__main__":
     try:
         mainsystem.main()
     except KeyboardInterrupt:
-        Solution.printLog(Fore.RED + "程序被中断（用户终止）" + Fore.RESET)
+        printLog(Fore.RED + "程序被中断（用户终止）" + Fore.RESET)
         mainsystem.start_LED.off()
 # end main

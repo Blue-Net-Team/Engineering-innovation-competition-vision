@@ -33,7 +33,7 @@ import numpy as np
 from colorama import Fore, Style, init
 import fcntl
 
-from utils import printLog
+from .logger import printLog
 
 init(autoreset=True)
 

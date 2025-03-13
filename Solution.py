@@ -19,6 +19,10 @@ from colorama import Fore, init, Style
 
 import detector
 from utils import Uart
+import detector
+from colorama import Fore, Style, init
+import math
+from utils import printLog
 
 # 初始化 colorama
 init(autoreset=True)
@@ -540,19 +544,3 @@ class Solution:
 
         return res, res_img
     # endregion
-
-def printLog(logData: str, time_color:str=Fore.YELLOW) -> None:
-    """
-    打印日志信息和时间戳(包含毫秒)
-    ----
-    Args:
-        logData (str): 日志信息
-        time_color (str): 时间戳颜色，默认为黄色
-    """
-    timestamp = datetime.datetime.now(
-        datetime.timezone(datetime.timedelta(hours=8))
-    ).strftime("%Y-%m-%d %H:%M:%S:%f")[:-3]
-    print(
-        f"{time_color}[{timestamp}]{Style.RESET_ALL}" + logData
-    )
-

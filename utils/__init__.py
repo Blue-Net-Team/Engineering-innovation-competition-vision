@@ -5,6 +5,7 @@ from .typingCheck import check_args
 from .gpio import Switch, OLED_I2C, LED
 from .tspi_board_info import get_CPU_temp, get_GPU_temp
 from .wifi_connect import connect_to_wifi
+from .logger import printLog
 
 __all__ = [
     "Cap",
@@ -21,4 +22,5 @@ __all__ = [
     "get_CPU_temp",
     "get_GPU_temp",
     "connect_to_wifi",
+    "printLog",
 ]

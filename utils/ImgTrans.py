@@ -33,6 +33,8 @@ import numpy as np
 from colorama import Fore, Style, init
 import fcntl
 
+from utils import printLog
+
 init(autoreset=True)
 
 class NeedReConnect(Exception):
@@ -66,11 +68,17 @@ class SendImg(object):
         """
         self.is_open = False
         self.interface = interface
+        self.port = port
+        self.host_name = ""
+        self.client_address = ""
 
-        if self.host and port:
+        self.open_socket()
+
+    def open_socket(self):
+        if self.host and self.port:
             try:
                 self.server_socket = socket.socket()
-                self.server_socket.bind((self.host, port))
+                self.server_socket.bind((self.host, self.port))
                 self.server_socket.listen(5)
                 self.server_socket.settimeout(0.05)
                 self.connection = None
@@ -78,7 +86,7 @@ class SendImg(object):
                 self.stream = io.BytesIO()
                 self.is_open = True
             except Exception as e:
-                print(Fore.RED + "Error: ", e)
+                printLog(Fore.RED + f"Error: {e}", Fore.RED)
 
     @staticmethod
     def get_ip_address(interface: str) -> str:
@@ -110,7 +118,7 @@ class SendImg(object):
         连接客户端
         ----
         """
-        if self.is_open:
+        def _connect(self):
             try:
                 self.connection, self.client_address = self.server_socket.accept()
                 self.connect = self.connection.makefile("wb")
@@ -120,8 +128,12 @@ class SendImg(object):
                 return True
             except socket.timeout:
                 return False
-
-        return False
+        if self.is_open:
+            return _connect(self)
+        else:
+            # 重新初始化
+            self.open_socket()
+            return _connect(self)
 
     def start(self) -> None:
         """
@@ -129,9 +141,9 @@ class SendImg(object):
         ----
         运行这个函数之前，必须先运行`connecting`函数
         """
-        print("Client Host Name:", self.host_name)
-        print("Connection from: ", self.client_address)
-        print("Streaming...")
+        printLog("Client Host Name:", self.host_name)
+        printLog("Connection from: ", self.client_address)
+        printLog("Streaming...")
 
     def send(self, _img: cv2.typing.MatLike) -> bool:
         """
@@ -160,17 +172,36 @@ class SendImg(object):
                 self.stream.truncate()
                 self.connect.write(struct.pack("<L", 0))
                 return True
-            except ConnectionResetError or ConnectionAbortedError or BrokenPipeError:
+            except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
+                printLog(Fore.RED + f"Connection error: {e}", Fore.RED)
+                self.close()
+                raise NeedReConnect("连接已断开，请重新连接")
+            except OSError as e:
+                printLog(Fore.RED + f"OS error: {e}", Fore.RED)
+                self.close()
                 raise NeedReConnect("连接已断开，请重新连接")
         else:
             return False
 
     def close(self):
         """关闭连接"""
-        if self.is_open and self.connect and self.connection:
-            self.connection.close()
-            self.server_socket.close()
-
+        if self.is_open:
+            if self.connect:
+                try:
+                    self.connect.close()
+                except OSError as e:
+                    printLog(Fore.RED + f"Error closing connect: {e}", Fore.RED)
+            if self.connection:
+                try:
+                    self.connection.close()
+                except OSError as e:
+                    printLog(Fore.RED + f"Error closing connection: {e}", Fore.RED)
+            if self.server_socket:
+                try:
+                    self.server_socket.close()
+                except OSError as e:
+                    printLog(Fore.RED + f"Error closing server_socket: {e}", Fore.RED)
+            self.is_open = False
 
 class ReceiveImg(object):
     """客户端接收视频流"""
@@ -183,12 +214,12 @@ class ReceiveImg(object):
             self.connection = self.client_socket.makefile("rb")
             self.stream_bytes = b" "
 
-            print(" ")
-            print("已连接到服务端：")
-            print("Host : ", host)
-            print("请按‘q’退出图像传输!")
+            printLog(" ")
+            printLog("已连接到服务端：")
+            printLog("Host : ", host)
+            printLog("请按‘q’退出图像传输!")
         except Exception as e:
-            print(Fore.RED + "Error: ", e)
+            printLog(Fore.RED + f"Error: {e}", Fore.RED)
             exit()
 
     def read(self):
@@ -206,7 +237,7 @@ class ReceiveImg(object):
                 return True, image
 
         except:
-            print("Error：连接出错！")
+            printLog("Error：连接出错！")
         return False, None
 
     def release(self):

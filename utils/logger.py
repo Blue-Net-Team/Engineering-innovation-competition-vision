@@ -1,4 +1,7 @@
 import datetime
+from colorama import Fore, init, Style
+
+init(autoreset=True)
 
 def printLog(logData: str, time_color:str=Fore.YELLOW) -> None:
     """

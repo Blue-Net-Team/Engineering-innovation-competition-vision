@@ -36,7 +36,10 @@ class Detect:
             config (dict): 配置字典
         """
         with open(path, "w") as f:
-            json.dump(config, f, indent=4)
+            if path.endswith("json"):
+                json.dump(config, f, indent=4)
+            else:
+                yaml.dump(config, f, default_flow_style=False)
 
     def load_config(self, _config: str|dict):
         """

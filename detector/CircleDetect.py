@@ -167,28 +167,53 @@ class CircleDetector(Detect):
 
         super().save_config(jsion_path, config)
 
-    def load_config(self, jsion_path):
+    def load_config(self, _config:str|dict):
         """
         加载配置
         ----
         Args:
-            jsion_path (str): 配置文件路径
+            _config (str|dict): 配置文件路径
         """
+        res_str = ""
         circle_type = "annulus"
+
         try:
-            config = super().load_config(jsion_path)
+            config = super().load_config(_config)
             config = config[circle_type]
 
-            self.dp = config["dp"]
-            self.minDist = config["minDist"]
-            self.param1 = config["param1"]
-            self.param2 = config["param2"]
-            self.minRadius = config["minRadius"]
-            self.maxRadius = config["maxRadius"]
-            self.sigma = config["sigma"]
-            self.odd_index = config["odd_index"]
-            res_str = ""
-        except:
-            res_str = f"配置文件{jsion_path}中没有{circle_type}的配置"
+            if "dp" in config:
+                self.dp = config["dp"]
+            else:
+                res_str += "配置文件中没有dp参数；"
+            if "minDist" in config:
+                self.minDist = config["minDist"]
+            else:
+                res_str += "配置文件中没有minDist参数；"
+            if "param1" in config:
+                self.param1 = config["param1"]
+            else:
+                res_str += "配置文件中没有param1参数；"
+            if "param2" in config:
+                self.param2 = config["param2"]
+            else:
+                res_str += "配置文件中没有param2参数；"
+            if "minRadius" in config:
+                self.minRadius = config["minRadius"]
+            else:
+                res_str += "配置文件中没有minRadius参数；"
+            if "maxRadius" in config:
+                self.maxRadius = config["maxRadius"]
+            else:
+                res_str += "配置文件中没有maxRadius参数；"
+            if "sigma" in config:
+                self.sigma = config["sigma"]
+            else:
+                res_str += "配置文件中没有sigma参数；"
+            if "odd_index" in config:
+                self.odd_index = config["odd_index"]
+            else:
+                res_str += "配置文件中没有odd_index参数；"
+        except KeyError:
+            res_str += f"配置文件{_config}中没有{circle_type}的配置"
             pass
         return res_str

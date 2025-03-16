@@ -285,27 +285,53 @@ class LineDetector(Detect):
         }
         super().save_config(path, config)
 
-    def load_config(self, path: str):
+    def load_config(self, _config: str|dict):
         """
         从指定路径的 JSON 文件加载参数
         ----
         Args:
-            path (str): 文件路径
+            _config (str|dict): 配置信息
+        Returns:
+            res_str(str): 错误信息
         """
+        res_str = ''
         try:
-            ori_config = super().load_config(path)
+            ori_config = super().load_config(_config)
             config = ori_config["LineDetector"]
 
-            self.Min_val = config["Min_val"]
-            self.Max_val = config["Max_val"]
-            self.Hough_threshold = config["Hough_threshold"]
-            self.minLineLength = config["minLineLength"]
-            self.maxLineGap = config["maxLineGap"]
-            self.bias = config["bias"]
-            self.sigma = config["sigma"]
-            self.odd_index = config["odd_index"]
-            res_str = ''
-        except:
-            res_str = f"加载{path}失败"
+            if "Min_val" in config:
+                self.Min_val = config["Min_val"]
+            else:
+                res_str += "配置文件中没有Min_val参数；"
+            if "Max_val" in config:
+                self.Max_val = config["Max_val"]
+            else:
+                res_str += "配置文件中没有Max_val参数；"
+            if "Hough_threshold" in config:
+                self.Hough_threshold = config["Hough_threshold"]
+            else:
+                res_str += "配置文件中没有Hough_threshold参数；"
+            if "minLineLength" in config:
+                self.minLineLength = config["minLineLength"]
+            else:
+                res_str += "配置文件中没有minLineLength参数；"
+            if "maxLineGap" in config:
+                self.maxLineGap = config["maxLineGap"]
+            else:
+                res_str += "配置文件中没有maxLineGap参数；"
+            if "bias" in config:
+                self.bias = config["bias"]
+            else:
+                res_str += "配置文件中没有bias参数；"
+            if "sigma" in config:
+                self.sigma = config["sigma"]
+            else:
+                res_str += "配置文件中没有sigma参数；"
+            if "odd_index" in config:
+                self.odd_index = config["odd_index"]
+            else:
+                res_str += "配置文件中没有odd_index参数；"
+        except KeyError:
+            res_str += f"加载{_config}失败，配置文件没有LineDetector的配置"
             pass
         return res_str

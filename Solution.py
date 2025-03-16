@@ -129,11 +129,11 @@ class Solution:
             printLog(Fore.RED + str(e))
 
         # 加载圆环识别的圆环参数
-        load_err1 = self.annulus_circle_detector.load_config("config.json", "annulus")
+        load_err1 = self.annulus_circle_detector.load_config(self.configPath)
         # 加载直线检测的参数
-        load_err2 = self.line_detector.load_config("config.json")
+        load_err2 = self.line_detector.load_config(self.configPath)
         # 加载颜色识别的参数
-        load_err3 = self.traditional_color_detector.load_config("config.json")
+        load_err3 = self.traditional_color_detector.load_config(self.configPath)
 
         err = [load_err1, load_err2, load_err3]
         if any(err):

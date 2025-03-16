@@ -1,9 +1,44 @@
 import cv2
 from collections import deque
+import subprocess
+import re
 
 
 class Cap(cv2.VideoCapture):
-    def __init__(self, _id: int = 0, w: int = 640, h: int = 480, fps: int = 60) -> None:
+    @staticmethod
+    def getCapIndex():
+        try:
+            result = subprocess.run(['v4l2-ctl', '--list-devices'], capture_output=True, text=True, check=True)
+            pattern = r"LRCP 1080P-60.*?\n\s*(/dev/video\d+)\n\s*(/dev/video\d+)"
+            match = re.search(pattern, result.stdout, re.DOTALL)
+            if match:
+                video1 = match.group(1)
+                video2 = match.group(2)
+                video1_num = re.search(r'\d+', video1).group()
+                video2_num = re.search(r'\d+', video2).group()
+                return video1_num, video2_num
+        except subprocess.CalledProcessError as e:
+            print(f"Error occurred: {e}")
+            return None
+
+    # 识别的时候需要裁剪掉的底部区域高度(px)
+    NEED2CUT = 40
+
+    # 裁剪的时候需要保留的高度
+    @property
+    def DETECT_HEIGHT(self):
+        res = self.height - self.NEED2CUT
+        return res if res > 0 else self.height
+
+    def __init__(self, _id: int|None = None, w: int = 320, h: int = 240, fps: int = 60) -> None:
+        if _id is None:
+            caps = Cap.getCapIndex()
+            if caps:
+                _id = int(caps[0])
+            else:
+                _id = 0
+        self.width = w
+        self.height = h
         super().__init__(_id)
         self.set(3, w)
         self.set(4, h)
@@ -12,7 +47,7 @@ class Cap(cv2.VideoCapture):
 
 
 class LoadCap:
-    def __init__(self, _id: int = 0, cap_method: str = "opencv") -> None:
+    def __init__(self, _id: int|None = None, cap_method: str = "opencv") -> None:
         """
         初始化
         ----
@@ -55,7 +90,7 @@ class InterpolatedCap(Cap):
     运用插值补帧方法的Cap类
     """
 
-    def __init__(self, _id: int = 0) -> None:
+    def __init__(self, _id: int|None = None) -> None:
         super().__init__(_id)
         self.set(3, 640)
         self.set(4, 480)

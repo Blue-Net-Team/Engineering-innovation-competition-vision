@@ -82,6 +82,12 @@ class Solution:
         self.configPath = config_path
         self.position_id_stack:list[dict[str,int|None]] = []     # 用于存放上一帧图像的物料位号的栈
 
+        # 初始化默认参数
+        self.area1_points:list[list[int]] = [[0,0],[0,0]]
+        self.area2_points:list[list[int]] = [[0,0],[0,0]]
+        self.area3_points:list[list[int]] = [[0,0],[0,0]]
+        self.target_angel:int = 45
+        self.NEED2CUT:int = 40
         # 读取配置文件
         self.load_config()
 
@@ -93,17 +99,29 @@ class Solution:
         try:
             with open(self.configPath, "r") as f:
                 config = json.load(f)
-                # 位号顶点
+            # 判断是否存在对应的参数
+            if "area1_points" in config:
                 self.area1_points:list[list[int]] = config["area1_points"]
+            else:
+                printLog(Fore.RED + "配置文件读取位号1参数失败")
+            if "area2_points" in config:
                 self.area2_points:list[list[int]] = config["area2_points"]
+            else:
+                printLog(Fore.RED + "配置文件读取位号2参数失败")
+            if "area3_points" in config:
                 self.area3_points:list[list[int]] = config["area3_points"]
+            else:
+                printLog(Fore.RED + "配置文件读取位号3参数失败")
+            if "target_angel" in config:
                 self.target_angel:int = config["target_angel"]
+            else:
+                printLog(Fore.RED + "配置文件读取目标角度参数失败")
+            if "need2cut_height" in config:
+                self.NEED2CUT:int = config["need2cut_height"]
+            else:
+                printLog(Fore.RED + "配置文件读取裁剪高度参数失败")
         except Exception as e:
-            self.area1_points:list[list[int]] = [[0,0],[0,0]]
-            self.area2_points:list[list[int]] = [[0,0],[0,0]]
-            self.area3_points:list[list[int]] = [[0,0],[0,0]]
-            self.target_angel:int = 45
-            printLog(Fore.RED + "配置文件读取位号参数失败")
+            printLog(Fore.RED + e)
 
         # 加载圆环识别的圆环参数
         load_err1 = self.annulus_circle_detector.load_config("config.json", "annulus")

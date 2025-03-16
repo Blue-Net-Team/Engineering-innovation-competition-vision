@@ -1,6 +1,7 @@
 import json
 import cv2
 import numpy as np
+import yaml
 
 
 class Detect:
@@ -45,5 +46,9 @@ class Detect:
             path (str): 配置文件路径
         """
         with open(path, "r") as f:
-            config = json.load(f)
+            if path.endswith("json"):
+                config = json.load(f)
+            else:
+                config = yaml.safe_load(f)
+
         return config

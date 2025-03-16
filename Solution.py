@@ -17,6 +17,7 @@ import detector
 from colorama import Fore, Style, init
 import math
 from utils import printLog
+import yaml
 
 # 初始化 colorama
 init(autoreset=True)
@@ -97,8 +98,12 @@ class Solution:
         ----
         """
         try:
+            config = {}
             with open(self.configPath, "r") as f:
-                config = json.load(f)
+                if self.configPath.endswith(".json"):
+                    config = json.load(f)
+                else:
+                    config = yaml.safe_load(f)
             # 判断是否存在对应的参数
             if "area1_points" in config:
                 self.area1_points:list[list[int]] = config["area1_points"]
@@ -121,7 +126,7 @@ class Solution:
             else:
                 printLog(Fore.RED + "配置文件读取裁剪高度参数失败")
         except Exception as e:
-            printLog(Fore.RED + e)
+            printLog(Fore.RED + str(e))
 
         # 加载圆环识别的圆环参数
         load_err1 = self.annulus_circle_detector.load_config("config.json", "annulus")

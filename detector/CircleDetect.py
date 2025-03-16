@@ -167,17 +167,14 @@ class CircleDetector(Detect):
 
         super().save_config(jsion_path, config)
 
-    def load_config(self, jsion_path, circle_type):
+    def load_config(self, jsion_path):
         """
         加载配置
         ----
         Args:
             jsion_path (str): 配置文件路径
-            circle_type (str): 圆形类型,包含"material"(物料圆环)、"annulus"(地面圆环)
         """
-        if circle_type not in ["material", "annulus"]:
-            raise ValueError("circle_type must be 'material' or 'annulus'")
-
+        circle_type = "annulus"
         try:
             config = super().load_config(jsion_path)
             config = config[circle_type]

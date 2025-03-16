@@ -359,8 +359,6 @@ class MainSystem:
                                 self.DEAL_IMG_DICT[self.deal_img_method](img)
 
                         _, img = self.cap.read()
-                        # 切割图片
-                        img = img[:self.cap.DETECT_HEIGHT,:]
 
                         res, res_img = self.TASK_DICT[sign](img)
 

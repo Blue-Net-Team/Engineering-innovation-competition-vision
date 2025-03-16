@@ -45,6 +45,20 @@ class Cap(cv2.VideoCapture):
         self.set(5, fps)
         self.set(6, cv2.VideoWriter.fourcc("M", "J", "P", "G"))
 
+    def read(self, image: cv2.typing.MatLike | None = None):
+        """
+        读取摄像头数据
+        ----
+        Returns:
+            tuple: (ret, frame)
+        """
+        ret, frame = super().read()
+        if ret:
+            # 裁剪底部区域
+            frame = frame[0:self.DETECT_HEIGHT, :]
+            return ret, frame
+        return ret, None
+
 
 class LoadCap:
     def __init__(self, _id: int|None = None, cap_method: str = "opencv") -> None:

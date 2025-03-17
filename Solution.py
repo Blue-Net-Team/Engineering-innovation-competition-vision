@@ -102,8 +102,10 @@ class Solution:
             with open(self.configPath, "r") as f:
                 if self.configPath.endswith(".json"):
                     config = json.load(f)
-                else:
+                elif self.configPath.endswith(".yaml"):
                     config = yaml.safe_load(f)
+                else:
+                    printLog(Fore.RED + f"{self.configPath}不是一个合理的配置文件")
             # 判断是否存在对应的参数
             if "area1_points" in config:
                 self.area1_points:list[list[int]] = config["area1_points"]
@@ -137,7 +139,6 @@ class Solution:
 
         err = [load_err1, load_err2, load_err3]
         if any(err):
-            printLog(Fore.RED + "加载配置文件失败")
             for e in err:
                 if e:
                     printLog(Fore.RED + e)
@@ -165,23 +166,7 @@ class Solution:
 
         color_position_dict:dict[str,tuple[int,int,int,int]] = self.__detect_material_positions(_img)   # type:ignore
 
-
-        for (color, position), area_point in zip(
-            color_position_dict.items(),
-            [self.area1_points, self.area2_points, self.area3_points],
-        ):
-            if position is not None:
-                # 画出物料
-                res_img = draw_material(position, res_img, color)
-
-            # 画出位号
-            cv2.rectangle(
-                res_img,
-                (area_point[0][0], area_point[0][1]),
-                (area_point[1][0], area_point[1][1]),
-                (255, 0, 200),
-                2,
-            )
+        res_img = self.__draw_positions(color_position_dict, res_img)
 
         # 将坐标转换成位号，在后面排除了now_color_position_id_dict中有None的情况
         now_color_position_id_dict: dict[str, int|None] = self.position2area(color_position_dict)     # type:ignore
@@ -204,7 +189,6 @@ class Solution:
             return res, res_img
         else:
             return None, res_img
-
     # endregion
 
     # region 物料位置检测
@@ -223,21 +207,7 @@ class Solution:
 
         color_position_dict:dict[str,tuple[int,int,int,int]|None] = self.__detect_material_positions(_img)
 
-        for (color, position), area_point in zip(
-            color_position_dict.items(),
-            [self.area1_points, self.area2_points, self.area3_points],
-        ):
-            if position is not None:
-                # 画出物料
-                res_img = draw_material(position, res_img, color)
-            # 画出位号
-            cv2.rectangle(
-                res_img,
-                (area_point[0][0], area_point[0][1]),
-                (area_point[1][0], area_point[1][1]),
-                (255, 0, 200),
-                2,
-            )
+        res_img = self.__draw_positions(color_position_dict, res_img)
 
         color_position_id_dict = self.position2area(color_position_dict)
 
@@ -249,6 +219,24 @@ class Solution:
         )
         res = "C" + res + "E"
         return res, res_img
+
+    def __draw_positions(self, color_position_dict, _img):
+        for (color, position), area_point in zip(
+                color_position_dict.items(),
+                [self.area1_points, self.area2_points, self.area3_points],
+        ):
+            if position is not None:
+                # 画出物料
+                _img = draw_material(position, _img, color)
+            # 画出位号
+            cv2.rectangle(
+                _img,
+                (area_point[0][0], area_point[0][1]),
+                (area_point[1][0], area_point[1][1]),
+                (255, 0, 200),
+                2,
+            )
+        return _img
 
     def __detect_material_positions(self, _img:cv2.typing.MatLike) -> dict[str, tuple[int, int, int, int] | None]:
         """

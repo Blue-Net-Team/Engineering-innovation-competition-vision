@@ -22,7 +22,7 @@ class Cap(cv2.VideoCapture):
             return None
 
     # 识别的时候需要裁剪掉的底部区域高度(px)
-    NEED2CUT = 40
+    NEED2CUT:int = 40
 
     # 裁剪的时候需要保留的高度
     @property

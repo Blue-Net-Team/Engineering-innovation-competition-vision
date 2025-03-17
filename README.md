@@ -455,14 +455,14 @@ target_angle: 46
 
 ```yaml
 annulus:
-    dp: 1             //霍夫变换的分辨率
-    minDist: 100      //俩个圆之间的最小距离
-    param1: 100       //Canny边缘检测的高阈值，低阈值是高阈值的一半
-    param2: 100       //累加器阈值，值越大，检测时间越短，识别到的
-    minRadius: 40     //最小圆半径
-    maxRadius: 97     //最大圆半径
-    sigma: 0          //高斯滤波标准差
-    odd_index: 3      //kernel_size(滤波卷积核尺寸)是第几个奇数
+  dp: 1             //霍夫变换的分辨率
+  minDist: 100      //俩个圆之间的最小距离
+  param1: 100       //Canny边缘检测的高阈值，低阈值是高阈值的一半
+  param2: 100       //累加器阈值，值越大，检测时间越短，识别到的
+  minRadius: 40     //最小圆半径
+  maxRadius: 97     //最大圆半径
+  sigma: 0          //高斯滤波标准差
+  odd_index: 3      //kernel_size(滤波卷积核尺寸)是第几个奇数
 ```
 
 ### 底部裁剪高度

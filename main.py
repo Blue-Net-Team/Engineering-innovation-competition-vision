@@ -343,11 +343,11 @@ class MainSystem:
                     self.oled.display()
                     t0 = time.perf_counter()
                     num = 0
-                    while self.task_running_flag:
-                        if sign in ["1", "2"]:
-                            # 去除缓冲区图像
-                            for i in range(30):
-                                _, img = self.cap.read()
+                    if sign in ["1", "2"]:
+                        # 去除缓冲区图像
+                        for i in range(30):
+                            _, img = self.cap.read()
+                            if img:
                                 cv2.putText(
                                     img,
                                     "Cleaning Buffer...",
@@ -358,7 +358,11 @@ class MainSystem:
                                 )
                                 self.DEAL_IMG_DICT[self.deal_img_method](img)
 
+                    while self.task_running_flag:
                         _, img = self.cap.read()
+
+                        if img is None:
+                            continue
 
                         res, res_img = self.TASK_DICT[sign](img)
 

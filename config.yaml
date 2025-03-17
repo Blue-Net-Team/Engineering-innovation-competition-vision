@@ -6,17 +6,19 @@ LineDetector:
   minLineLength: 70
   maxLineGap: 49
   bias: 1
+  sigma: 0
+  odd_index: 3
 
 # 位号顶点
 area1_points:
-  - [50, 0]
-  - [335, 235]
+  - [25, 0]
+  - [168, 118]
 area2_points:
-  - [335, 0]
-  - [585, 235]
+  - [168, 0]
+  - [293, 118]
 area3_points:
-  - [130, 235]
-  - [580, 473]
+  - [65, 118]
+  - [290, 237]
 
 # 颜色阈值
 color:
@@ -56,6 +58,11 @@ annulus:
     param2: 100
     minRadius: 40
     maxRadius: 97
+    sigma: 0
+    odd_index: 3
 
 # 目标角度
 target_angle: 46
+
+# 画面底部需要被裁剪的高度
+need2cut_height: 20

@@ -53,7 +53,7 @@ class Detect:
         if isinstance(_config, dict):
             return _config
         elif isinstance(_config, str):
-            with open(_config, "r") as f:
+            with open(_config, "r", encoding="utf-8") as f:
                 if _config.endswith("json"):
                     config = json.load(f)
                 else:

@@ -19,11 +19,8 @@ from colorama import Fore, init, Style
 import yaml
 
 import detector
-from utils import Uart
-import detector
-from colorama import Fore, Style, init
+from utils import Uart, printLog
 import math
-from utils import printLog
 
 # 初始化 colorama
 init(autoreset=True)
@@ -64,7 +61,7 @@ def draw_material(
         img,
         (x - w // 2, y - h // 2),
         (x + w // 2, y + h // 2),
-        (0, 255, 0),
+        COLOR_DIC_CV[color] if color else COLOR_DIC_CV["G"],
         2,
     )
     cv2.circle(img, (x, y), 5, (0, 0, 255), -1)

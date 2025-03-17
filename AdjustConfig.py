@@ -27,7 +27,7 @@ class Ad_Config(Solution):
         _cap:cv2.VideoCapture|Cap|ReceiveImg,
         ser_port: str|None = None,
     ):
-        super().__init__(ser_port)
+        super().__init__(ser_port, "config.yaml")
 
         self.cap = _cap
 
@@ -55,9 +55,9 @@ class Ad_Config(Solution):
                 print(
                     Fore.GREEN + f"[{timeStamp}]" + Fore.RESET,
                     Fore.WHITE + f"检测到圆环，圆心坐标：x" + Fore.RESET,
-                    Fore.MAGENTA + f"{res[4:7]}" + Fore.RESET,
+                    Fore.MAGENTA + f"{res[5:8]}" + Fore.RESET,
                     Fore.WHITE + f"y" + Fore.RESET,
-                    Fore.MAGENTA + f"{res[7:10]}" + Fore.RESET,
+                    Fore.MAGENTA + f"{res[8:11]}" + Fore.RESET,
                 )
 
             cv2.imshow("img", res_img)
@@ -190,7 +190,7 @@ class Ad_Area_config:
         """
         加载配置
         """
-        with open("config.yaml", "r") as f:
+        with open("config.yaml", "r", encoding="utf-8") as f:
             self.config = yaml.safe_load(f)
         self.area_dict = {
             1: self.config["area1_points"],
@@ -202,14 +202,14 @@ class Ad_Area_config:
         """
         保存配置
         """
-        with open("config.yaml", "r") as f:
+        with open("config.yaml", "r", encoding="utf-8") as f:
             self.config = yaml.safe_load(f)
 
         self.config["area1_points"] = self.area_dict[1]
         self.config["area2_points"] = self.area_dict[2]
         self.config["area3_points"] = self.area_dict[3]
 
-        with open("config.yaml", "w") as f:
+        with open("config.yaml", "w", encoding='utf-8') as f:
             yaml.dump(self.config, f, default_flow_style=False)
 
     def createTrackbar(self):
@@ -245,11 +245,12 @@ class Ad_Area_config:
                 cv2.putText(
                     img,
                     f"area{key}",
-                    value[0],
+                    # value[0]+(20,20),
+                    (value[0][0], value[0][1] + 10),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
+                    0.5,
                     (0, 255, 0),
-                    2
+                    1
                 )
             cv2.imshow("img", img)
             key = cv2.waitKey(1)
@@ -285,8 +286,8 @@ if __name__ == "__main__":
     cap = ReceiveImg("169.254.133.100", 4444)
 
     #  先s保存，再q退出
-    # ad_color(cap)
-    # ad_area(cap)
+    ad_color(cap)
+    ad_area(cap)
     ad_circle(cap)
-    # ad_right_angle(cap)
+    ad_right_angle(cap)
 # end main

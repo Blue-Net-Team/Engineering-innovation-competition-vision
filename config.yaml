@@ -65,4 +65,4 @@ annulus:
 target_angle: 46
 
 # 画面底部需要被裁剪的高度
-need2cut_height: 40
+need2cut_height: 20

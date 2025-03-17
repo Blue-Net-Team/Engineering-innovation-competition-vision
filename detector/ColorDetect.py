@@ -207,25 +207,28 @@ class TraditionalColorDetector(Detect):
         cv2.createTrackbar("max_area", "Trackbar", self.max_material_area // 100, 1000, self.__callback)
 
     def __callback(self, x):
-        self.centre = cv2.getTrackbarPos("Centre", "Trackbar")
-        self.error = cv2.getTrackbarPos("Error", "Trackbar")
-        self.L_S = cv2.getTrackbarPos("L_S", "Trackbar")
-        self.U_S = cv2.getTrackbarPos("U_S", "Trackbar")
-        self.L_V = cv2.getTrackbarPos("L_V", "Trackbar")
-        self.U_V = cv2.getTrackbarPos("U_V", "Trackbar")
-        self.min_material_area = cv2.getTrackbarPos("min_area", "Trackbar") * 100
-        self.max_material_area = cv2.getTrackbarPos("max_area", "Trackbar") * 100
+        try:
+            self.centre = cv2.getTrackbarPos("Centre", "Trackbar")
+            self.error = cv2.getTrackbarPos("Error", "Trackbar")
+            self.L_S = cv2.getTrackbarPos("L_S", "Trackbar")
+            self.U_S = cv2.getTrackbarPos("U_S", "Trackbar")
+            self.L_V = cv2.getTrackbarPos("L_V", "Trackbar")
+            self.U_V = cv2.getTrackbarPos("U_V", "Trackbar")
+            self.min_material_area = cv2.getTrackbarPos("min_area", "Trackbar") * 100
+            self.max_material_area = cv2.getTrackbarPos("max_area", "Trackbar") * 100
 
-        self.color_threshold[self.color] = {
-            "centre": self.centre,
-            "error": self.error,
-            "L_S": self.L_S,
-            "U_S": self.U_S,
-            "L_V": self.L_V,
-            "U_V": self.U_V,
-        }
+            self.color_threshold[self.color] = {
+                "centre": self.centre,
+                "error": self.error,
+                "L_S": self.L_S,
+                "U_S": self.U_S,
+                "L_V": self.L_V,
+                "U_V": self.U_V,
+            }
 
-        self.update_range(self.color)
+            self.update_range(self.color)
+        except:
+            pass
 
     def _color_callback(self, x):
         self.color_index = cv2.getTrackbarPos("color", "Trackbar")

@@ -62,6 +62,19 @@ class CircleDetector(Detect):
         """kernel_size是第几个奇数"""
         return 2 * self.odd_index - 1
 
+    def __callback(self, x):
+        try:
+            self.dp = cv2.getTrackbarPos("dp", "Trackbar")
+            self.minDist = cv2.getTrackbarPos("minDist", "Trackbar")
+            self.param1 = cv2.getTrackbarPos("param1", "Trackbar")
+            self.param2 = cv2.getTrackbarPos("param2", "Trackbar")
+            self.minRadius = cv2.getTrackbarPos("minRadius", "Trackbar")
+            self.maxRadius = cv2.getTrackbarPos("maxRadius", "Trackbar")
+            self.odd_index = cv2.getTrackbarPos("odd_index", "Trackbar")
+            self.sigma = cv2.getTrackbarPos("sigma", "Trackbar") / 10
+        except:
+            pass
+
     def createTrackbar(self):
         cv2.namedWindow("Trackbar")
         cv2.createTrackbar("dp", "Trackbar", self.dp, 10, self.__callback)
@@ -81,16 +94,6 @@ class CircleDetector(Detect):
         cv2.setTrackbarPos("maxRadius", "Trackbar", self.maxRadius)
         cv2.setTrackbarPos("odd_index", "Trackbar", self.odd_index)
         cv2.setTrackbarPos("sigma", "Trackbar", int(self.sigma * 10))
-
-    def __callback(self, x):
-        self.dp = cv2.getTrackbarPos("dp", "Trackbar")
-        self.minDist = cv2.getTrackbarPos("minDist", "Trackbar")
-        self.param1 = cv2.getTrackbarPos("param1", "Trackbar")
-        self.param2 = cv2.getTrackbarPos("param2", "Trackbar")
-        self.minRadius = cv2.getTrackbarPos("minRadius", "Trackbar")
-        self.maxRadius = cv2.getTrackbarPos("maxRadius", "Trackbar")
-        self.odd_index = cv2.getTrackbarPos("odd_index", "Trackbar")
-        self.sigma = cv2.getTrackbarPos("sigma", "Trackbar") / 10
 
     def detect_circle(self, _img) -> tuple[list[tuple[int,int]]|None,list[int]|None, cv2.typing.MatLike]:
         """

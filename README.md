@@ -408,7 +408,7 @@ test_Solution.py            用于测试Solution或者detector的功能
 img_trans.py                用于远程图传的代码，主要用于调试过程方便在电脑上得到图像
 main.py                     主程序，直接在Jetson或者树莓派上运行的代码
 requirements.txt            依赖的库,可以使用pip install -r requirements.txt一键安装依赖
-config.json                 用于存放参数的文件
+config.yaml                 用于存放参数的文件
 environment.sh              用于一键配置泰山派环境的脚本，还没用过，不建议使用，可以参考里面的内容，手动配置
 ```
 
@@ -456,118 +456,99 @@ str的结果会表示为
 
 该参数尽量固定
 
-```json
-{
-    ...
-    "LineDetector": {
-        "Min_val": 120,         //Canny边缘检测的低阈值
-        "Max_val": 255,         //Canny边缘检测的高阈值
-        "Hough_threshold": 48,  //霍夫变换的阈值,值越大，检测时间越短，但是可能会丢失一些直线
-        "minLineLength": 41,    //线段的最小长度
-        "maxLineGap": 49,       //线段之间的最大间隔
-        "bias": 3               //允许的角度误差
-    }
-}
+```yaml
+LineDetector:
+  Min_val: 120          #Canny边缘检测的低阈值
+  Max_val: 255          #Canny边缘检测的高阈值
+  Hough_threshold: 48   #霍夫变换的阈值,值越大，检测时间越短，但是可能会丢失一些直线
+  minLineLength: 70     #Hough变换的最小线段长度
+  maxLineGap: 49        #Hough变换的最大线段间隔
+  bias: 1               #允许的角度误差
+  sigma: 0              #Canny边缘检测的sigma
+  odd_index: 3          #kernel_size(滤波卷积核尺寸)是第几个奇数
 ```
 
 ### 位号参数
 
 该参数尽量固定，这个参数主要是机械臂距离圆盘的高度决定的
 
-```json
-{
-    ...
-    "area1_points":[
-        [0,0],      //左上角
-        [0,0]       //右下角
-    ],
-    "area2_points":[
-        [0,0],      //左上角
-        [0,0]       //右下角
-    ],
-    "area3_points":[
-        [0,0],      //左上角
-        [0,0]       //右下角
-    ]
-}
+```yaml
+area1_points:
+  - [25, 0]        #左上角
+  - [168, 118]     #右下角
+area2_points:
+  - [168, 0]       #左上角
+  - [293, 118]     #右下角
+area3_points:
+  - [65, 118]      #左上角
+  - [290, 237]     #右下角
+
 ```
 
 ### 颜色阈值
 
 该参数尽量固定，但是现场可能仍要调整
 
-```json
-{
-    "color": {
-        "R": {
-            "centre": 0,
-            "error": 17,
-            "L_S": 60,
-            "U_S": 255,
-            "L_V": 30,
-            "U_V": 255
-        },
-        "G": {
-            "centre": 65,
-            "error": 21,
-            "L_S": 25,
-            "U_S": 255,
-            "L_V": 31,
-            "U_V": 255
-        },
-        "B": {
-            "centre": 109,
-            "error": 17,
-            "L_S": 60,
-            "U_S": 255,
-            "L_V": 30,
-            "U_V": 255
-        }
-    },
-    "min_material_area": 2000,
-    "max_material_area": 40000,
-}
+```yaml
+color:
+  R:
+    centre: 0
+    error: 17
+    L_S: 80
+    U_S: 255
+    L_V: 40
+    U_V: 255
+
+  G:
+    centre: 65
+    error: 20
+    L_S: 80
+    U_S: 255
+    L_V: 40
+    U_V: 255
+
+  B:
+    centre: 109
+    error: 17
+    L_S: 80
+    U_S: 255
+    L_V: 40
+    U_V: 255
+
+min_material_area: 2000     #目标颜色最小面积
+max_material_area: 40000    #目标颜色最大面积
 ```
 
 ### 目标角度
 
 该参数尽量固定，这个角度是直角定位产生的角度
 
-```json
-{
-    "target_angle": 46
-}
+```yaml
+target_angle: 46
 ```
 
 ### 圆环参数
 
 圆环参数是包含物料圆环（识别圆形物料的，**现已弃用**），和地面的圆环（现在以这个为例）
 
-```json
-{
-    ...
-    "annulus":{
-        "dp": 1,                //霍夫变换的分辨率
-        "minDist": 10,          //两个圆之间的最小距离
-        "param1": 100,          //Canny边缘检测的高阈值，低阈值是高阈值的一半
-        "param2": 30,           //累加器阈值，值越大，检测时间越短，识别到的圆越少
-        "minRadius": 10,        //圆的最小半径
-        "maxRadius": 50,        //圆的最大半径
-        "sigma": 0,             //高斯滤波器标准差
-        "odd_index":3           //kernel_size(滤波卷积核尺寸)是第几个奇数
-    }
-}
+```yaml
+annulus:
+  dp: 1             #霍夫变换的分辨率
+  minDist: 100      #俩个圆之间的最小距离
+  param1: 100       #Canny边缘检测的高阈值，低阈值是高阈值的一半
+  param2: 100       #累加器阈值，值越大，检测时间越短，识别到的
+  minRadius: 40     #最小圆半径
+  maxRadius: 97     #最大圆半径
+  sigma: 0          #高斯滤波标准差
+  odd_index: 3      #kernel_size(滤波卷积核尺寸)是第几个奇数
 ```
 
 ### 底部裁剪高度
 
 在摄像头画面的底部可能包含车身部分，所以要对底部进行裁剪，这个高度有对应的参数，单位px
 
-```json
-{
-    ...
-    "need2cut_height": 40
-}
+```yaml
+need2cut_height: 20
 ```
 
 ## 代码解读
@@ -589,7 +570,7 @@ str的结果会表示为
 
 在三个识别器中的核心函数的传参都设计成，只传入一个图片，返回对应需要的结果。在这个位置还没有完成完全的多态，但是传参进行了第一步的规范，为后续多态的构建提供了基础。
 
-![项目结构图](flow_chart\项目结构.png)
+![项目结构图](flow_chart/项目结构.png)
 
 初步完成底层的函数之后，开始构建顶层的函数，将底层的功能结合起来，这个地方的函数会完成完全的多态结构（此处的多态是函数多态，也可以理解为用函数指针调用函数）。
 

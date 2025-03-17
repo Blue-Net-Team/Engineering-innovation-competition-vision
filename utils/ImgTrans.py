@@ -31,7 +31,7 @@ import struct
 import cv2
 import numpy as np
 from colorama import Fore, Style, init
-# import fcntl
+import fcntl
 
 from .logger import printLog
 

@@ -99,7 +99,7 @@ class Solution:
         """
         try:
             config = {}
-            with open(self.configPath, "r") as f:
+            with open(self.configPath, "r", encoding='utf-8') as f:
                 if self.configPath.endswith(".json"):
                     config = json.load(f)
                 elif self.configPath.endswith(".yaml"):

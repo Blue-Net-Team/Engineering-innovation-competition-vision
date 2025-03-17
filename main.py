@@ -47,7 +47,7 @@ class MainSystem:
         pgkTAIL:str,
         sender: SendImg | None = None,
         deal_img_method: str = "hide",
-        config_path: str = "config.json",
+        config_path: str = "config.yaml",
     ) -> None:
         """
         主系统
@@ -420,7 +420,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-c", "--config_path",
         type=str,
-        default="config.json",
+        default="config.yaml",
         help="配置文件路径",
     )
     parser.add_argument(

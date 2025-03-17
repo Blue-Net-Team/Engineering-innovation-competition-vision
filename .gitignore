@@ -152,4 +152,5 @@ datas/
 
 # cfg
 *.json
-!config.json
+*.yaml
+!config.yaml

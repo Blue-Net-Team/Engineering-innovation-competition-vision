@@ -3,6 +3,7 @@ import time
 
 import cv2
 import numpy as np
+import yaml
 from colorama import Fore, init
 
 from Solution import Solution
@@ -68,7 +69,7 @@ class Ad_Config(Solution):
                 break
             elif press_key & 0xFF == ord("s"):
                 # 保存配置
-                detector.save_config("config.json", "annulus")
+                detector.save_config("config.yaml")
                 print(Fore.GREEN + "保存配置")
 
     def adjust_color_threshold(self, color_name: str="R"):
@@ -118,7 +119,7 @@ class Ad_Config(Solution):
             if key_pressed & 0xFF == ord("q"):
                 break
             elif key_pressed & 0xFF == ord("s"):
-                self.traditional_color_detector.save_params("config.json")
+                self.traditional_color_detector.save_config("config.yaml")
                 print(Fore.GREEN + "保存配置")
 
         self.cap.release()
@@ -160,7 +161,7 @@ class Ad_Config(Solution):
             if press_key & 0xFF == ord("q"):
                 break
             elif press_key & 0xFF == ord("s"):
-                detector.save_config("config.json")
+                detector.save_config("config.yaml")
                 timeStamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
                 print(
                     Fore.GREEN + f"[{timeStamp}]" + Fore.RESET,
@@ -189,8 +190,8 @@ class Ad_Area_config:
         """
         加载配置
         """
-        with open("config.json", "r") as f:
-            self.config = json.load(f)
+        with open("config.yaml", "r") as f:
+            self.config = yaml.safe_load(f)
         self.area_dict = {
             1: self.config["area1_points"],
             2: self.config["area2_points"],
@@ -201,15 +202,15 @@ class Ad_Area_config:
         """
         保存配置
         """
-        with open("config.json", "r") as f:
-            self.config = json.load(f)
+        with open("config.yaml", "r") as f:
+            self.config = yaml.safe_load(f)
 
         self.config["area1_points"] = self.area_dict[1]
         self.config["area2_points"] = self.area_dict[2]
         self.config["area3_points"] = self.area_dict[3]
 
-        with open("config.json", "w") as f:
-            json.dump(self.config, f, indent=4)
+        with open("config.yaml", "w") as f:
+            yaml.dump(self.config, f, default_flow_style=False)
 
     def createTrackbar(self):
         cv2.namedWindow("trackbar", cv2.WINDOW_NORMAL)
@@ -278,14 +279,14 @@ def ad_right_angle(_cap:cv2.VideoCapture|Cap|ReceiveImg):
 
 if __name__ == "__main__":
     # 机载摄像头
-    cap = Cap(0)
+    # cap = Cap(0)
 
     # 图传接收器
-    # cap = ReceiveImg("169.254.60.115", 4444)
+    cap = ReceiveImg("169.254.133.100", 4444)
 
     #  先s保存，再q退出
-    ad_color(cap)
-    ad_area(cap)
+    # ad_color(cap)
+    # ad_area(cap)
     ad_circle(cap)
-    ad_right_angle(cap)
+    # ad_right_angle(cap)
 # end main

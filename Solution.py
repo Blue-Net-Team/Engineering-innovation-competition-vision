@@ -87,7 +87,7 @@ class Solution:
         self.area1_points:list[list[int]] = [[0,0],[0,0]]
         self.area2_points:list[list[int]] = [[0,0],[0,0]]
         self.area3_points:list[list[int]] = [[0,0],[0,0]]
-        self.target_angel:int = 45
+        self.target_angle:int = 45
         self.NEED2CUT:int = 40
         # 读取配置文件
         self.load_config()
@@ -119,8 +119,8 @@ class Solution:
                 self.area3_points:list[list[int]] = config["area3_points"]
             else:
                 printLog(Fore.RED + "配置文件读取位号3参数失败")
-            if "target_angel" in config:
-                self.target_angel:int = config["target_angel"]
+            if "target_angle" in config:
+                self.target_angle:int = config["target_angle"]
             else:
                 printLog(Fore.RED + "配置文件读取目标角度参数失败")
             if "need2cut_height" in config:
@@ -335,7 +335,7 @@ class Solution:
             2,
         )
 
-        diff_angel = int((angel - self.target_angel)*10)
+        diff_angel = int((angel - self.target_angle)*10)
 
         res1 = f"L{'0' if diff_angel < 0 else '1'}{str(abs(diff_angel)).rjust(3, '0')}"
         res3 =  f"{str(abs(cross_point[0])).rjust(3, '0')}"\

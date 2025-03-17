@@ -1,4 +1,4 @@
-# 直线识别器
+# 直线识别参数
 LineDetector:
   Min_val: 120
   Max_val: 255

@@ -2,6 +2,7 @@ import json
 
 import cv2
 import numpy as np
+import yaml
 
 
 class Detect:
@@ -36,15 +37,28 @@ class Detect:
             config (dict): 配置字典
         """
         with open(path, "w") as f:
-            json.dump(config, f, indent=4)
+            if path.endswith("json"):
+                json.dump(config, f, indent=4)
+            else:
+                yaml.dump(config, f, default_flow_style=False)
 
-    def load_config(self, path: str):
+    def load_config(self, _config: str|dict):
         """
         加载配置
         ----
         Args:
-            path (str): 配置文件路径
+            _config (str|dict): 配置文件路径
+        Returns:
+            config (dict): 配置字典
         """
-        with open(path, "r") as f:
-            config = json.load(f)
-        return config
+        if isinstance(_config, dict):
+            return _config
+        elif isinstance(_config, str):
+            with open(_config, "r") as f:
+                if _config.endswith("json"):
+                    config = json.load(f)
+                else:
+                    config = yaml.safe_load(f)
+            return config
+        else:
+            raise TypeError("config must be str or dict")

@@ -16,6 +16,7 @@ import math
 import cv2
 import numpy as np
 from colorama import Fore, init, Style
+import yaml
 
 import detector
 from utils import Uart
@@ -95,6 +96,12 @@ class Solution:
         self.configPath = config_path
         self.position_id_stack:list[dict[str,int|None]] = []     # 用于存放上一帧图像的物料位号的栈
 
+        # 初始化默认参数
+        self.area1_points:list[list[int]] = [[0,0],[0,0]]
+        self.area2_points:list[list[int]] = [[0,0],[0,0]]
+        self.area3_points:list[list[int]] = [[0,0],[0,0]]
+        self.target_angel:int = 45
+        self.NEED2CUT:int = 40
         # 读取配置文件
         self.load_config()
 
@@ -104,22 +111,40 @@ class Solution:
         ----
         """
         try:
+            config = {}
             with open(self.configPath, "r") as f:
-                config = json.load(f)
-                # 位号顶点
+                if self.configPath.endswith(".json"):
+                    config = json.load(f)
+                elif self.configPath.endswith(".yaml"):
+                    config = yaml.safe_load(f)
+                else:
+                    printLog(Fore.RED + f"{self.configPath}不是一个合理的配置文件")
+            # 判断是否存在对应的参数
+            if "area1_points" in config:
                 self.area1_points:list[list[int]] = config["area1_points"]
+            else:
+                printLog(Fore.RED + "配置文件读取位号1参数失败")
+            if "area2_points" in config:
                 self.area2_points:list[list[int]] = config["area2_points"]
+            else:
+                printLog(Fore.RED + "配置文件读取位号2参数失败")
+            if "area3_points" in config:
                 self.area3_points:list[list[int]] = config["area3_points"]
+            else:
+                printLog(Fore.RED + "配置文件读取位号3参数失败")
+            if "target_angel" in config:
                 self.target_angel:int = config["target_angel"]
+            else:
+                printLog(Fore.RED + "配置文件读取目标角度参数失败")
+            if "need2cut_height" in config:
+                self.NEED2CUT:int = config["need2cut_height"]
+            else:
+                printLog(Fore.RED + "配置文件读取裁剪高度参数失败")
         except Exception as e:
-            self.area1_points:list[list[int]] = [[0,0],[0,0]]
-            self.area2_points:list[list[int]] = [[0,0],[0,0]]
-            self.area3_points:list[list[int]] = [[0,0],[0,0]]
-            self.target_angel:int = 45
-            printLog(Fore.RED + "配置文件读取位号参数失败")
+            printLog(Fore.RED + str(e))
 
         # 加载圆环识别的圆环参数
-        load_err1 = self.annulus_circle_detector.load_config(self.configPath, "annulus")
+        load_err1 = self.annulus_circle_detector.load_config(self.configPath)
         # 加载直线检测的参数
         load_err2 = self.line_detector.load_config(self.configPath)
         # 加载颜色识别的参数
@@ -127,7 +152,6 @@ class Solution:
 
         err = [load_err1, load_err2, load_err3]
         if any(err):
-            printLog(Fore.RED + "加载配置文件失败")
             for e in err:
                 if e:
                     printLog(Fore.RED + e)
@@ -155,23 +179,7 @@ class Solution:
 
         color_position_dict:dict[str,tuple[int,int,int,int]] = self.__detect_material_positions(_img)   # type:ignore
 
-
-        for (color, position), area_point in zip(
-            color_position_dict.items(),
-            [self.area1_points, self.area2_points, self.area3_points],
-        ):
-            if position is not None:
-                # 画出物料
-                res_img = draw_material(position, res_img, color)
-
-            # 画出位号
-            cv2.rectangle(
-                res_img,
-                (area_point[0][0], area_point[0][1]),
-                (area_point[1][0], area_point[1][1]),
-                (255, 0, 200),
-                2,
-            )
+        res_img = self.__draw_positions(color_position_dict, res_img)
 
         # 将坐标转换成位号，在后面排除了now_color_position_id_dict中有None的情况
         now_color_position_id_dict: dict[str, int|None] = self.position2area(color_position_dict)     # type:ignore
@@ -213,21 +221,7 @@ class Solution:
 
         color_position_dict:dict[str,tuple[int,int,int,int]|None] = self.__detect_material_positions(_img)
 
-        for (color, position), area_point in zip(
-            color_position_dict.items(),
-            [self.area1_points, self.area2_points, self.area3_points],
-        ):
-            if position is not None:
-                # 画出物料
-                res_img = draw_material(position, res_img, color)
-            # 画出位号
-            cv2.rectangle(
-                res_img,
-                (area_point[0][0], area_point[0][1]),
-                (area_point[1][0], area_point[1][1]),
-                (255, 0, 200),
-                2,
-            )
+        res_img = self.__draw_positions(color_position_dict, res_img)
 
         color_position_id_dict = self.position2area(color_position_dict)
 
@@ -239,6 +233,24 @@ class Solution:
         )
         res = "C" + res + "E"
         return res, res_img
+
+    def __draw_positions(self, color_position_dict, _img):
+        for (color, position), area_point in zip(
+                color_position_dict.items(),
+                [self.area1_points, self.area2_points, self.area3_points],
+        ):
+            if position is not None:
+                # 画出物料
+                _img = draw_material(position, _img, color)
+            # 画出位号
+            cv2.rectangle(
+                _img,
+                (area_point[0][0], area_point[0][1]),
+                (area_point[1][0], area_point[1][1]),
+                (255, 0, 200),
+                2,
+            )
+        return _img
 
     def __detect_material_positions(self, _img:cv2.typing.MatLike) -> dict[str, tuple[int, int, int, int] | None]:
         """

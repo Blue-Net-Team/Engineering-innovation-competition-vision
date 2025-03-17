@@ -60,8 +60,9 @@ class MainSystem:
             deal_img_method (str): 处理图像的方法,包含"show"(显示)、"hide"(隐藏)、"send"(发送)
             config_path (str): 配置文件路径
         """
-        self.cap = Cap()
         self.solution = Solution.Solution(ser_port, config_path)
+        self.cap = Cap()
+        self.cap.NEED2CUT = self.solution.NEED2CUT
         self.switch = Switch("GPIO3-A3", True)
         self.start_LED = LED("GPIO3-A2")
         self.detecting_LED = LED("GPIO3-A4")
@@ -358,8 +359,6 @@ class MainSystem:
                                 self.DEAL_IMG_DICT[self.deal_img_method](img)
 
                         _, img = self.cap.read()
-                        # 切割图片
-                        img = img[:400,:]
 
                         res, res_img = self.TASK_DICT[sign](img)
 

@@ -31,7 +31,7 @@ import struct
 import cv2
 import numpy as np
 from colorama import Fore, Style, init
-import fcntl
+# import fcntl
 
 from .logger import printLog
 
@@ -214,9 +214,8 @@ class ReceiveImg(object):
             self.connection = self.client_socket.makefile("rb")
             self.stream_bytes = b" "
 
-            printLog(" ")
             printLog("已连接到服务端：")
-            printLog("Host : ", host)
+            printLog(f"Host : {host}" )
             printLog("请按‘q’退出图像传输!")
         except Exception as e:
             printLog(Fore.RED + f"Error: {e}", Fore.RED)

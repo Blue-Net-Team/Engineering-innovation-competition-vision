@@ -21,6 +21,15 @@ class Cap(cv2.VideoCapture):
             print(f"Error occurred: {e}")
             return None
 
+    # 识别的时候需要裁剪掉的底部区域高度(px)
+    NEED2CUT = 40
+
+    # 裁剪的时候需要保留的高度
+    @property
+    def DETECT_HEIGHT(self):
+        res = self.height - self.NEED2CUT
+        return res if res > 0 else self.height
+
     def __init__(self, _id: int|None = None, w: int = 320, h: int = 240, fps: int = 60) -> None:
         if _id is None:
             caps = Cap.getCapIndex()
@@ -28,11 +37,27 @@ class Cap(cv2.VideoCapture):
                 _id = int(caps[0])
             else:
                 _id = 0
+        self.width = w
+        self.height = h
         super().__init__(_id)
         self.set(3, w)
         self.set(4, h)
         self.set(5, fps)
         self.set(6, cv2.VideoWriter.fourcc("M", "J", "P", "G"))
+
+    def read(self, image: cv2.typing.MatLike | None = None):
+        """
+        读取摄像头数据
+        ----
+        Returns:
+            tuple: (ret, frame)
+        """
+        ret, frame = super().read()
+        if ret:
+            # 裁剪底部区域
+            frame = frame[0:self.DETECT_HEIGHT, :]
+            return ret, frame
+        return ret, None
 
 
 class LoadCap:

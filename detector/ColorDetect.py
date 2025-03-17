@@ -43,13 +43,18 @@ from typing import Union
 import cv2
 import numpy as np
 
+try:
+    from Detect import Detect
+except ModuleNotFoundError:
+    from detector.Detect import Detect
+
 COLOR_DICT: dict[Union[int, float, bool], str] = {
     0:'R',
     1:'G',
     2:'B',
 }
 
-class TraditionalColorDetector:
+class TraditionalColorDetector(Detect):
     """
     传统颜色识别
     ----
@@ -270,39 +275,43 @@ class TraditionalColorDetector:
             pass
 
 
-    def save_params(self, path):
+    def save_config(self, path):
         """
         保存参数
         ----
-        :param path: 路径
+        Args:
+            path (str): 保存路径
         """
-        with open(path, "r") as f:
-            config = json.load(f)
+        config = super().load_config(path)
 
         config["color"] = self.color_threshold
         config["min_material_area"] = self.min_material_area
         config["max_material_area"] = self.max_material_area
 
-        with open(path, "w") as f:
-            json.dump(config, f, indent=4)
+        super().save_config(path, config)
 
-    def load_config(self, path):
+    def load_config(self, config: str|dict):
         """
         加载参数
         ----
-        :param path: 路径
+        Args:
+            config(str|dict): 配置文件信息
+        Return:
+            res_str(str): 错误信息
         """
+        res_str = ""
+        config_dict = super().load_config(config)
         try:
-            with open(path, "r") as f:
-                config = json.load(f)
-                self.color_threshold = config["color"]
-                self.min_material_area = config["min_material_area"]
-                self.max_material_area = config["max_material_area"]
+            self.color_threshold = config_dict["color"]
+            if "min_material_area" in config_dict:
+                self.min_material_area = config_dict["min_material_area"]
+            else:
+                res_str += "配置文件中没有min_material_area参数；"
+            if "max_material_area" in config_dict:
+                self.max_material_area = config_dict["max_material_area"]
+            else:
+                res_str += "配置文件中没有max_material_area参数；"
             self.update_threshold("R")
-            res_str = ""
-        except FileNotFoundError:
-            res_str = f"TriditionalColorDetector 文件 {path} 不存在"
         except KeyError:
-            res_str = f"TriditionalColorDetector 配置文件 {path} 中没有找到对应的配置项"
-        return res_str
+            res_str += f"配置文件 {config} 中没有color的配置项"
 

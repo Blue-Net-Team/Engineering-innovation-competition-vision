@@ -55,9 +55,9 @@ class Ad_Config(Solution):
                 print(
                     Fore.GREEN + f"[{timeStamp}]" + Fore.RESET,
                     Fore.WHITE + f"检测到圆环，圆心坐标：x" + Fore.RESET,
-                    Fore.MAGENTA + f"{res[4:7]}" + Fore.RESET,
+                    Fore.MAGENTA + f"{res[5:8]}" + Fore.RESET,
                     Fore.WHITE + f"y" + Fore.RESET,
-                    Fore.MAGENTA + f"{res[7:10]}" + Fore.RESET,
+                    Fore.MAGENTA + f"{res[8:11]}" + Fore.RESET,
                 )
 
             cv2.imshow("img", res_img)

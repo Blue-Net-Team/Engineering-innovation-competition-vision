@@ -120,14 +120,17 @@ class LineDetector(Detect):
         cv2.createTrackbar("sigma", "Trackbar", self.sigma * 10, 100, self.__callback)
 
     def __callback(self, x):
-        self.Min_val = cv2.getTrackbarPos("Min_val", "Trackbar")
-        self.Max_val = cv2.getTrackbarPos("Max_val", "Trackbar")
-        self.Hough_threshold = cv2.getTrackbarPos("Hough_threshold", "Trackbar")
-        self.minLineLength = cv2.getTrackbarPos("minLineLength", "Trackbar")
-        self.maxLineGap = cv2.getTrackbarPos("maxLineGap", "Trackbar")
-        self.bias = cv2.getTrackbarPos("bias", "Trackbar")
-        self.odd_index = cv2.getTrackbarPos("odd_index", "Trackbar")
-        self.sigma = cv2.getTrackbarPos("sigma", "Trackbar") / 10
+        try:
+            self.Min_val = cv2.getTrackbarPos("Min_val", "Trackbar")
+            self.Max_val = cv2.getTrackbarPos("Max_val", "Trackbar")
+            self.Hough_threshold = cv2.getTrackbarPos("Hough_threshold", "Trackbar")
+            self.minLineLength = cv2.getTrackbarPos("minLineLength", "Trackbar")
+            self.maxLineGap = cv2.getTrackbarPos("maxLineGap", "Trackbar")
+            self.bias = cv2.getTrackbarPos("bias", "Trackbar")
+            self.odd_index = cv2.getTrackbarPos("odd_index", "Trackbar")
+            self.sigma = cv2.getTrackbarPos("sigma", "Trackbar") / 10
+        except:
+            pass
 
     def draw_line(self, img, line, _color=(0, 0, 255)):
         """

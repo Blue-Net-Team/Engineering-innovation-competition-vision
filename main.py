@@ -38,6 +38,7 @@ class MainSystem:
     deal_img_method = "hide"  # 处理图像的方法
     ori_imgTrans_running_flag = False  # 原始图像是否正在传输
     task_running_flag = False  # 任务是否正在运行
+    read_empty_frame_num:int = 0  # 读取空帧的次数
 
 
     def __init__(
@@ -114,6 +115,7 @@ class MainSystem:
             "2": self.solution.get_material,  # 获取物料位号
             "3": self.solution.right_angle_detect,  # 直角检测
             "4": self.solution.annulus_top,  # 圆环检测
+            "5": self.clear_img_buffer,  # 清空缓冲区
         }
 
         self.deal_img_method = deal_img_method
@@ -311,6 +313,8 @@ class MainSystem:
 
                 # 开始任务
                 while self.task_running_flag:
+                    # 读取空帧的次数
+                    self.read_empty_frame_num = 0
                     # 读取串口信号
                     sign = self.solution.uart.new_read(self.HEAD, self.TAIL)
 
@@ -343,20 +347,6 @@ class MainSystem:
                     self.oled.display()
                     t0 = time.perf_counter()
                     num = 0
-                    if sign in ["1", "2"]:
-                        # 去除缓冲区图像
-                        for i in range(30):
-                            _, img = self.cap.read()
-                            if img:
-                                cv2.putText(
-                                    img,
-                                    "Cleaning Buffer...",
-                                    (10, 30),
-                                    cv2.FONT_HERSHEY_SIMPLEX,
-                                    1,
-                                    (0, 0, 255),
-                                )
-                                self.DEAL_IMG_DICT[self.deal_img_method](img)
 
                     while self.task_running_flag:
                         _, img = self.cap.read()
@@ -410,6 +400,22 @@ class MainSystem:
                                 self.task_running_flag = False
                                 break
         self.start_LED.off()
+
+    def clear_img_buffer(self, img:cv2.typing.MatLike):
+        # 去除缓冲区图像
+        cv2.putText(
+            img,
+            "Cleaning Buffer...",
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 0, 255),
+        )
+        res = None
+        self.read_empty_frame_num += 1
+        if self.read_empty_frame_num > 30:
+            res = "1"
+        return res, img
 
 
 if __name__ == "__main__":

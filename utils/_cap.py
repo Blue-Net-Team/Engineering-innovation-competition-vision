@@ -52,7 +52,8 @@ class Cap(cv2.VideoCapture):
         Returns:
             tuple: (ret, frame)
         """
-        ret, frame = super().read()
+        self.grab()
+        ret, frame = self.retrieve(image)
         if ret:
             # 裁剪底部区域
             frame = frame[0:self.DETECT_HEIGHT, :]

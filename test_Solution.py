@@ -43,10 +43,10 @@ class Test_solution(Solution):
         解决方案
         ----
         Args:
-            pth_path (str): pytorch模型路径
             ser_port (str): 串口号
+            sender(SendImg|None): 发送图片的对象，如果设置为None，则不发送图片
         """
-        super().__init__(ser_port)
+        super().__init__(ser_port, "config.yaml")
         # 顶层方法字典
         self.TOP_FUNC_DICT = {
             "1": self.annulus_top,  # 圆环检测
@@ -256,7 +256,7 @@ class Test_solution(Solution):
         测试物料位置检测
         ----
         Args:
-            cap_id (int): 摄像头编号
+            cap(Cap|ReceiveImg): 摄像头对象
         """
         # cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         while True:
@@ -273,10 +273,10 @@ class Test_solution(Solution):
         cap.release()
 
 if __name__ == "__main__":
-    sender = SendImg("eth0", 4444)
+    sender = SendImg("169.254.60.115", 4444)
     cap = Cap()
     test = Test_solution(sender=sender)
-    test.test_func(cap, "1")
+    test.test_func(cap, "2")
     # test.test_material_positions(0)
     # test.test_annulus_color(0, "G")
     # test.test_usart_read("@","#")

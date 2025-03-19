@@ -306,15 +306,13 @@ class TraditionalColorDetector(Detect):
         config_dict = super().load_config(config)
         try:
             self.color_threshold = config_dict["color"]
-            if "min_material_area" in config_dict:
-                self.min_material_area = config_dict["min_material_area"]
-            else:
-                res_str += "配置文件中没有min_material_area参数；"
-            if "max_material_area" in config_dict:
-                self.max_material_area = config_dict["max_material_area"]
-            else:
-                res_str += "配置文件中没有max_material_area参数；"
-            self.update_threshold("R")
         except KeyError:
             res_str += f"配置文件 {config} 中没有color的配置项"
+
+        res_str += super().load_param(config_dict, "min_material_area")
+        res_str += super().load_param(config_dict, "max_material_area")
+
+        self.update_threshold("R")
+
+        return res_str
 

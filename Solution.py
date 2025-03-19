@@ -9,18 +9,15 @@
 - 直角检测，返回两直线的角度的均值和交点
 """
 
-import datetime
 import json
-import math
 
 import cv2
 import numpy as np
-from colorama import Fore, init, Style
 import yaml
+from colorama import Fore, init
 
 import detector
-from utils import Uart, printLog
-import math
+from utils import printLog, ConfigLoader, Uart
 
 # 初始化 colorama
 init(autoreset=True)
@@ -29,13 +26,6 @@ COLOR_DIC = {0: "R", 1: "G", 2: "B"}
 COLOR_DIC_INV = {v: k for k, v in COLOR_DIC.items()}
 COLOR_DIC_CV = {"R": (0, 0, 255), "G": (0, 255, 0), "B": (255, 0, 0)}
 
-
-def getTimeStamp():
-    """
-    获取时间戳(包含毫秒)
-    ----
-    """
-    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")[:-3]
 
 def show(img):
     return cv2.imshow("img", img)
@@ -77,7 +67,7 @@ def draw_material(
         )
     return img
 
-class Solution:
+class Solution(ConfigLoader):
     def __init__(self, ser_port: str|None, config_path:str):
         """
         解决方案
@@ -107,8 +97,8 @@ class Solution:
         读取配置文件
         ----
         """
+        config = {}
         try:
-            config = {}
             with open(self.configPath, "r", encoding='utf-8') as f:
                 if self.configPath.endswith(".json"):
                     config = json.load(f)
@@ -116,29 +106,14 @@ class Solution:
                     config = yaml.safe_load(f)
                 else:
                     printLog(Fore.RED + f"{self.configPath}不是一个合理的配置文件")
-            # 判断是否存在对应的参数
-            if "area1_points" in config:
-                self.area1_points:list[list[int]] = config["area1_points"]
-            else:
-                printLog(Fore.RED + "配置文件读取位号1参数失败")
-            if "area2_points" in config:
-                self.area2_points:list[list[int]] = config["area2_points"]
-            else:
-                printLog(Fore.RED + "配置文件读取位号2参数失败")
-            if "area3_points" in config:
-                self.area3_points:list[list[int]] = config["area3_points"]
-            else:
-                printLog(Fore.RED + "配置文件读取位号3参数失败")
-            if "target_angle" in config:
-                self.target_angle:int = config["target_angle"]
-            else:
-                printLog(Fore.RED + "配置文件读取目标角度参数失败")
-            if "need2cut_height" in config:
-                self.NEED2CUT:int = config["need2cut_height"]
-            else:
-                printLog(Fore.RED + "配置文件读取裁剪高度参数失败")
         except Exception as e:
             printLog(Fore.RED + str(e))
+
+        self.load_param(config, "area1_points")
+        self.load_param(config, "area2_points")
+        self.load_param(config, "area3_points")
+        self.load_param(config, "target_angle", )
+        self.load_param(config, "need2cut_height", "NEED2CUT")
 
         # 加载圆环识别的圆环参数
         load_err1 = self.annulus_circle_detector.load_config(self.configPath)
@@ -152,7 +127,6 @@ class Solution:
             for e in err:
                 if e:
                     printLog(Fore.RED + e)
-
 
     # region 物料运动检测
     def material_moving_detect(self, _img:cv2.typing.MatLike) -> tuple[str|None, cv2.typing.MatLike]:
@@ -199,7 +173,6 @@ class Solution:
             return res, res_img
         else:
             return None, res_img
-
     # endregion
 
     # region 物料位置检测

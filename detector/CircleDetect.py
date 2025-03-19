@@ -180,43 +180,22 @@ class CircleDetector(Detect):
         res_str = ""
         circle_type = "annulus"
 
+        config = {}
         try:
             config = super().load_config(_config)
             config = config[circle_type]
 
-            if "dp" in config:
-                self.dp = config["dp"]
-            else:
-                res_str += "配置文件中没有dp参数；"
-            if "minDist" in config:
-                self.minDist = config["minDist"]
-            else:
-                res_str += "配置文件中没有minDist参数；"
-            if "param1" in config:
-                self.param1 = config["param1"]
-            else:
-                res_str += "配置文件中没有param1参数；"
-            if "param2" in config:
-                self.param2 = config["param2"]
-            else:
-                res_str += "配置文件中没有param2参数；"
-            if "minRadius" in config:
-                self.minRadius = config["minRadius"]
-            else:
-                res_str += "配置文件中没有minRadius参数；"
-            if "maxRadius" in config:
-                self.maxRadius = config["maxRadius"]
-            else:
-                res_str += "配置文件中没有maxRadius参数；"
-            if "sigma" in config:
-                self.sigma = config["sigma"]
-            else:
-                res_str += "配置文件中没有sigma参数；"
-            if "odd_index" in config:
-                self.odd_index = config["odd_index"]
-            else:
-                res_str += "配置文件中没有odd_index参数；"
         except KeyError:
             res_str += f"配置文件{_config}中没有{circle_type}的配置"
             pass
+
+        res_str += super().load_param(config, "dp")
+        res_str += super().load_param(config, "minDist")
+        res_str += super().load_param(config, "param1")
+        res_str += super().load_param(config, "param2")
+        res_str += super().load_param(config, "minRadius")
+        res_str += super().load_param(config, "maxRadius")
+        res_str += super().load_param(config, "sigma")
+        res_str += super().load_param(config, "odd_index")
+
         return res_str

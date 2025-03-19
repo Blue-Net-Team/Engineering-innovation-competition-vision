@@ -298,43 +298,22 @@ class LineDetector(Detect):
             res_str(str): 错误信息
         """
         res_str = ''
+        config = {}
         try:
             ori_config = super().load_config(_config)
             config = ori_config["LineDetector"]
 
-            if "Min_val" in config:
-                self.Min_val = config["Min_val"]
-            else:
-                res_str += "配置文件中没有Min_val参数；"
-            if "Max_val" in config:
-                self.Max_val = config["Max_val"]
-            else:
-                res_str += "配置文件中没有Max_val参数；"
-            if "Hough_threshold" in config:
-                self.Hough_threshold = config["Hough_threshold"]
-            else:
-                res_str += "配置文件中没有Hough_threshold参数；"
-            if "minLineLength" in config:
-                self.minLineLength = config["minLineLength"]
-            else:
-                res_str += "配置文件中没有minLineLength参数；"
-            if "maxLineGap" in config:
-                self.maxLineGap = config["maxLineGap"]
-            else:
-                res_str += "配置文件中没有maxLineGap参数；"
-            if "bias" in config:
-                self.bias = config["bias"]
-            else:
-                res_str += "配置文件中没有bias参数；"
-            if "sigma" in config:
-                self.sigma = config["sigma"]
-            else:
-                res_str += "配置文件中没有sigma参数；"
-            if "odd_index" in config:
-                self.odd_index = config["odd_index"]
-            else:
-                res_str += "配置文件中没有odd_index参数；"
         except KeyError:
             res_str += f"加载{_config}失败，配置文件没有LineDetector的配置"
             pass
+
+        res_str += super().load_param(config, "Min_val")
+        res_str += super().load_param(config, "Max_val")
+        res_str += super().load_param(config, "Hough_threshold")
+        res_str += super().load_param(config, "minLineLength")
+        res_str += super().load_param(config, "maxLineGap")
+        res_str += super().load_param(config, "bias")
+        res_str += super().load_param(config, "sigma")
+        res_str += super().load_param(config, "odd_index")
+
         return res_str

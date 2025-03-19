@@ -18,7 +18,7 @@ class ConfigLoader:
             path (str): 保存路径
             config (dict): 配置字典
         """
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             if path.endswith("json"):
                 json.dump(config, f, indent=4)
             else:

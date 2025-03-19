@@ -15,7 +15,7 @@ class Detect(ConfigLoader):
         """
         锐化图片
         ----
-        :param img: 需要锐化的图片
+        :param _img: 需要锐化的图片
         """
         # 锐化卷积核
         kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])

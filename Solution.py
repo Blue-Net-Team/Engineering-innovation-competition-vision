@@ -28,6 +28,9 @@ COLOR_DIC_CV = {"R": (0, 0, 255), "G": (0, 255, 0), "B": (255, 0, 0)}
 
 
 def show(img):
+    """
+    显示图片
+    """
     return cv2.imshow("img", img)
 
 def draw_material(
@@ -92,7 +95,7 @@ class Solution(ConfigLoader):
         # 读取配置文件
         self.load_config()
 
-    def load_config(self):
+    def load_config(self, **kwargs):
         """
         读取配置文件
         ----
@@ -410,8 +413,10 @@ class Solution(ConfigLoader):
                 [
                     color,
                     [
-                        annulus_dict[color][0],     # type:ignore  x轴坐标
-                        annulus_dict[color][1],     # type:ignore  y轴坐标
+                        # x轴坐标
+                        annulus_dict[color][0],     # type:ignore
+                        # y轴坐标
+                        annulus_dict[color][1],     # type:ignore
                     ],
                 ]
                 if annulus_dict[color]

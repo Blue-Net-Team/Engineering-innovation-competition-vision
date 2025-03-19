@@ -93,7 +93,7 @@ class Solution(ConfigLoader):
         # 读取配置文件
         self.load_config()
 
-    def load_config(self):
+    def load_config(self, **kwargs):
         """
         读取配置文件
         ----
@@ -168,7 +168,7 @@ class Solution(ConfigLoader):
 
         # 如果两个字典不相等，说明物料运动了
         if now_color_position_id_dict != last_color_position_id_dict\
-        and (len(set(now_color_position_id_dict.values())) == 3\
+        and (len(set(now_color_position_id_dict.values())) == 3
             or list(now_color_position_id_dict.values()).count(None) == 2):
             res, res_img = self.get_material(_img)
             return res, res_img
@@ -411,8 +411,10 @@ class Solution(ConfigLoader):
                 [
                     color,
                     [
-                        annulus_dict[color][0],     # type:ignore  x轴坐标
-                        annulus_dict[color][1],     # type:ignore  y轴坐标
+                        # x轴坐标
+                        annulus_dict[color][0],     # type:ignore
+                        # y轴坐标
+                        annulus_dict[color][1],     # type:ignore
                     ],
                 ]
                 if annulus_dict[color]

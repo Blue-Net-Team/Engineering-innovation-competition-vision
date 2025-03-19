@@ -157,7 +157,7 @@ class LineDetector(Detect):
         """
         cv2.circle(img, point, 2, (255, 0, 0), 3)
 
-    def get_right_angle(self, _img, draw: bool = True) -> tuple[None|int, None|int, None|tuple[float, float], cv2.typing.MatLike]:
+    def get_right_angle(self, _img, draw: bool = True) -> tuple[None|int, None|int, None|tuple[tuple[float], tuple[float]], cv2.typing.MatLike]:
         """
         找出直角
         ----

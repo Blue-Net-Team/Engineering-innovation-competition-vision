@@ -117,7 +117,7 @@ class LineDetector(Detect):
         cv2.createTrackbar("maxLineGap", "Trackbar", self.maxLineGap, 600, self.__callback)
         cv2.createTrackbar("bias", "Trackbar", self.bias, 10, self.__callback)
         cv2.createTrackbar("odd_index", "Trackbar", self.odd_index, 20, self.__callback)
-        cv2.createTrackbar("sigma", "Trackbar", self.sigma * 10, 100, self.__callback)
+        cv2.createTrackbar("sigma", "Trackbar", int(self.sigma * 10), 100, self.__callback)
 
     def __callback(self, x):
         try:

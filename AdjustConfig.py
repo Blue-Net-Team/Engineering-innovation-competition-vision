@@ -148,11 +148,11 @@ class Ad_Config(Solution):
                 print(
                     Fore.GREEN + f"[{timeStamp}]" + Fore.RESET,
                     Fore.WHITE + f"检测到直角，角度：" + Fore.RESET,
-                    Fore.MAGENTA + f"{'+' if res[0]=='1' else '-'}{res[1:3]}.{res[3]}\t" + Fore.RESET,
+                    Fore.MAGENTA + f"{'+' if res[1]=='1' else '-'}{res[2:4]}.{res[4]}\t" + Fore.RESET,
                     Fore.WHITE + f"交点坐标：x:" + Fore.RESET,
-                    Fore.MAGENTA + f"{res[4:7]}\t" + Fore.RESET,
+                    Fore.MAGENTA + f"{res[5:8]}\t" + Fore.RESET,
                     Fore.WHITE + f"y:" + Fore.RESET,
-                    Fore.MAGENTA + f"{res[7:10]}" + Fore.RESET,
+                    Fore.MAGENTA + f"{res[8:11]}" + Fore.RESET,
                 )
 
             cv2.imshow("img", res_img)

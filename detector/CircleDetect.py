@@ -141,19 +141,16 @@ class CircleDetector(Detect):
             return point_lst, r_lst, res_img
         return None, None, res_img
 
-    def save_config(self, jsion_path, circle_type):
+    def save_config(self, config_path):
         """
         保存配置
         ----
         Args:
-            jsion_path (str): 配置文件路径
-            circle_type (str): 圆形类型,包含"material"(物料圆环)、"annulus"(地面圆环)
+            config_path (str): 配置文件路径
         """
-        if circle_type not in ["material", "annulus"]:
-            raise ValueError("circle_type must be 'material' or 'annulus'")
-
+        circle_type = "annulus"
         try:
-            config = super().load_config(jsion_path)
+            config = super().load_config(config_path)
         except:
             config = {}
 
@@ -168,7 +165,7 @@ class CircleDetector(Detect):
             "odd_index": self.odd_index
         }
 
-        super().save_config(jsion_path, config)
+        super().save_config(config_path, config)
 
     def load_config(self, _config:str|dict):
         """

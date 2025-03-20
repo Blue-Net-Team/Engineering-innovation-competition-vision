@@ -44,6 +44,7 @@ class Cap(cv2.VideoCapture):
         self.set(4, h)
         self.set(5, fps)
         self.set(6, cv2.VideoWriter.fourcc("M", "J", "P", "G"))
+        self.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
     def read(self, image: cv2.typing.MatLike | None = None):
         """
@@ -52,8 +53,7 @@ class Cap(cv2.VideoCapture):
         Returns:
             tuple: (ret, frame)
         """
-        self.grab()
-        ret, frame = self.retrieve(image)
+        ret, frame = super().read()
         if ret:
             # 裁剪底部区域
             frame = frame[0:self.DETECT_HEIGHT, :]

@@ -96,8 +96,8 @@ LineDetector类
         - `tuple`: 两个直线的角度，两直线的交点坐标
 """
 
-from detector.CircleDetect import CircleDetector
-from detector.ColorDetect import *
-from detector.LineDetect import LineDetector
+from .CircleDetect import CircleDetector
+from .ColorDetect import *
+from .LineDetect import LineDetector
 
 __all__ = ["CircleDetector", "TraditionalColorDetector", "LineDetector"]

@@ -72,43 +72,44 @@ class MainSystem:
         self.HEAD = pkgHEAD
         self.TAIL = pgkTAIL
         self.DEAL_IMG_DICT = {"show": Solution.show, "hide": lambda x: None}
-        if self.sender and self.switch.read_status():
+        if self.sender:
             self.DEAL_IMG_DICT["send"] = self.sender.send
-            if self.sender.host == "":
-                printLog(
-                    Fore.RED + "未连接到图传网络,尝试连接" + Fore.RESET
-                )
+            if self.switch.read_status():
+                if self.sender.host == "":
+                    printLog(
+                        Fore.RED + "未连接到图传网络,尝试连接" + Fore.RESET
+                    )
 
-                self.oled.clear()
-                self.oled.text("未连接到图传网络\n尝试连接...", (1,1))
-                self.oled.display()
+                    self.oled.clear()
+                    self.oled.text("未连接到图传网络\n尝试连接...", (1,1))
+                    self.oled.display()
 
-                while self.sender.host == "":
-                    conn_res = connect_to_wifi("EIC-FF", "lckfb666")
-                    if conn_res[0]:
-                        printLog(
-                            Fore.GREEN + "连接成功" + Fore.RESET
-                        )
+                    while self.sender.host == "":
+                        conn_res = connect_to_wifi("EIC-FF", "lckfb666")
+                        if conn_res[0]:
+                            printLog(
+                                Fore.GREEN + "连接成功" + Fore.RESET
+                            )
 
-                        self.oled.clear()
-                        self.oled.text("连接成功", (1,1))
-                        self.oled.display()
+                            self.oled.clear()
+                            self.oled.text("连接成功", (1,1))
+                            self.oled.display()
 
-                        # 更新host
-                        self.sender.update_host()
-                        break
-                    else:
-                        printLog(
-                            Fore.RED + f"连接失败，{conn_res[1]}" + Fore.RESET
-                        )
-
-                        self.oled.clear()
-                        self.oled.text(f"连接失败\n{conn_res[1]}", (1,1))
-                        self.oled.display()
-                        if not self.switch.read_status():
+                            # 更新host
+                            self.sender.update_host()
                             break
                         else:
-                            time.sleep(0.5)
+                            printLog(
+                                Fore.RED + f"连接失败，{conn_res[1]}" + Fore.RESET
+                            )
+
+                            self.oled.clear()
+                            self.oled.text(f"连接失败\n{conn_res[1]}", (1,1))
+                            self.oled.display()
+                            if not self.switch.read_status():
+                                break
+                            else:
+                                time.sleep(0.5)
 
         self.TASK_DICT = {
             "1": self.solution.material_moving_detect,  # 物料运动检测
@@ -292,6 +293,7 @@ class MainSystem:
 
                 # 加载参数
                 self.solution.load_config()
+                self.cap.NEED2CUT = self.solution.NEED2CUT
 
                 # 连接图传
                 if self.deal_img_method == "send" and self.sender:
@@ -340,6 +342,7 @@ class MainSystem:
                         else:
                             continue
 
+                    printLog(f"收到信号{sign}")
                     # 执行任务
                     self.detecting_LED.on()
                     self.oled.clear()
@@ -357,11 +360,6 @@ class MainSystem:
                         res, res_img = self.TASK_DICT[sign](img)
 
                         num += 1
-
-                        printLog(
-                            Fore.WHITE + "result:" + Fore.RESET +
-                            Fore.MAGENTA + f"{res}" + Fore.RESET
-                        )
 
                         try:
                             self.DEAL_IMG_DICT[self.deal_img_method](res_img)
@@ -386,6 +384,11 @@ class MainSystem:
                             )
                             self.solution.uart.write(res)
 
+                            self.oled.clear()
+                            self.oled.text(f"收到信号{sign}\n识别结果{res}", (1,1))
+                            self.oled.text(f"", (1,30))
+                            self.oled.display()
+
                             self.detecting_LED.off()
                             break
 
@@ -394,9 +397,11 @@ class MainSystem:
                             # 检查核心温度
                             temp_cup = get_CPU_temp()
                             temp_gpu = get_GPU_temp()
+                            self.oled.clear()
+                            self.oled.text(f"收到信号{sign}", (1,1))
                             self.oled.text(f"CPU温度:{temp_cup}\nGPU温度:{temp_gpu}", (1,30))
                             self.oled.display()
-                            if not self.switch.read_status():
+                            if self.switch.read_status():
                                 self.task_running_flag = False
                                 break
         self.start_LED.off()

@@ -34,7 +34,9 @@ from utils.logger import printLog
 init(autoreset=True)
 
 class MainSystem:
-
+    """
+    主任务系统
+    """
     deal_img_method = "hide"  # 处理图像的方法
     ori_imgTrans_running_flag = False  # 原始图像是否正在传输
     task_running_flag = False  # 任务是否正在运行
@@ -341,11 +343,11 @@ class MainSystem:
                             continue
 
                     # 执行任务
+                    t0 = time.perf_counter()
                     self.detecting_LED.on()
                     self.oled.clear()
                     self.oled.text(f"收到信号{sign}", (1,1))
                     self.oled.display()
-                    t0 = time.perf_counter()
                     num = 0
 
                     while self.task_running_flag:
@@ -402,7 +404,15 @@ class MainSystem:
         self.start_LED.off()
 
     def clear_img_buffer(self, img:cv2.typing.MatLike):
-        # 去除缓冲区图像
+        """
+        去除缓冲区图像
+        ----
+        Args:
+            img (cv2.typing.MatLike): 图像数据
+        Returns:
+            res (str): 返回值，完成清除缓冲区操作的信号
+            img (cv2.typing.MatLike): 图像数据，读出来的图像数据
+        """
         cv2.putText(
             img,
             "Cleaning Buffer...",

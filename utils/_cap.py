@@ -24,9 +24,11 @@ class Cap(cv2.VideoCapture):
     # 识别的时候需要裁剪掉的底部区域高度(px)
     NEED2CUT:int = 40
 
-    # 裁剪的时候需要保留的高度
     @property
     def DETECT_HEIGHT(self):
+        """
+        裁剪的时候需要保留的高度
+        """
         res = self.height - self.NEED2CUT
         return res if res > 0 else self.height
 

@@ -1,13 +1,13 @@
-from utils import SendImg, Cap
-from utils.ImgTrans import NeedReConnect
+from ImgTrans import SendImgUDP
+from ImgTrans.ImgTrans import NeedReConnect
+from utils import Cap
 
 if __name__ == "__main__":
-    stream = SendImg("wlan0", 4444)
+    stream = SendImgUDP("wlan0", 4444)
     cap = Cap()
     while True:
         if stream.connecting():
             break
-    stream.start()
     while True:
         try:
             img = cap.read()[1]

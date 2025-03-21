@@ -27,9 +27,9 @@ import cv2
 from colorama import Fore, init
 
 import Solution
-from utils import SendImg, Cap, Switch, LED, OLED_I2C, connect_to_wifi, get_CPU_temp, get_GPU_temp
-from utils.ImgTrans import NeedReConnect
-from utils.logger import printLog
+from ImgTrans import SendImg, SendImgUDP
+from utils import Cap, Switch, LED, OLED_I2C, connect_to_wifi, get_CPU_temp, get_GPU_temp, printLog
+from ImgTrans.ImgTrans import NeedReConnect
 
 init(autoreset=True)
 
@@ -364,6 +364,25 @@ class MainSystem:
 
                         num += 1
 
+                        if res[0] == "L" and res[-1] == "E":
+                            printLog(
+                                Fore.WHITE + "sent:" + Fore.RESET +
+                                Fore.WHITE + "角度:" + Fore.RESET +
+                                Fore.GREEN + f"{'+' if res[1]=='1' else '-'}{res[2:4]}.{res[4]}\t" + Fore.RESET +
+                                Fore.WHITE + f"X:" + Fore.RESET +
+                                Fore.GREEN + f"{res[5:8]}\t" + Fore.RESET +
+                                Fore.WHITE + "Y:" + Fore.RESET +
+                                Fore.GREEN + f"{res[8:11]}\t" + Fore.RESET +
+                                # Fore.MAGENTA + f"{res}\t" + Fore.RESET +
+                                Fore.WHITE + "used time:" + Fore.RESET +
+                                color + f"{used_time_ms:.2f}ms" + Fore.RESET
+                            )
+                        else:
+                            printLog(
+                                Fore.WHITE + "result:" + Fore.RESET +
+                                Fore.MAGENTA + f"{res}" + Fore.RESET
+                            )
+
                         try:
                             self.DEAL_IMG_DICT[self.deal_img_method](res_img)
                         except BlockingIOError as e:
@@ -464,7 +483,7 @@ if __name__ == "__main__":
     # endregion
 
     # 设置图传发送器
-    sender = SendImg(interface, 4444)
+    sender = SendImgUDP(interface, 4444)
 
     mainsystem = MainSystem(
         ser_port="/dev/ttyS3",

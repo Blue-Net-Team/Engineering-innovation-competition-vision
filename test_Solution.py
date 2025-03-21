@@ -27,10 +27,11 @@ from datetime import datetime
 
 import cv2
 import numpy as np
+from Solution import Solution
+from utils import LoadCap, Cap, InterpolatedCap
+from ImgTrans import SendImg, ReceiveImg
 from colorama import Fore, Style, init
 
-from Solution import Solution
-from utils import SendImg, ReceiveImg, Cap
 
 init(autoreset=True)
 
@@ -46,7 +47,7 @@ class Test_solution(Solution):
             ser_port (str): 串口号
             sender(SendImg|None): 发送图片的对象，如果设置为None，则不发送图片
         """
-        super().__init__(ser_port, "config.yaml")
+        super().__init__(ser_port, 'config.yaml')
         # 顶层方法字典
         self.TOP_FUNC_DICT = {
             "1": self.annulus_top,  # 圆环检测

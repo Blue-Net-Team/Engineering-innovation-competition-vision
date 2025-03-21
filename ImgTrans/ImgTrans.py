@@ -167,6 +167,8 @@ class ReceiveImgTCP(ReceiveImg):
     def __init__(self, host:str, port:int):
         """初始化"""
         super().__init__(host, port)
+        self.host = host
+        self.port = port
         try:
             self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.client_socket.connect((self.host, self.port))
@@ -294,7 +296,7 @@ class ReceiveImgUDP(ReceiveImg):
 
         # 包尾检查
         if data[4 + data_length:4 + data_length + len(b'EOF')] == b'EOF':
-            print("接收到完整图像数据")
+            # print("接收到完整图像数据")
 
             # 处理图像数据（例如显示）
             nparr = np.frombuffer(image_data, np.uint8)
@@ -320,7 +322,7 @@ class LoadWebCam:
             ip (str): 服务端IP地址
             port (int): 端口号
         """
-        self.streaming = ReceiveImgTCP(ip, port)
+        self.streaming = ReceiveImgUDP(ip, port)
 
     def __iter__(self):
         return self
@@ -331,5 +333,4 @@ class LoadWebCam:
 
     def release(self):
         """释放资源"""
-        self.streaming.connection.close()
         self.streaming.client_socket.close()

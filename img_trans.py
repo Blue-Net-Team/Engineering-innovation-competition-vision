@@ -1,5 +1,5 @@
 import cv2
-from utils import LoadWebCam, SendImg
+from ImgTrans import LoadWebCam, SendImgTCP
 
 if __name__ == "__main__":
     cap = LoadWebCam("192.168.137.161", 4444)

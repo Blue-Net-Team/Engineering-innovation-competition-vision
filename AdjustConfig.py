@@ -7,7 +7,8 @@ import yaml
 from colorama import Fore, init
 
 from Solution import Solution
-from utils import ReceiveImg, Cap
+from ImgTrans import ReceiveImg, ReceiveImgTCP
+from utils import Cap
 
 # 初始化 colorama
 init(autoreset=True)
@@ -24,7 +25,7 @@ class Ad_Config(Solution):
 
     def __init__(
         self,
-        _cap:cv2.VideoCapture|Cap|ReceiveImg,
+        _cap: cv2.VideoCapture | Cap | ReceiveImg,
         ser_port: str|None = None,
     ):
         super().__init__(ser_port, "config.yaml")
@@ -180,7 +181,7 @@ class Ad_Area_config:
     area_dict: dict[int, list[tuple[int, int]]]
     x:int
 
-    def __init__(self, _cap:cv2.VideoCapture|Cap|ReceiveImg,) -> None:
+    def __init__(self, _cap: cv2.VideoCapture | Cap | ReceiveImg) -> None:
         self.load_config()
         self.x = 0
 
@@ -261,19 +262,19 @@ class Ad_Area_config:
                 print(Fore.GREEN + "保存配置")
 
 
-def ad_color(_cap:cv2.VideoCapture|Cap|ReceiveImg):
+def ad_color(_cap: cv2.VideoCapture | Cap | ReceiveImg):
     ad_config = Ad_Config(_cap)
     ad_config.adjust_color_threshold()
 
-def ad_circle(_cap:cv2.VideoCapture|Cap|ReceiveImg):
+def ad_circle(_cap: cv2.VideoCapture | Cap | ReceiveImg):
     ad_config = Ad_Config(_cap)
     ad_config.adjust_circle()
 
-def ad_area(_cap:cv2.VideoCapture|Cap|ReceiveImg):
+def ad_area(_cap: cv2.VideoCapture | Cap | ReceiveImg):
     ad_area_config = Ad_Area_config(_cap)
     ad_area_config.main()
 
-def ad_right_angle(_cap:cv2.VideoCapture|Cap|ReceiveImg):
+def ad_right_angle(_cap: cv2.VideoCapture | Cap | ReceiveImg):
     ad_line_config = Ad_Config(_cap)
     ad_line_config.adjust_rightAngle()
 
@@ -283,7 +284,7 @@ if __name__ == "__main__":
     # cap = Cap(0)
 
     # 图传接收器
-    cap = ReceiveImg("169.254.133.100", 4444)
+    cap = ReceiveImgTCP("169.254.133.100", 4444)
 
     #  先s保存，再q退出
     # ad_color(cap)

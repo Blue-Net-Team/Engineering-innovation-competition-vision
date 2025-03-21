@@ -27,9 +27,9 @@ import cv2
 from colorama import Fore, init
 
 import Solution
-from utils import SendImg, Cap, Switch, LED, OLED_I2C, connect_to_wifi, get_CPU_temp, get_GPU_temp
-from utils.ImgTrans import NeedReConnect
-from utils.logger import printLog
+from ImgTrans import SendImg, SendImgUDP
+from utils import Cap, Switch, LED, OLED_I2C, connect_to_wifi, get_CPU_temp, get_GPU_temp, printLog
+from ImgTrans.ImgTrans import NeedReConnect
 
 init(autoreset=True)
 
@@ -459,7 +459,7 @@ if __name__ == "__main__":
     # endregion
 
     # 设置图传发送器
-    sender = SendImg(interface, 4444)
+    sender = SendImgUDP(interface, 4444)
 
     mainsystem = MainSystem(
         ser_port="/dev/ttyS3",

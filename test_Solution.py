@@ -27,7 +27,8 @@ import time
 import cv2
 import numpy as np
 from Solution import Solution
-from utils import LoadCap, SendImg, ReceiveImg, Cap, InterpolatedCap
+from utils import LoadCap, Cap, InterpolatedCap
+from ImgTrans import SendImg, ReceiveImg
 from colorama import Fore, Style, init
 
 init(autoreset=True)
@@ -44,7 +45,7 @@ class Test_solution(Solution):
             pth_path (str): pytorch模型路径
             ser_port (str): 串口号
         """
-        super().__init__(ser_port)
+        super().__init__(ser_port, 'config.yaml')
         # 顶层方法字典
         self.TOP_FUNC_DICT = {
             "1": self.annulus_top,  # 圆环检测

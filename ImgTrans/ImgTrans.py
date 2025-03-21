@@ -13,7 +13,7 @@ r"""
     - `start(self)`: 开始传输视频流
     - `send(self, _img: cv2.typing.MatLike) -> bool`: 发送图像数据
 
-`ReceiveImg`:
+`ReceiveImgTCP`:
 ----
 接收视频流类(客户端)
 
@@ -31,9 +31,14 @@ import struct
 import cv2
 import numpy as np
 from colorama import Fore, Style, init
-# import fcntl
 
-from .logger import printLog
+from ImgTrans.IImgTrans import ReceiveImg, SendImg
+try:
+    import fcntl
+except:
+    pass
+
+from utils.logger import printLog
 
 init(autoreset=True)
 
@@ -41,23 +46,8 @@ class NeedReConnect(Exception):
     """需要重新连接"""
     pass
 
-class SendImg(object):
+class SendImgTCP(SendImg):
     """服务端视频发送"""
-    _host:str = ""
-    _interface:str = ""
-
-    @property
-    def host(self):
-        return self._host
-
-    @property
-    def interface(self):
-        return self._interface
-
-    @interface.setter
-    def interface(self, value:str):
-        self._interface = value
-        self._host = self.get_ip_address(value)
 
     def __init__(self, interface:str, port:int=4444):
         """初始化
@@ -66,9 +56,7 @@ class SendImg(object):
             interface (str): 用于图传的网卡
             port (int): 端口号
         """
-        self.is_open = False
-        self.interface = interface
-        self.port = port
+        super().__init__(interface, port)
         self.host_name = ""
         self.client_address = ""
 
@@ -89,42 +77,13 @@ class SendImg(object):
             except Exception as e:
                 printLog(Fore.RED + f"Error: {e}", Fore.RED)
 
-    @staticmethod
-    def get_ip_address(interface: str) -> str:
-        """
-        获取IP地址
-        ----
-        用于树莓派获取IP地址
-
-        Args:
-            interface (str): 网卡名称，lo为本地回环网卡，eth0为以太网网卡等
-        Returns:
-            ip (str): IP地址
-        """
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            return socket.inet_ntoa(fcntl.ioctl(
-                s.fileno(),
-                0x8915,  # SIOCGIFADDR
-                struct.pack('256s', interface[:15].encode('utf-8'))
-            )[20:24])
-        except:
-            return ""
-
-    def update_host(self):
-        self._host = self.get_ip_address(self.interface)
-
     def connecting(self):
-        """
-        连接客户端
-        ----
-        """
-        def _connect(self):
+        def _connect(obj):
             try:
-                self.connection, self.client_address = self.server_socket.accept()
-                self.connect = self.connection.makefile("wb")
-                self.host_name = socket.gethostname()
-                self.host_ip = socket.gethostbyname(self.host_name)
+                obj.connection, obj.client_address = obj.server_socket.accept()
+                obj.connect = obj.connection.makefile("wb")
+                obj.host_name = socket.gethostname()
+                obj.host_ip = socket.gethostbyname(obj.host_name)
 
                 return True
             except socket.timeout:
@@ -204,14 +163,15 @@ class SendImg(object):
                     printLog(Fore.RED + f"Error closing server_socket: {e}", Fore.RED)
             self.is_open = False
 
-class ReceiveImg(object):
+class ReceiveImgTCP(ReceiveImg):
     """客户端接收视频流"""
 
-    def __init__(self, host, port):
+    def __init__(self, host:str, port:int):
         """初始化"""
+        super().__init__(host, port)
         try:
             self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.client_socket.connect((host, port))
+            self.client_socket.connect((self.host, self.port))
             self.connection = self.client_socket.makefile("rb")
             self.stream_bytes = b" "
 
@@ -223,7 +183,6 @@ class ReceiveImg(object):
             exit()
 
     def read(self):
-        """读取图像数据"""
         try:
             msg = self.connection.read(4096)
             self.stream_bytes += msg
@@ -241,10 +200,107 @@ class ReceiveImg(object):
         return False, None
 
     def release(self):
-        """释放资源"""
         self.connection.close()
         self.client_socket.close()
 
+class SendImgUDP(SendImg):
+    """服务端视频发送(UDP)"""
+    EOF_MARKER = b'EOF'
+    BUFFER_SIZE = 65536  # UDP最大接收缓冲区大小
+
+    def __init__(self, interface:str, port:int):
+        """
+        初始化
+        ----
+        Args:
+            interface (str): 服务端IP地址
+            port (int): 端口号
+        """
+        super().__init__(interface, port)
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.server_socket.bind((self.host, self.port))
+
+    def connecting(self):
+        try:
+            self.server_socket.settimeout(0.5)
+            data, addr = self.server_socket.recvfrom(self.BUFFER_SIZE)
+        except socket.timeout:
+            return False
+        if addr != (self.host, self.port):  # 避免回环请求
+            printLog(f"接收到来自 {addr} 的连接请求")
+            # 获取B设备的IP和端口
+            B_IP, B_PORT = addr
+            printLog(f"已与对端建立连接，IP: {B_IP}, 端口: {B_PORT}")
+            return True
+        return False
+
+    def send(self, _img: cv2.typing.MatLike) -> bool:
+        _, img_encoded = cv2.imencode('.jpg', _img)
+        img_data = img_encoded.tobytes()
+
+        # 创建包头：包头包含数据长度
+        header = struct.pack('!I', len(img_data))  # '!I' 表示大端字节序的一个无符号整数（数据长度）
+
+        # 构造完整数据包：包头 + 图像数据 + 包尾
+        packet = header + img_data + self.EOF_MARKER
+
+        # 发送图像数据给B设备
+        self.server_socket.sendto(packet, (self.host, self.port))
+        try:
+            self.server_socket.settimeout(1)  # 设置超时1秒
+            self.server_socket.recvfrom(3)
+        except socket.timeout:
+            printLog("对端断开连接，停止发送图像")
+            raise NeedReConnect
+        return True
+
+    def close(self):
+        self.server_socket.close()
+
+class ReceiveImgUDP(ReceiveImg):
+    def __init__(self, host:str, port:int):
+        """
+        初始化
+        ----
+        """
+        super().__init__(host, port)
+        self.host = host
+        self.port = port
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.client_socket.sendto(b'connect', (self.host, self.port))
+
+    def read(self):
+        try:
+            self.client_socket.settimeout(1)
+            data, addr = self.client_socket.recvfrom(65536)
+        except socket.timeout:
+            printLog("接收数据超时,1000ms")
+            return False, None
+        if addr != (self.host, self.port):
+            printLog(f"接收到来自未知地址 {addr} 的数据 {data}")
+            return False, None
+
+            # 解析包头，获取数据长度
+        data_length = struct.unpack('!I', data[:4])[0]  # 获取数据包的长度，前4个字节
+        image_data = data[4:4 + data_length]  # 获取图像数据（包头后面的部分）
+
+        # 包尾检查
+        if data[4 + data_length:4 + data_length + len(b'EOF')] == b'EOF':
+            print("接收到完整图像数据")
+
+            # 处理图像数据（例如显示）
+            nparr = np.frombuffer(image_data, np.uint8)
+            frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            if frame is not None:
+                self.client_socket.sendto(b'@1#', (self.host, self.port))
+                return True, frame
+            else:
+                return False, None
+        else:
+            return False, None
+
+    def release(self):
+        client_socket.close()
 
 class LoadWebCam:
     """读取远程图传的迭代器"""
@@ -256,7 +312,7 @@ class LoadWebCam:
             ip (str): 服务端IP地址
             port (int): 端口号
         """
-        self.streaming = ReceiveImg(ip, port)
+        self.streaming = ReceiveImgTCP(ip, port)
 
     def __iter__(self):
         return self

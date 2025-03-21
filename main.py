@@ -269,7 +269,8 @@ class MainSystem:
                                     self.oled.text("图传连接成功", (1,1))
                                     self.oled.display()
                                     break
-
+                    except BlockingIOError as e:
+                        printLog(Fore.RED + f"图传发送失败，稍后重试: {e}" + Fore.RESET)
                     # 检查开关
                     if not self.switch.read_status():
                         # 开关状态2，关闭图传
@@ -365,6 +366,8 @@ class MainSystem:
 
                         try:
                             self.DEAL_IMG_DICT[self.deal_img_method](res_img)
+                        except BlockingIOError as e:
+                            printLog(Fore.RED + f"图像处理失败，稍后重试: {e}" + Fore.RESET)
                         except Exception as e:
                             printLog(Fore.RED + f"图像处理失败:{e}" + Fore.RESET, Fore.RED)
 

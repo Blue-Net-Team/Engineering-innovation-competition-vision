@@ -496,11 +496,6 @@ class Solution(ConfigLoader):
         img = _img.copy()
         avg_point, avg_r, new_img = self.annulus_detect_only(img)
 
-        canny_img = cv2.Canny(
-            new_img,
-            self.annulus_circle_detector.param1//2,
-            self.annulus_circle_detector.param1
-        )
 
         if avg_point is not None and avg_r is not None:
             # 画出圆环
@@ -514,11 +509,7 @@ class Solution(ConfigLoader):
             # 画出圆心
             cv2.circle(new_img, avg_point, 2, (255, 255, 0), 2)
 
-        # 拼接canny和原图
-        res_img = np.vstack((
-            new_img,
-            cv2.cvtColor(canny_img, cv2.COLOR_GRAY2BGR)
-        ))
+        res_img = new_img
 
         if avg_point is None or avg_r is None:
             return None, res_img

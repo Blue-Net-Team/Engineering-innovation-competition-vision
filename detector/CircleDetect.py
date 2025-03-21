@@ -56,6 +56,7 @@ class CircleDetector(Detect):
     maxRadius = 45  # 圆的最大半径
     sigma:float = 0  # 高斯滤波器的标准差
     odd_index = 3   # 奇数索引
+    iter_time:int = 1   # 闭运算迭代次数
 
     @property
     def kernel_size(self):
@@ -72,6 +73,7 @@ class CircleDetector(Detect):
             self.maxRadius = cv2.getTrackbarPos("maxRadius", "Trackbar")
             self.odd_index = cv2.getTrackbarPos("odd_index", "Trackbar")
             self.sigma = cv2.getTrackbarPos("sigma", "Trackbar") / 10
+            self.iter_time = cv2.getTrackbarPos("iter_time", "Trackbar")
         except:
             pass
 
@@ -85,6 +87,7 @@ class CircleDetector(Detect):
         cv2.createTrackbar("maxRadius", "Trackbar", self.maxRadius, 100, self.__callback)
         cv2.createTrackbar("odd_index", "Trackbar", self.odd_index, 20, self.__callback)
         cv2.createTrackbar("sigma", "Trackbar", int(self.sigma * 10), 100, self.__callback)
+        cv2.createTrackbar("iter_time", "Trackbar", self.iter_time, 10, self.__callback)
 
         cv2.setTrackbarPos("dp", "Trackbar", self.dp)
         cv2.setTrackbarPos("minDist", "Trackbar", self.minDist)
@@ -94,6 +97,7 @@ class CircleDetector(Detect):
         cv2.setTrackbarPos("maxRadius", "Trackbar", self.maxRadius)
         cv2.setTrackbarPos("odd_index", "Trackbar", self.odd_index)
         cv2.setTrackbarPos("sigma", "Trackbar", int(self.sigma * 10))
+        cv2.setTrackbarPos("iter_time", "Trackbar", self.iter_time)
 
     def detect_circle(self, _img) -> tuple[list[tuple[int,int]]|None,list[int]|None, cv2.typing.MatLike]:
         """
@@ -114,6 +118,12 @@ class CircleDetector(Detect):
             self.sigma,
             borderType=cv2.BORDER_REPLICATE
         )
+        # canny边缘检测
+        img = cv2.Canny(img, self.param1 // 2, self.param1)
+        # 膨胀再腐蚀
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        img = cv2.dilate(img, kernel, iterations=self.iter_time)
+        img = cv2.erode(img, kernel, iterations=self.iter_time)
 
         circles = cv2.HoughCircles(
             img,

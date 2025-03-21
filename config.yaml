@@ -9,12 +9,12 @@ LineDetector:
   sigma: 0.0
 annulus:
   dp: 1
-  maxRadius: 97
+  maxRadius: 46
   minDist: 100
-  minRadius: 40
+  minRadius: 11
   odd_index: 2
   param1: 100
-  param2: 100
+  param2: 14
   sigma: 0.0
 area1_points:
   - [25, 0]
@@ -30,26 +30,26 @@ area3_points:
 color:
   B:
     L_S: 80
-    L_V: 40
+    L_V: 20
     U_S: 255
     U_V: 255
     centre: 109
     error: 17
   G:
     L_S: 80
-    L_V: 40
+    L_V: 20
     U_S: 255
     U_V: 255
     centre: 65
-    error: 20
+    error: 17
   R:
     L_S: 80
-    L_V: 40
+    L_V: 20
     U_S: 255
     U_V: 255
     centre: 0
     error: 17
-max_material_area: 40000
-min_material_area: 2000
-need2cut_height: 80
+max_material_area: 26000
+min_material_area: 0
+need2cut_height: 0
 target_angle: 46

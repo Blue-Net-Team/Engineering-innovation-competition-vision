@@ -100,6 +100,7 @@ class LineDetector(Detect):
     bias = 3            # 允许的角度误差
     sigma = 0  # 高斯滤波器的标准差
     odd_index = 3   # 奇数索引
+    iter_time:int = 1   # 闭运算迭代次数
 
     @property
     def kernel_size(self):
@@ -118,6 +119,7 @@ class LineDetector(Detect):
         cv2.createTrackbar("bias", "Trackbar", self.bias, 10, self.__callback)
         cv2.createTrackbar("odd_index", "Trackbar", self.odd_index, 20, self.__callback)
         cv2.createTrackbar("sigma", "Trackbar", int(self.sigma * 10), 100, self.__callback)
+        cv2.createTrackbar("iter_time", "Trackbar", self.iter_time, 10, self.__callback)
 
     def __callback(self, x):
         try:
@@ -129,6 +131,7 @@ class LineDetector(Detect):
             self.bias = cv2.getTrackbarPos("bias", "Trackbar")
             self.odd_index = cv2.getTrackbarPos("odd_index", "Trackbar")
             self.sigma = cv2.getTrackbarPos("sigma", "Trackbar") / 10
+            self.iter_time = cv2.getTrackbarPos("iter_time", "Trackbar")
         except:
             pass
 
@@ -235,6 +238,11 @@ class LineDetector(Detect):
 
         # canny边缘检测
         canny_img = cv2.Canny(img, self.Min_val, self.Max_val)
+
+        # 膨胀再腐蚀
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        canny_img = cv2.dilate(canny_img, kernel, iterations=self.iter_time)
+        canny_img = cv2.erode(canny_img, kernel, iterations=self.iter_time)
 
         # 霍夫直线检测
         # lines是形状为(n,1,4)的数组

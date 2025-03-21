@@ -31,15 +31,12 @@ import struct
 import cv2
 import numpy as np
 from colorama import Fore, Style, init
-<<<<<<< HEAD:utils/ImgTrans.py
-import fcntl
-=======
 from ImgTrans.IImgTrans import ReceiveImg, SendImg
+
 try:
     import fcntl
 except:
     pass
->>>>>>> developing:ImgTrans/ImgTrans.py
 
 from utils.logger import printLog
 

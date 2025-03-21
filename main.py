@@ -346,6 +346,10 @@ class MainSystem:
                             continue
 
                     printLog(f"收到信号{sign}")
+
+                    if sign == "1":
+                        self.solution.position_id_stack = []
+
                     # 执行任务
                     t0 = time.perf_counter()
                     self.detecting_LED.on()
@@ -401,7 +405,8 @@ class MainSystem:
                                     Fore.WHITE + "used time:" + Fore.RESET +
                                     color + f"{used_time_ms:.2f}ms" + Fore.RESET
                                 )
-                            self.solution.uart.write(res)
+                            if res != "1":
+                                self.solution.uart.write(res)
 
                             self.oled.clear()
                             self.oled.text(f"收到信号{sign}\n识别结果{res}", (1,1))

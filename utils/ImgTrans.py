@@ -63,7 +63,7 @@ class SendImg(object):
         """初始化
         ----
         Args:
-            host (str): 主机IP地址
+            interface (str): 用于图传的网卡
             port (int): 端口号
         """
         self.is_open = False
@@ -77,10 +77,11 @@ class SendImg(object):
     def open_socket(self):
         if self.host and self.port:
             try:
-                self.server_socket = socket.socket()
+                self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 self.server_socket.bind((self.host, self.port))
                 self.server_socket.listen(5)
                 self.server_socket.settimeout(0.05)
+                self.server_socket.setblocking(0)
                 self.connection = None
                 self.connect = None
                 self.stream = io.BytesIO()

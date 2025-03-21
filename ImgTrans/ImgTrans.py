@@ -31,7 +31,6 @@ import struct
 import cv2
 import numpy as np
 from colorama import Fore, Style, init
-
 from ImgTrans.IImgTrans import ReceiveImg, SendImg
 try:
     import fcntl
@@ -53,7 +52,7 @@ class SendImgTCP(SendImg):
         """初始化
         ----
         Args:
-            interface (str): 用于图传的网卡
+            host (str): 主机IP地址
             port (int): 端口号
         """
         super().__init__(interface, port)
@@ -65,11 +64,10 @@ class SendImgTCP(SendImg):
     def open_socket(self):
         if self.host and self.port:
             try:
-                self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                self.server_socket = socket.socket()
                 self.server_socket.bind((self.host, self.port))
                 self.server_socket.listen(5)
                 self.server_socket.settimeout(0.05)
-                self.server_socket.setblocking(0)
                 self.connection = None
                 self.connect = None
                 self.stream = io.BytesIO()
@@ -207,6 +205,7 @@ class SendImgUDP(SendImg):
     """服务端视频发送(UDP)"""
     EOF_MARKER = b'EOF'
     BUFFER_SIZE = 65536  # UDP最大接收缓冲区大小
+    B_IP, B_PORT = "", int()
 
     def __init__(self, interface:str, port:int):
         """
@@ -217,6 +216,9 @@ class SendImgUDP(SendImg):
             port (int): 端口号
         """
         super().__init__(interface, port)
+        self.openSocket()
+
+    def openSocket(self):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.server_socket.bind((self.host, self.port))
 
@@ -224,14 +226,18 @@ class SendImgUDP(SendImg):
         try:
             self.server_socket.settimeout(0.5)
             data, addr = self.server_socket.recvfrom(self.BUFFER_SIZE)
+            if addr != (self.host, self.port):  # 避免回环请求
+                printLog(f"接收到来自 {addr} 的连接请求")
+                # 获取B设备的IP和端口
+                self.B_IP, self.B_PORT = addr
+                printLog(f"已与对端建立连接，IP: {self.B_IP}, 端口: {self.B_PORT}")
+                return True
         except socket.timeout:
             return False
-        if addr != (self.host, self.port):  # 避免回环请求
-            printLog(f"接收到来自 {addr} 的连接请求")
-            # 获取B设备的IP和端口
-            B_IP, B_PORT = addr
-            printLog(f"已与对端建立连接，IP: {B_IP}, 端口: {B_PORT}")
-            return True
+        except OSError:
+            self.openSocket()
+        except Exception as e:
+            printLog(str(e))
         return False
 
     def send(self, _img: cv2.typing.MatLike) -> bool:
@@ -245,13 +251,15 @@ class SendImgUDP(SendImg):
         packet = header + img_data + self.EOF_MARKER
 
         # 发送图像数据给B设备
-        self.server_socket.sendto(packet, (self.host, self.port))
+        self.server_socket.sendto(packet, (self.B_IP, self.B_PORT))
         try:
             self.server_socket.settimeout(1)  # 设置超时1秒
             self.server_socket.recvfrom(3)
         except socket.timeout:
             printLog("对端断开连接，停止发送图像")
             raise NeedReConnect
+        except Exception as e:
+            printLog(e)
         return True
 
     def close(self):

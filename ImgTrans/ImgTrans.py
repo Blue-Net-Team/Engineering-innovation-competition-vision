@@ -300,7 +300,7 @@ class ReceiveImgUDP(ReceiveImg):
             return False, None
 
     def release(self):
-        client_socket.close()
+        self.client_socket.close()
 
 class LoadWebCam:
     """读取远程图传的迭代器"""

@@ -52,7 +52,7 @@ class SendImgTCP(SendImg):
         """初始化
         ----
         Args:
-            host (str): 主机IP地址
+            interface (str): 主机发送图像的网口
             port (int): 端口号
         """
         super().__init__(interface, port)

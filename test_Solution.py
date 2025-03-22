@@ -28,7 +28,7 @@ import cv2
 import numpy as np
 from Solution import Solution
 from utils import LoadCap, Cap, InterpolatedCap
-from ImgTrans import SendImg, ReceiveImg
+from ImgTrans import ReceiveImgUDP, SendImg, ReceiveImg
 from colorama import Fore, Style, init
 
 init(autoreset=True)
@@ -42,8 +42,8 @@ class Test_solution(Solution):
         解决方案
         ----
         Args:
-            pth_path (str): pytorch模型路径
             ser_port (str): 串口号
+            sender (str): 图传发送对象
         """
         super().__init__(ser_port, 'config.yaml')
         # 顶层方法字典
@@ -59,7 +59,6 @@ class Test_solution(Solution):
             while True:
                 if self.sender.connecting():
                     break
-            self.sender.start()
         else:
             self.sender = None
 
@@ -72,7 +71,7 @@ class Test_solution(Solution):
         * "4": 获取物料位号
 
         Args:
-            cap_id (int): 摄像头编号
+            cap (Cap): 摄像头对象
             sign (str): 串口信号(功能编号)
         Returns:
             None
@@ -132,9 +131,9 @@ class Test_solution(Solution):
                     )
 
 
-            # if self.sender is None:
-            #     if cv2.waitKey(1) & 0xFF == ord("q"):
-            #         break
+            if self.sender is None:
+                if cv2.waitKey(1) & 0xFF == ord("q"):
+                    break
 
     def test_usart_read(self, head: str, tail: str):
         """
@@ -255,7 +254,7 @@ class Test_solution(Solution):
         测试物料位置检测
         ----
         Args:
-            cap_id (int): 摄像头编号
+            cap (int): 摄像头对象
         """
         # cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         while True:
@@ -272,10 +271,10 @@ class Test_solution(Solution):
         cap.release()
 
 if __name__ == "__main__":
-    sender = SendImg("169.254.60.115", 4444)
-    cap = Cap()
-    test = Test_solution(sender=sender)
-    test.test_func(cap, "2")
+    # sender = SendImgTCP("169.254.60.115", 4444)
+    cap = ReceiveImgUDP("169.254.133.100", 4444)
+    test = Test_solution(sender=None)
+    test.test_func(cap, "3")
     # test.test_material_positions(0)
     # test.test_annulus_color(0, "G")
     # test.test_usart_read("@","#")

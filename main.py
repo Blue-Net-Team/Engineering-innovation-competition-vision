@@ -361,6 +361,23 @@ class MainSystem:
 
                         num += 1
 
+                        try:
+                            self.DEAL_IMG_DICT[self.deal_img_method](res_img)
+                        except BlockingIOError as e:
+                            printLog(Fore.RED + f"图像处理失败，稍后重试: {e}" + Fore.RESET)
+                        except Exception as e:
+                            printLog(Fore.RED + f"图像处理失败:{e}" + Fore.RESET, Fore.RED)
+
+                        if res:
+                            t1 = time.perf_counter()
+                            used_time_ms = (t1 - t0) * 1000
+                            if used_time_ms < 40:
+                                color = Fore.GREEN
+                            elif used_time_ms < 60:
+                                color = Fore.YELLOW
+                            else:
+                                color = Fore.RED
+
                         if res[0] == "L" and res[-1] == "E":
                             printLog(
                                 Fore.WHITE + "sent:" + Fore.RESET +
@@ -379,23 +396,6 @@ class MainSystem:
                                 Fore.WHITE + "result:" + Fore.RESET +
                                 Fore.MAGENTA + f"{res}" + Fore.RESET
                             )
-
-                        try:
-                            self.DEAL_IMG_DICT[self.deal_img_method](res_img)
-                        except BlockingIOError as e:
-                            printLog(Fore.RED + f"图像处理失败，稍后重试: {e}" + Fore.RESET)
-                        except Exception as e:
-                            printLog(Fore.RED + f"图像处理失败:{e}" + Fore.RESET, Fore.RED)
-
-                        if res:
-                            t1 = time.perf_counter()
-                            used_time_ms = (t1 - t0) * 1000
-                            if used_time_ms < 40:
-                                color = Fore.GREEN
-                            elif used_time_ms < 60:
-                                color = Fore.YELLOW
-                            else:
-                                color = Fore.RED
 
                             printLog(
                                 Fore.WHITE + "sent:" + Fore.RESET +

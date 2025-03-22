@@ -187,7 +187,7 @@ class TraditionalColorDetector(Detect):
                 center_x = x + w // 2
                 center_y = y + h // 2
 
-                return (center_x, center_y, w, h)
+                return center_x, center_y, w, h
         return None
 
     def createTrackbar(self):

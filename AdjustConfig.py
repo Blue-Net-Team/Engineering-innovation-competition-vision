@@ -43,7 +43,6 @@ class Ad_Config(Solution):
         # 创建滑动条
         detector.createTrackbar()
         while True:
-            t0 = time.perf_counter()
             _, img = self.cap.read()
 
             if img is None:
@@ -281,10 +280,10 @@ def ad_right_angle(_cap: cv2.VideoCapture | Cap | ReceiveImg):
 
 if __name__ == "__main__":
     # 机载摄像头
-    # cap = Cap(0)
+    cap = Cap(0)
 
     # 图传接收器
-    cap = ReceiveImgTCP("169.254.133.100", 4444)
+    # cap = ReceiveImgTCP("169.254.133.100", 4444)
 
     #  先s保存，再q退出
     ad_color(cap)

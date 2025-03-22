@@ -35,6 +35,7 @@ LineDetector类
 
 import cv2
 import numpy as np
+from numpy import dtype, float64, ndarray
 
 try:
     from Detect import Detect
@@ -135,7 +136,8 @@ class LineDetector(Detect):
         except:
             pass
 
-    def draw_line(self, img, line, _color=(0, 0, 255)):
+    @staticmethod
+    def draw_line(img, line, _color=(0, 0, 255)):
         """
         通过直线参数画出直线
         ----
@@ -148,7 +150,8 @@ class LineDetector(Detect):
 
         cv2.line(img, (x1, y1), (x2, y2), _color, 1)
 
-    def __draw_point(self, img, point):
+    @staticmethod
+    def __draw_point(img, point):
         """
         画出交点
         ----
@@ -160,7 +163,15 @@ class LineDetector(Detect):
         """
         cv2.circle(img, point, 2, (255, 0, 0), 3)
 
-    def get_right_angle(self, _img, draw: bool = True) -> tuple[None|int, None|int, None|tuple[tuple[float], tuple[float]], cv2.typing.MatLike]:
+    def get_right_angle(
+            self,
+            _img,
+            draw: bool = True) -> tuple[
+                                    None | int,
+                                    None | int,
+                                    None | ndarray[tuple[int, ...], dtype[float64]],
+                                    cv2.typing.MatLike
+                                ]:
         """
         找出直角
         ----
@@ -260,7 +271,8 @@ class LineDetector(Detect):
 
         return lines, canny_img
 
-    def get_line_angle(self, line):
+    @staticmethod
+    def get_line_angle(line):
         """
         获取直线角度
         ----

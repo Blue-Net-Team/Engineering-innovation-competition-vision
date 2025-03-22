@@ -29,7 +29,7 @@ import cv2
 import numpy as np
 from Solution import Solution
 from utils import LoadCap, Cap, InterpolatedCap
-from ImgTrans import SendImg, ReceiveImg
+from ImgTrans import ReceiveImgUDP, SendImg, ReceiveImg
 from colorama import Fore, Style, init
 
 
@@ -61,7 +61,6 @@ class Test_solution(Solution):
             while True:
                 if self.sender.connecting():
                     break
-            self.sender.start()
         else:
             self.sender = None
 
@@ -74,7 +73,7 @@ class Test_solution(Solution):
         * "4": 获取物料位号
 
         Args:
-            cap_id (int): 摄像头编号
+            cap (Cap): 摄像头对象
             sign (str): 串口信号(功能编号)
         Returns:
             None

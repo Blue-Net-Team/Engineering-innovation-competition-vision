@@ -11,7 +11,8 @@ class Detect(ConfigLoader):
     提供了卷积锐化的方法--sharpen
     """
 
-    def sharpen(self, _img):
+    @staticmethod
+    def sharpen(_img):
         """
         锐化图片
         ----

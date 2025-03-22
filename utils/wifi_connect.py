@@ -22,7 +22,7 @@ def connect_to_wifi(ssid:str, password:str, reflash:bool=False) -> tuple[bool, s
                 text=True,
             )
         # 连接到指定的SSID
-        res = subprocess.run(
+        subprocess.run(
             ["sudo", "nmcli", "device", "wifi", "connect", ssid, "password", password],
             check=True,
             stdout=subprocess.PIPE,

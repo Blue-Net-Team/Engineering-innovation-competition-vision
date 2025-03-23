@@ -272,7 +272,7 @@ class MainSystem:
                     if isinstance(self.sender, SendImgTCP):
                         extension_txt = f"TCP图传等待连接"
                     elif isinstance(self.sender, SendImgUDP):
-                        extension_txt = f"UDP图传正在发送"
+                        extension_txt = f"收到信号后，UDP图传会执行发送程序"
                     else:
                         raise TypeError("不支持的图传发送器类型")
 

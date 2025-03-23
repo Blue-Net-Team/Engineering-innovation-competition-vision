@@ -336,6 +336,7 @@ class MainSystem:
                             continue
 
                     # 执行任务
+                    printLog(Fore.WHITE + f"收到信号 {sign}" + Fore.RESET)
                     t0 = time.perf_counter()
                     self.detecting_LED.on()
                     self.oled.clear()

@@ -1,15 +1,16 @@
 LineDetector:
   Hough_threshold: 10
-  Max_val: 255
-  Min_val: 76
+  Max_val: 154
+  Min_val: 33
   bias: 1
+  iter_time: 4
   maxLineGap: 49
   minLineLength: 0
   odd_index: 2
   sigma: 0.0
-  iter_time: 1
 annulus:
   dp: 1
+  iter_time: 7
   maxRadius: 46
   minDist: 100
   minRadius: 11
@@ -17,7 +18,6 @@ annulus:
   param1: 100
   param2: 14
   sigma: 0.0
-  iter_time: 4
 area1_points:
 - - 25
   - 0
@@ -33,6 +33,8 @@ area3_points:
   - 118
 - - 360
   - 237
+clientsIp:
+- 169.254.233.52
 color:
   B:
     L_S: 80
@@ -59,5 +61,3 @@ max_material_area: 26000
 min_material_area: 0
 need2cut_height: 0
 target_angle: 46
-clientsIp:
-  - "169.254.233.52"

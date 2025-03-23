@@ -75,9 +75,10 @@ class MainSystem:
         self.DEAL_IMG_DICT = {"show": Solution.show, "hide": lambda x: None}
 
         # 如果设置了图传发送器并且模式在图传档
-        if self.sender and self.switch.read_status():
+        if self.sender:
             self.DEAL_IMG_DICT["send"] = self.sender.send
-            self.checkWlan()
+            if self.switch.read_status():
+                self.checkWlan()
 
         self.TASK_DICT = {
             "1": self.solution.material_moving_detect,  # 物料运动检测

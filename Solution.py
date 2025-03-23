@@ -93,6 +93,7 @@ class Solution(ConfigLoader):
         self.area3_points:list[list[int]] = [[0,0],[0,0]]
         self.target_angle:int = 45
         self.NEED2CUT:int = 40
+        self.clientsIp = []
         # 读取配置文件
         self.load_config()
 
@@ -118,6 +119,7 @@ class Solution(ConfigLoader):
         self.load_param(config, "area3_points")
         self.load_param(config, "target_angle", )
         self.load_param(config, "need2cut_height", "NEED2CUT")
+        self.load_param(config, "clientsIp")
 
         # 加载圆环识别的圆环参数
         load_err1 = self.annulus_circle_detector.load_config(self.configPath)
@@ -189,7 +191,7 @@ class Solution(ConfigLoader):
         Returns:
             res (str,cv2.Mat): 物料位置和画出物料和位号的图片
 
-            例如："R1G2B3"代表红色在1号位，绿色在2号位，蓝色在3号位
+            例如："C123E"代表红色在1号位，绿色在2号位，蓝色在3号位
         """
         res_img = _img.copy()
 

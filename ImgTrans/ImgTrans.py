@@ -208,32 +208,60 @@ class SendImgUDP(SendImg):
     """服务端视频发送(UDP)"""
     EOF_MARKER = b'EOF'
     BUFFER_SIZE = 65536  # UDP最大接收缓冲区大小
-    B_IP, B_PORT = "", int()
+    B_IP = ""
+    _ip_lst = set()
+
+    @property
+    def clients_ip(self):
+        """
+        客户端ip列表
+        """
+        if self.B_IP:
+            self._ip_lst.add(self.B_IP)
+        return self._ip_lst
+
+    @clients_ip.setter
+    def clients_ip(self, ip:list):
+        """
+        设置客户端ip列表
+        ----
+        Args:
+            ip (list): 客户端ip列表
+        """
+        self._ip_lst = set(ip)
+        if self.B_IP:
+            self._ip_lst.add(self.B_IP)
 
     def __init__(self, interface:str, port:int):
         """
         初始化
         ----
         Args:
-            interface (str): 服务端IP地址
+            interface (str): 服务端开放的网卡设备
             port (int): 端口号
         """
         super().__init__(interface, port)
         self.openSocket()
 
     def openSocket(self):
+        """
+        打开udp套接字
+        """
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.server_socket.bind((self.host, self.port))
 
     def connecting(self):
+        """
+        等待udp客户端连接，如果不等待，回向配置中的ip列表发送数据
+        """
         try:
             self.server_socket.settimeout(0.5)
             data, addr = self.server_socket.recvfrom(self.BUFFER_SIZE)
             if addr != (self.host, self.port) and data == b'connect':  # 避免回环请求
                 printLog(f"接收到来自 {addr} 的连接请求")
-                # 获取B设备的IP和端口
-                self.B_IP, self.B_PORT = addr
-                printLog(f"已与对端建立连接，IP: {self.B_IP}, 端口: {self.B_PORT}")
+                # 获取B设备的IP和端口，固定向对端4444端口发送数据
+                self.B_IP, _ = addr
+                printLog(f"已与对端建立连接，IP: {self.B_IP}, 端口: {self.port}")
                 return True
         except socket.timeout:
             return False
@@ -253,8 +281,9 @@ class SendImgUDP(SendImg):
         # 构造完整数据包：包头 + 图像数据 + 包尾
         packet = header + img_data + self.EOF_MARKER
 
-        # 发送图像数据给B设备
-        self.server_socket.sendto(packet, (self.B_IP, self.B_PORT))
+        # 发送图像数据到对端
+        for ip in self.clients_ip:
+            self.server_socket.sendto(packet, (ip, self.port))
         return True
 
     def close(self):
@@ -265,12 +294,18 @@ class ReceiveImgUDP(ReceiveImg):
         """
         初始化
         ----
+        Args:
+            host (str): 服务端IP地址
+            port (int): 开放的端口号
         """
         super().__init__(host, port)
         self.host = host
         self.port = port
+        # 打开udp套接字
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # 绑定自身ip
         self.client_socket.bind(('0.0.0.0', self.port))
+        # 发起连接请求
         self.client_socket.sendto(b'connect', (self.host, self.port))
 
     def read(self):
@@ -284,19 +319,16 @@ class ReceiveImgUDP(ReceiveImg):
             printLog(f"接收到来自未知地址 {addr} 的数据 {data}")
             return False, None
 
-            # 解析包头，获取数据长度
+        # 解析包头，获取数据长度
         data_length = struct.unpack('!I', data[:4])[0]  # 获取数据包的长度，前4个字节
         image_data = data[4:4 + data_length]  # 获取图像数据（包头后面的部分）
 
         # 包尾检查
         if data[4 + data_length:4 + data_length + len(b'EOF')] == b'EOF':
-            # print("接收到完整图像数据")
-
             # 处理图像数据（例如显示）
             nparr = np.frombuffer(image_data, np.uint8)
             frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             if frame is not None:
-                self.client_socket.sendto(b'@1#', (self.host, self.port))
                 return True, frame
             else:
                 return False, None

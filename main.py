@@ -27,7 +27,7 @@ import cv2
 from colorama import Fore, init
 
 import Solution
-from ImgTrans import SendImg, SendImgUDP
+from ImgTrans import SendImg, SendImgTCP, SendImgUDP
 from utils import Cap, Switch, LED, OLED_I2C, connect_to_wifi, get_CPU_temp, get_GPU_temp, printLog
 from ImgTrans.ImgTrans import NeedReConnect
 
@@ -65,7 +65,6 @@ class MainSystem:
         """
         self.solution = Solution.Solution(ser_port, config_path)
         self.cap = Cap()
-        self.cap.NEED2CUT = self.solution.NEED2CUT
         self.switch = Switch("GPIO3-A3", True)
         self.start_LED = LED("GPIO3-A2")
         self.detecting_LED = LED("GPIO3-A4")
@@ -74,44 +73,11 @@ class MainSystem:
         self.HEAD = pkgHEAD
         self.TAIL = pgkTAIL
         self.DEAL_IMG_DICT = {"show": Solution.show, "hide": lambda x: None}
-        if self.sender:
+
+        # 如果设置了图传发送器并且模式在图传档
+        if self.sender and self.switch.read_status():
             self.DEAL_IMG_DICT["send"] = self.sender.send
-            if self.switch.read_status():
-                if self.sender.host == "":
-                    printLog(
-                        Fore.RED + "未连接到图传网络,尝试连接" + Fore.RESET
-                    )
-
-                    self.oled.clear()
-                    self.oled.text("未连接到图传网络\n尝试连接...", (1,1))
-                    self.oled.display()
-
-                    while self.sender.host == "":
-                        conn_res = connect_to_wifi("EIC-FF", "lckfb666")
-                        if conn_res[0]:
-                            printLog(
-                                Fore.GREEN + "连接成功" + Fore.RESET
-                            )
-
-                            self.oled.clear()
-                            self.oled.text("连接成功", (1,1))
-                            self.oled.display()
-
-                            # 更新host
-                            self.sender.update_host()
-                            break
-                        else:
-                            printLog(
-                                Fore.RED + f"连接失败，{conn_res[1]}" + Fore.RESET
-                            )
-
-                            self.oled.clear()
-                            self.oled.text(f"连接失败\n{conn_res[1]}", (1,1))
-                            self.oled.display()
-                            if not self.switch.read_status():
-                                break
-                            else:
-                                time.sleep(0.5)
+            self.checkWlan()
 
         self.TASK_DICT = {
             "1": self.solution.material_moving_detect,  # 物料运动检测
@@ -132,6 +98,46 @@ class MainSystem:
             tmp_img = self.cap.read()[1]
             self.DEAL_IMG_DICT["hide"](tmp_img)
 
+    def checkWlan(self):
+        """
+        检查wlan是否连接
+        """
+        if self.sender.host == "":
+            printLog(
+                Fore.RED + "未连接到图传网络,尝试连接" + Fore.RESET
+            )
+
+            self.oled.clear()
+            self.oled.text("未连接到图传网络\n尝试连接...", (1, 1))
+            self.oled.display()
+
+            while self.sender.host == "":
+                conn_res = connect_to_wifi("EIC-FF", "lckfb666")
+                if conn_res[0]:
+                    printLog(
+                        Fore.GREEN + "连接成功" + Fore.RESET
+                    )
+
+                    self.oled.clear()
+                    self.oled.text("连接成功", (1, 1))
+                    self.oled.display()
+
+                    # 更新host
+                    self.sender.update_host()
+                    break
+                else:
+                    printLog(
+                        Fore.RED + f"连接失败，{conn_res[1]}" + Fore.RESET
+                    )
+
+                    self.oled.clear()
+                    self.oled.text(f"连接失败\n{conn_res[1]}", (1, 1))
+                    self.oled.display()
+                    if not self.switch.read_status():
+                        break
+                    else:
+                        time.sleep(0.5)
+
     def main(self):
         """
         主函数
@@ -142,6 +148,9 @@ class MainSystem:
             switch_status = self.switch.read_status()
 
             if switch_status:
+                # 更新配置
+                self.updateConfig()
+
                 # 开关状态1，开图传，关任务
                 printLog(
                     Fore.WHITE + "模式切换为" + Fore.RESET +
@@ -154,74 +163,47 @@ class MainSystem:
                     break
 
                 # 检查wlan
-                if self.sender.host == "":
-                    printLog(
-                        Fore.RED + "未连接到图传网络,尝试连接" + Fore.RESET
-                    )
-
-                    self.oled.clear()
-                    self.oled.text("未连接到图传网络\n尝试连接...", (1, 1))
-                    self.oled.display()
-
-                    while True:
-                        conn_res = connect_to_wifi("EIC-FF", "lckfb666")
-                        if conn_res[0]:
-                            printLog(
-                                Fore.GREEN + "连接成功" + Fore.RESET
-                            )
-
-                            self.oled.clear()
-                            self.oled.text("连接成功", (1, 1))
-                            self.oled.display()
-
-                            # 更新host
-                            self.sender.update_host()
-                            break
-                        else:
-                            printLog(
-                                Fore.RED + f"连接失败，{conn_res[1]}" + Fore.RESET
-                            )
-
-                            self.oled.clear()
-                            self.oled.text(f"连接失败\n{conn_res[1]}", (1, 1))
-                            self.oled.display()
-                            if not self.switch.read_status():
-                                break
-                            else:
-                                time.sleep(0.5)
+                self.checkWlan()
                 if not self.switch.read_status():
+                    # 切换模式，使用continue跳过本次循环
                     continue
 
                 # 设置标志
                 self.ori_imgTrans_running_flag = True
                 self.task_running_flag = False
 
-                # 等待连接
-                printLog(
-                    Fore.WHITE + "等待图传连接\tIP:" + Fore.RESET +
-                    Fore.CYAN + f"{self.sender.host}" + Fore.RESET,)
+                # 等待tcp握手
+                if isinstance(self.sender, SendImgTCP):
+                    # region 等待连接
+                    printLog(
+                        Fore.WHITE + "等待图连接\tIP:" + Fore.RESET +
+                        Fore.CYAN + f"{self.sender.host}" + Fore.RESET, )
+                    self.oled.clear()
+                    self.oled.text(f"图传模式\n等待图传连接\nIP:{self.sender.host}", (1, 1))
+                    self.oled.display()
+                    while self.ori_imgTrans_running_flag:
+                        if self.sender.connecting():
+                            break
+                        if not self.switch.read_status():
+                            # 开关状态2，关闭图传
+                            self.ori_imgTrans_running_flag = False
+                            break
 
-                self.oled.clear()
-                self.oled.text(f"图传模式\n等待图传连接\nIP:{self.sender.host}", (1,1))
-                self.oled.display()
+                    if not self.ori_imgTrans_running_flag:
+                        continue
 
-                while self.ori_imgTrans_running_flag:
-                    if self.sender.connecting():
-                        break
-                    if not self.switch.read_status():
-                        # 开关状态2，关闭图传
-                        self.ori_imgTrans_running_flag = False
-                        break
-
-                if not self.ori_imgTrans_running_flag:
-                    continue
-
-                printLog(Fore.WHITE + "图传连接成功" + Fore.RESET)
+                    printLog(Fore.WHITE + "图传连接成功" + Fore.RESET)
 
 
-                self.oled.clear()
-                self.oled.text("图传连接成功", (1,1))
-                self.oled.display()
+                    self.oled.clear()
+                    self.oled.text("图传连接成功", (1,1))
+                    self.oled.display()
+                    # endregion
+                # udp直接发送，不等待连接
+                elif isinstance(self.sender, SendImgUDP):
+                    pass
+                else:
+                    raise TypeError("不支持的图传发送器类型")
 
                 while self.ori_imgTrans_running_flag:
                     _, img = self.cap.read()
@@ -238,6 +220,7 @@ class MainSystem:
                     # 发送图像
                     try:
                         self.sender.send(img)
+                    # 只有tcp会跑出此异常
                     except NeedReConnect:
                         self.sender.close()
                         printLog(Fore.RED + "图传连接中断" + Fore.RESET)
@@ -283,8 +266,16 @@ class MainSystem:
                                   Fore.CYAN + "任务模式" + Fore.RESET)
 
                 self.oled.clear()
-                if self.deal_img_method == "send" and self.sender:
-                    extension_txt = f"等待图传连接\nIP:{self.sender.host}"
+                if self.deal_img_method == "send":
+                    if isinstance(self.sender, SendImgTCP):
+                        extension_txt = f"TCP图传等待连接"
+                    elif isinstance(self.sender, SendImgUDP):
+                        extension_txt = f"UDP图传正在发送"
+                    else:
+                        raise TypeError("不支持的图传发送器类型")
+
+                elif self.deal_img_method == "record":
+                    extension_txt = "记录器开始记录"
                 else:
                     extension_txt = ""
                 self.oled.text(f"任务模式\n{extension_txt}", (1,1))
@@ -295,20 +286,19 @@ class MainSystem:
                 self.task_running_flag = True
 
                 # 加载参数
-                self.solution.load_config()
-                self.cap.NEED2CUT = self.solution.NEED2CUT
+                self.updateConfig()
 
-                # 连接图传
-                if self.deal_img_method == "send" and self.sender:
+                # 等待TCP握手
+                if self.deal_img_method == "send" and isinstance(self.sender, SendImgTCP):
                     printLog(Fore.WHITE + "等待图传连接\tIP:" + Fore.RESET +
-                                    Fore.CYAN + f"{self.sender.host}" + Fore.RESET)
+                             Fore.CYAN + f"{self.sender.host}" + Fore.RESET)
 
                     while self.task_running_flag:
                         if self.sender.connecting():
-                            printLog(Fore.WHITE + "图传连接成功" + Fore.RESET,)
+                            printLog(Fore.WHITE + "图传连接成功" + Fore.RESET, )
 
                             self.oled.clear()
-                            self.oled.text("图传连接成功", (1,1))
+                            self.oled.text("图传连接成功", (1, 1))
                             self.oled.display()
 
                             break
@@ -345,11 +335,6 @@ class MainSystem:
                         else:
                             continue
 
-                    printLog(f"收到信号{sign}")
-
-                    if sign == "1":
-                        self.solution.position_id_stack = []
-
                     # 执行任务
                     t0 = time.perf_counter()
                     self.detecting_LED.on()
@@ -375,6 +360,7 @@ class MainSystem:
                         except Exception as e:
                             printLog(Fore.RED + f"图像处理失败:{e}" + Fore.RESET, Fore.RED)
 
+                        # 如果有识别结果
                         if res:
                             t1 = time.perf_counter()
                             used_time_ms = (t1 - t0) * 1000
@@ -385,9 +371,10 @@ class MainSystem:
                             else:
                                 color = Fore.RED
 
+                            # 打印定位信息
                             if res[0] == "L" and res[-1] == "E":
                                 printLog(
-                                    Fore.WHITE + "sent:" + Fore.RESET +
+                                    Fore.WHITE + "res:" + Fore.RESET +
                                     Fore.WHITE + "角度:" + Fore.RESET +
                                     Fore.GREEN + f"{'+' if res[1]=='1' else '-'}{res[2:4]}.{res[4]}\t" + Fore.RESET +
                                     Fore.WHITE + f"X:" + Fore.RESET +
@@ -398,23 +385,29 @@ class MainSystem:
                                     Fore.WHITE + "used time:" + Fore.RESET +
                                     color + f"{used_time_ms:.2f}ms" + Fore.RESET
                                 )
-                            else:
-
+                            # 打印物料位号
+                            elif res[0] == "C" and res[-1] == "E":
                                 printLog(
-                                    Fore.WHITE + "sent:" + Fore.RESET +
+                                    Fore.WHITE + "res:" + Fore.RESET +
+                                    Fore.RED + res[1] + "\t" + Fore.RESET +
+                                    Fore.GREEN + res[2] + "\t" + Fore.RESET +
+                                    Fore.BLUE + res[3] + "\t" + Fore.RESET +
+                                    Fore.WHITE + "used time:" + Fore.RESET +
+                                    color + f"{used_time_ms:.2f}ms" + Fore.RESET
+                                )
+                            # 其他情况直接打印res
+                            else:
+                                printLog(
+                                    Fore.WHITE + "res:" + Fore.RESET +
                                     Fore.MAGENTA + f"{res}\t" + Fore.RESET +
                                     Fore.WHITE + "used time:" + Fore.RESET +
                                     color + f"{used_time_ms:.2f}ms" + Fore.RESET
                                 )
-
+                            # 清空缓冲区的时候结果为1，这个结果不发送
                             if res != "1":
                                 self.solution.uart.write(res)
 
-                            self.oled.clear()
-                            self.oled.text(f"收到信号{sign}\n识别结果{res}", (1,1))
-                            self.oled.text(f"", (1,30))
-                            self.oled.display()
-
+                            # 关闭识别指示灯
                             self.detecting_LED.off()
                             break
 
@@ -423,14 +416,23 @@ class MainSystem:
                             # 检查核心温度
                             temp_cup = get_CPU_temp()
                             temp_gpu = get_GPU_temp()
-                            self.oled.clear()
-                            self.oled.text(f"收到信号{sign}", (1,1))
                             self.oled.text(f"CPU温度:{temp_cup}\nGPU温度:{temp_gpu}", (1,30))
                             self.oled.display()
-                            if self.switch.read_status():
+                            if not self.switch.read_status():
                                 self.task_running_flag = False
                                 break
         self.start_LED.off()
+
+    def updateConfig(self):
+        """
+        更新配置，此方法会更新图传发送器的ip和摄像头底部裁剪的高度
+        """
+        self.solution.load_config()
+        # 更新裁剪参数
+        self.cap.NEED2CUT = self.solution.NEED2CUT
+        # 更新客户端ip
+        if self.sender:
+            self.sender.clients_ip = self.solution.clientsIp
 
     def clear_img_buffer(self, img:cv2.typing.MatLike):
         """

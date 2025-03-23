@@ -7,6 +7,7 @@ LineDetector:
   minLineLength: 0
   odd_index: 2
   sigma: 0.0
+  iter_time: 1
 annulus:
   dp: 1
   maxRadius: 46
@@ -16,6 +17,7 @@ annulus:
   param1: 100
   param2: 14
   sigma: 0.0
+  iter_time: 4
 area1_points:
 - - 25
   - 0

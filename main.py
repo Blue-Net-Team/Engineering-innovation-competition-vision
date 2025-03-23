@@ -316,14 +316,6 @@ class MainSystem:
                     # 读取串口信号
                     sign = self.solution.uart.new_read(self.HEAD, self.TAIL)
 
-                    if sign is None:
-                        # 检查开关
-                        if self.switch.read_status():
-                            self.task_running_flag = False
-                            break
-                        else:
-                            continue
-
                     if sign not in self.TASK_DICT.keys():
                         printLog(Fore.RED + f"非法信号 {sign}" + Fore.RESET)
 
@@ -365,6 +357,9 @@ class MainSystem:
                             printLog(Fore.RED + f"图像处理失败:{e}" + Fore.RESET, Fore.RED)
 
                         # 如果有识别结果
+                        if sign is None:
+                            break
+
                         if res:
                             t1 = time.perf_counter()
                             used_time_ms = (t1 - t0) * 1000

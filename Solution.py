@@ -114,13 +114,14 @@ class Solution(ConfigLoader):
         except Exception as e:
             printLog(Fore.RED + str(e))
 
-        self.load_param(config, "area1_points")
-        self.load_param(config, "area2_points")
-        self.load_param(config, "area3_points")
-        self.load_param(config, "target_angle", )
-        self.load_param(config, "need2cut_height", "NEED2CUT")
-        self.load_param(config, "clientsIp")
-
+        err = [
+            self.load_param(config, "area1_points"),
+            self.load_param(config, "area2_points"),
+            self.load_param(config, "area3_points"),
+            self.load_param(config, "target_angle", ),
+            self.load_param(config, "need2cut_height", "NEED2CUT"),
+            self.load_param(config, "clientsIp"),
+        ]
         # 加载圆环识别的圆环参数
         load_err1 = self.annulus_circle_detector.load_config(self.configPath)
         # 加载直线检测的参数
@@ -128,7 +129,7 @@ class Solution(ConfigLoader):
         # 加载颜色识别的参数
         load_err3 = self.traditional_color_detector.load_config(self.configPath)
 
-        err = [load_err1, load_err2, load_err3]
+        err.extend([load_err1, load_err2, load_err3])
         if any(err):
             for e in err:
                 if e:

@@ -11,7 +11,7 @@ LineDetector:
 annulus:
   dp: 1
   iter_time: 7
-  maxRadius: 46
+  maxRadius: 80
   minDist: 100
   minRadius: 11
   odd_index: 2

@@ -305,7 +305,6 @@ class ReceiveImgUDP(ReceiveImg):
             nparr = np.frombuffer(image_data, np.uint8)
             frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             if frame is not None:
-                self.client_socket.sendto(b'@1#', (self.host, self.port))
                 return True, frame
             else:
                 return False, None

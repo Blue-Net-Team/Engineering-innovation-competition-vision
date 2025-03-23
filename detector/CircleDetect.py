@@ -172,7 +172,8 @@ class CircleDetector(Detect):
             "minRadius": self.minRadius,
             "maxRadius": self.maxRadius,
             "sigma": self.sigma,
-            "odd_index": self.odd_index
+            "odd_index": self.odd_index,
+            "iter_time": self.iter_time,
         }
 
         super().save_config(config_path, config)
@@ -204,5 +205,6 @@ class CircleDetector(Detect):
         res_str += super().load_param(config, "maxRadius")
         res_str += super().load_param(config, "sigma")
         res_str += super().load_param(config, "odd_index")
+        res_str += super().load_param(config, "iter_time")
 
         return res_str

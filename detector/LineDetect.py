@@ -304,7 +304,8 @@ class LineDetector(Detect):
             "maxLineGap": self.maxLineGap,
             "bias": self.bias,
             "sigma": self.sigma,
-            "odd_index": self.odd_index
+            "odd_index": self.odd_index,
+            "iter_time": self.iter_time
         }
         super().save_config(path, config)
 
@@ -335,5 +336,6 @@ class LineDetector(Detect):
         res_str += super().load_param(config, "bias")
         res_str += super().load_param(config, "sigma")
         res_str += super().load_param(config, "odd_index")
+        res_str += super().load_param(config, "iter_time")
 
         return res_str

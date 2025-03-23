@@ -364,6 +364,8 @@ class MainSystem:
 
                         # 如果有识别结果
                         if sign is None:
+                            if self.switch.read_status():
+                                self.task_running_flag = False
                             break
 
                         if res:

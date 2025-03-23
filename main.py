@@ -176,10 +176,10 @@ class MainSystem:
                 if isinstance(self.sender, SendImgTCP):
                     # region 等待连接
                     printLog(
-                        Fore.WHITE + "等待图连接\tIP:" + Fore.RESET +
+                        Fore.WHITE + "等待TCP连接\tIP:" + Fore.RESET +
                         Fore.CYAN + f"{self.sender.host}" + Fore.RESET, )
                     self.oled.clear()
-                    self.oled.text(f"图传模式\n等待图传连接\nIP:{self.sender.host}", (1, 1))
+                    self.oled.text(f"TCP图传模式\n等待图传连接\nIP:{self.sender.host}", (1, 1))
                     self.oled.display()
                     while self.ori_imgTrans_running_flag:
                         if self.sender.connecting():
@@ -192,16 +192,18 @@ class MainSystem:
                     if not self.ori_imgTrans_running_flag:
                         continue
 
-                    printLog(Fore.WHITE + "图传连接成功" + Fore.RESET)
+                    printLog(Fore.WHITE + "TCP图传连接成功" + Fore.RESET)
 
 
                     self.oled.clear()
-                    self.oled.text("图传连接成功", (1,1))
+                    self.oled.text("TCP图传连接成功", (1,1))
                     self.oled.display()
                     # endregion
                 # udp直接发送，不等待连接
                 elif isinstance(self.sender, SendImgUDP):
-                    pass
+                    self.oled.clear()
+                    self.oled.text(f"UDP图传模式\nIP:{self.sender.host}", (1, 1))
+                    self.oled.display()
                 else:
                     raise TypeError("不支持的图传发送器类型")
 

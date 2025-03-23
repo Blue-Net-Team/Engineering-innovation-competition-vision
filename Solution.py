@@ -188,7 +188,7 @@ class Solution(ConfigLoader):
         Returns:
             res (str,cv2.Mat): 物料位置和画出物料和位号的图片
 
-            例如："R1G2B3"代表红色在1号位，绿色在2号位，蓝色在3号位
+            例如："C123E"代表红色在1号位，绿色在2号位，蓝色在3号位
         """
         res_img = _img.copy()
 

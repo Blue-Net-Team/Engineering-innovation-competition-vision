@@ -388,6 +388,7 @@ class MainSystem:
                                     Fore.WHITE + "used time:" + Fore.RESET +
                                     color + f"{used_time_ms:.2f}ms" + Fore.RESET
                                 )
+                                oled_txt = f"角度：{'+' if res[1]=='1' else '-'}{res[2:4]}.{res[4]}\nX:{res[5:8]}\nY:{res[8:11]}"
                             # 打印物料位号
                             elif res[0] == "C" and res[-1] == "E":
                                 printLog(
@@ -398,6 +399,7 @@ class MainSystem:
                                     Fore.WHITE + "used time:" + Fore.RESET +
                                     color + f"{used_time_ms:.2f}ms" + Fore.RESET
                                 )
+                                oled_txt = f"物料位号：{res[1]}\n{res[2]}\n{res[3]}"
                             # 其他情况直接打印res
                             else:
                                 printLog(
@@ -406,6 +408,11 @@ class MainSystem:
                                     Fore.WHITE + "used time:" + Fore.RESET +
                                     color + f"{used_time_ms:.2f}ms" + Fore.RESET
                                 )
+                                oled_txt = f"res:{res}"
+
+                            self.oled.clear()
+                            self.oled.text(f"收到信号{sign}\n{oled_txt}", (1, 1))
+                            self.oled.display()
                             # 清空缓冲区的时候结果为1，这个结果不发送
                             if res != "1":
                                 self.solution.uart.write(res)

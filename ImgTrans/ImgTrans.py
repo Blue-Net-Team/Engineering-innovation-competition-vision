@@ -312,8 +312,17 @@ class ReceiveImgUDP(ReceiveImg):
             self.client_socket.settimeout(1)
             data, addr = self.client_socket.recvfrom(65536)
         except socket.timeout:
-            printLog("接收数据超时,1000ms")
-            return False, None
+            img = np.zeros((240, 320, 3), dtype=np.uint8)
+            cv2.putText(
+                img,
+                "read img timeout",
+                (20, 50),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 0, 255),
+                2
+            )
+            return False, img
         if addr != (self.host, self.port):
             printLog(f"接收到来自未知地址 {addr} 的数据 {data}")
             return False, None

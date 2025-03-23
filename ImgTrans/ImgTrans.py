@@ -207,7 +207,29 @@ class SendImgUDP(SendImg):
     """服务端视频发送(UDP)"""
     EOF_MARKER = b'EOF'
     BUFFER_SIZE = 65536  # UDP最大接收缓冲区大小
-    B_IP, B_PORT = "", int()
+    B_IP = ""
+    _ip_lst = set()
+
+    @property
+    def clients_ip(self):
+        """
+        客户端ip列表
+        """
+        if self.B_IP:
+            self._ip_lst.add(self.B_IP)
+        return self._ip_lst
+
+    @clients_ip.setter
+    def clients_ip(self, ip:list):
+        """
+        设置客户端ip列表
+        ----
+        Args:
+            ip (list): 客户端ip列表
+        """
+        self._ip_lst = set(ip)
+        if self.B_IP:
+            self._ip_lst.add(self.B_IP)
 
     def __init__(self, interface:str, port:int):
         """
@@ -238,7 +260,7 @@ class SendImgUDP(SendImg):
                 printLog(f"接收到来自 {addr} 的连接请求")
                 # 获取B设备的IP和端口，固定向对端4444端口发送数据
                 self.B_IP, _ = addr
-                printLog(f"已与对端建立连接，IP: {self.B_IP}, 端口: 4444")
+                printLog(f"已与对端建立连接，IP: {self.B_IP}, 端口: {self.port}")
                 return True
         except socket.timeout:
             return False
@@ -258,8 +280,9 @@ class SendImgUDP(SendImg):
         # 构造完整数据包：包头 + 图像数据 + 包尾
         packet = header + img_data + self.EOF_MARKER
 
-        # 发送图像数据给B设备
-        self.server_socket.sendto(packet, (self.B_IP, self.B_PORT))
+        # 发送图像数据到对端
+        for ip in self.clients_ip:
+            self.server_socket.sendto(packet, (ip, self.port))
         return True
 
     def close(self):

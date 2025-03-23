@@ -25,6 +25,7 @@ import argparse
 
 import cv2
 from colorama import Fore, init
+import numpy as np
 
 import Solution
 from ImgTrans import SendImg, SendImgTCP, SendImgUDP
@@ -86,6 +87,16 @@ class MainSystem:
             "3": self.solution.right_angle_detect,  # 直角检测
             "4": self.solution.annulus_top,  # 圆环检测
             "5": self.clear_img_buffer,  # 清空缓冲区
+            None: lambda x: tuple(["1",cv2.putText(
+                                    np.zeros((240, 320, 3), dtype=np.uint8),
+                                    "no any sign",
+                                    (20, 50),
+                                    cv2.FONT_HERSHEY_SIMPLEX,
+                                    1,
+                                    (0, 0, 255),
+                                    2
+                                )]
+                            )
         }
 
         self.deal_img_method = deal_img_method
@@ -331,13 +342,10 @@ class MainSystem:
                             continue
 
                     # 执行任务
-                    printLog(Fore.WHITE + f"收到信号 {sign}" + Fore.RESET)
+                    if sign is not None:
+                        printLog(Fore.WHITE + f"收到信号 {sign}" + Fore.RESET)
+                        self.detecting_LED.on()
                     t0 = time.perf_counter()
-                    self.detecting_LED.on()
-                    self.oled.clear()
-                    self.oled.text(f"收到信号{sign}", (1,1))
-                    self.oled.display()
-                    num = 0
 
                     while self.task_running_flag:
                         _, img = self.cap.read()
@@ -346,8 +354,6 @@ class MainSystem:
                             continue
 
                         res, res_img = self.TASK_DICT[sign](img)
-
-                        num += 1
 
                         try:
                             self.DEAL_IMG_DICT[self.deal_img_method](res_img)
@@ -416,17 +422,6 @@ class MainSystem:
                             # 关闭识别指示灯
                             self.detecting_LED.off()
                             break
-
-                        # 每30帧检查一次开关
-                        if num % 30 == 0:
-                            # 检查核心温度
-                            temp_cup = get_CPU_temp()
-                            temp_gpu = get_GPU_temp()
-                            self.oled.text(f"CPU温度:{temp_cup}\nGPU温度:{temp_gpu}", (1,30))
-                            self.oled.display()
-                            if not self.switch.read_status():
-                                self.task_running_flag = False
-                                break
         self.start_LED.off()
 
     def updateConfig(self):

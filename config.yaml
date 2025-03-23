@@ -60,5 +60,4 @@ min_material_area: 0
 need2cut_height: 0
 target_angle: 46
 clientsIp:
-  - "192.168.137.1"
-  - "169.254.60.103"
+  - "169.254.233.52"

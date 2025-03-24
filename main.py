@@ -441,7 +441,7 @@ class MainSystem:
         # 更新裁剪参数
         self.cap.NEED2CUT = self.solution.NEED2CUT
         # 更新客户端ip
-        if self.sender:
+        if isinstance(self.sender, SendImgUDP):
             self.sender.clients_ip = self.solution.clientsIp
 
     def clear_img_buffer(self, img:cv2.typing.MatLike):

@@ -57,6 +57,7 @@ class MainSystem:
     ori_imgTrans_running_flag = False  # 原始图像是否正在传输
     task_running_flag = False  # 任务是否正在运行
     read_empty_frame_num:int = 0  # 读取空帧的次数
+    missed_frames:int = 0  # 没有识别到图像的帧数
 
 
     def __init__(
@@ -414,6 +415,13 @@ class MainSystem:
                             # 关闭识别指示灯
                             self.detecting_LED.off()
                             break
+                        else:
+                            self.missed_frames += 1
+
+                    # 计算丢图率
+                    miss_rate = self.missed_frames / self.missed_frames + 1
+                    printLog(Fore.WHITE + f"丢图率: {miss_rate:.2%}" + Fore.RESET)
+
         self.start_LED.off()
 
     def updateConfig(self):

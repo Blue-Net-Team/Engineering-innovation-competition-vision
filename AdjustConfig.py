@@ -7,7 +7,7 @@ import yaml
 from colorama import Fore, init
 
 from Solution import Solution
-from ImgTrans import ReceiveImg, ReceiveImgTCP
+from ImgTrans import ReceiveImg, ReceiveImgTCP, ReceiveImgUDP
 from utils import Cap
 
 # 初始化 colorama
@@ -65,7 +65,7 @@ class Ad_Config(Solution):
             press_key = cv2.waitKey(1)
             if press_key & 0xFF == ord("q"):
                 # 释放摄像头
-                self.cap.release()
+                # self.cap.release()
                 break
             elif press_key & 0xFF == ord("s"):
                 # 保存配置
@@ -122,7 +122,7 @@ class Ad_Config(Solution):
                 self.traditional_color_detector.save_config("config.yaml")
                 print(Fore.GREEN + "保存配置")
 
-        self.cap.release()
+        # self.cap.release()
         cv2.destroyAllWindows()
 
     def adjust_rightAngle(self):
@@ -280,10 +280,10 @@ def ad_right_angle(_cap: cv2.VideoCapture | Cap | ReceiveImg):
 
 if __name__ == "__main__":
     # 机载摄像头
-    cap = Cap(0)
+    # cap = Cap(0)
 
     # 图传接收器
-    # cap = ReceiveImgTCP("169.254.133.100", 4444)
+    cap = ReceiveImgUDP("169.254.133.100", 4444)
 
     #  先s保存，再q退出
     ad_color(cap)

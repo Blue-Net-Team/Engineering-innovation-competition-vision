@@ -37,7 +37,8 @@ if sys.platform == "linux":
                 if stream.connecting():
                     break
 elif sys.platform == "win32":
-    cap = LoadWebCam("169.254.133.100", 4444, "169.254.233.52")
+    # cap = LoadWebCam("169.254.133.100", 4444, "169.254.233.52")
+    cap = LoadWebCam("192.168.137.161", 4444, "192.168.137.1")
     cv2.namedWindow("img", cv2.WINDOW_NORMAL)
     for img in cap:
         if img is None:
@@ -45,5 +46,3 @@ elif sys.platform == "win32":
         cv2.imshow("img", img)
         if cv2.waitKey(1) == ord("q"):
             break
-else:
-    print("不支持的操作系统")

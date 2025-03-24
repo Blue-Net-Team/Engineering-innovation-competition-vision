@@ -44,7 +44,7 @@ import numpy as np
 
 import Solution
 from ImgTrans import SendImg, SendImgTCP, SendImgUDP
-from utils import Cap, Switch, LED, OLED_I2C, recorder, connect_to_wifi, get_CPU_temp, get_GPU_temp, printLog
+from utils import Cap, Switch, LED, OLED_I2C, Recorder, connect_to_wifi, get_CPU_temp, get_GPU_temp, printLog
 from ImgTrans.ImgTrans import NeedReConnect
 
 init(autoreset=True)
@@ -82,6 +82,7 @@ class MainSystem:
             deal_img_method (str): 处理图像的方法,包含"record"(记录)--此参数还在开发
             config_path (str): 配置文件路径
         """
+        self.Recorder: Recorder | None = None
         self.solution = Solution.Solution(ser_port, config_path)
         self.cap = Cap()
         self.switch = Switch("GPIO3-A3", True)
@@ -168,6 +169,11 @@ class MainSystem:
             switch_status = self.switch.read_status()
 
             if switch_status:
+                # 切换到图传模式，终止记录
+                if self.Recorder:
+                    self.Recorder.release()
+                    # 置空Recorder引用
+                    self.Recorder = None
                 # 更新配置
                 self.updateConfig()
 
@@ -298,7 +304,7 @@ class MainSystem:
                 # TODO:完成记录器
                 if self.deal_img_method == "record":
                     extension_txt += "\n记录器开始记录"
-                    self.Recorder = recorder.Recorder()
+                    self.Recorder = Recorder()
                 else:
                     extension_txt += ""
                 self.oled.text(f"任务模式\n{extension_txt}", (1,1))
@@ -431,10 +437,9 @@ class MainSystem:
                         else:
                             self.missed_frames += 1
 
+
         self.start_LED.off()
 
-        if self.Recorder:
-            self.Recorder.release()
 
     def updateConfig(self):
         """

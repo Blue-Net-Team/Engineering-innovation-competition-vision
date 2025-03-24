@@ -1,3 +1,19 @@
+"""
+Copyright (C) 2025 IVEN-CN(He Yunfeng) and Anan-yy(Weng Kaiyi)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 import cv2
 import numpy as np
 import time
@@ -11,17 +27,10 @@ class Recorder:
     def __init__(self):
         """
         初始化
-
-        ----
-        Args:
-            output_path(str): 输出路径
-            fps(int): 帧率
-            frame_size(tuple): 帧大小
-            writer(cv2.VideoWriter): 视频写入器
-
         """
-        self.output_path = 'run_log/replay.mp4'
-        self.fps = 30
+        # 使用时间戳yy-mm-dd_hh-mm-ss-replay.mp4命名文件
+        self.output_path = 'run_log/' + time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime()) + '-replay.mp4'
+        self.fps = 60
         self.frame_size = (320, 240)
         self.writer = cv2.VideoWriter(
             self.output_path,
@@ -33,16 +42,14 @@ class Recorder:
     def record(self, frame: np.ndarray):
         """
         记录图像
-
         ----
         Args:
             frame: 图像帧
-
         """
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         # 字体设置(类型，位置，大小，颜色)
         font = cv2.FONT_HERSHEY_SIMPLEX
-        position = (10, 30)
+        position = (10, 10)
         size = 1
         font_color = (255, 0, 0)
         cv2.putText(frame, timestamp, position, font, size, font_color)

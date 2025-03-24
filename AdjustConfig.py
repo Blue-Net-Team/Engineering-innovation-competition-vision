@@ -298,7 +298,7 @@ if __name__ == "__main__":
     # cap = Cap(0)
 
     # 图传接收器
-    cap = ReceiveImgUDP("169.254.133.100", 4444)
+    cap = ReceiveImgUDP("169.254.133.100", 4444, "169.254.233.52")
 
     #  先s保存，再q退出
     ad_color(cap)

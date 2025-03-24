@@ -37,7 +37,7 @@ if sys.platform == "linux":
                 if stream.connecting():
                     break
 elif sys.platform == "win32":
-    cap = LoadWebCam("169.254.133.100", 4444)
+    cap = LoadWebCam("169.254.133.100", 4444, "169.254.233.52")
     cv2.namedWindow("img", cv2.WINDOW_NORMAL)
     for img in cap:
         if img is None:

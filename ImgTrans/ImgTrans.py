@@ -305,21 +305,22 @@ class SendImgUDP(SendImg):
         self.server_socket.close()
 
 class ReceiveImgUDP(ReceiveImg):
-    def __init__(self, host:str, port:int):
+    def __init__(self, server_ip:str, port:int, self_ip:str):
         """
         初始化
         ----
         Args:
-            host (str): 服务端IP地址
+            server_ip (str): 服务端IP地址
             port (int): 开放的端口号
+            self_ip (str): 本机IP地址
         """
-        super().__init__(host, port)
-        self.host = host
+        super().__init__(server_ip, port)
+        self.host = server_ip
         self.port = port
         # 打开udp套接字
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # 绑定自身ip
-        self.client_socket.bind(('0.0.0.0', self.port))
+        self.client_socket.bind((self_ip, self.port))
         # 发起连接请求
         self.client_socket.sendto(b'connect', (self.host, self.port))
 
@@ -364,15 +365,16 @@ class ReceiveImgUDP(ReceiveImg):
 
 class LoadWebCam:
     """读取远程图传的迭代器"""
-    def __init__(self, ip:str, port:int):
+    def __init__(self, server_ip:str, port:int, self_ip:str):
         """
         初始化
         ----
         Args:
-            ip (str): 服务端IP地址
+            server_ip (str): 服务端IP地址
             port (int): 端口号
+            self_ip (str): 本机IP地址
         """
-        self.streaming = ReceiveImgUDP(ip, port)
+        self.streaming = ReceiveImgUDP(server_ip, port, self_ip)
 
     def __iter__(self):
         return self

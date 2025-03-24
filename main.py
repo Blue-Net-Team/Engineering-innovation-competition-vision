@@ -44,7 +44,7 @@ import numpy as np
 
 import Solution
 from ImgTrans import SendImg, SendImgTCP, SendImgUDP
-from utils import Cap, Switch, LED, OLED_I2C, connect_to_wifi, get_CPU_temp, get_GPU_temp, printLog
+from utils import Cap, Switch, LED, OLED_I2C, recorder, connect_to_wifi, get_CPU_temp, get_GPU_temp, printLog
 from ImgTrans.ImgTrans import NeedReConnect
 
 init(autoreset=True)
@@ -57,6 +57,7 @@ class MainSystem:
     ori_imgTrans_running_flag = False  # 原始图像是否正在传输
     task_running_flag = False  # 任务是否正在运行
     read_empty_frame_num:int = 0  # 读取空帧的次数
+    missed_frames:int = 0  # 没有识别到图像的帧数
 
 
     def __init__(
@@ -297,6 +298,7 @@ class MainSystem:
                 # TODO:完成记录器
                 if self.deal_img_method == "record":
                     extension_txt += "\n记录器开始记录"
+                    self.Recorder = recorder.Recorder()
                 else:
                     extension_txt += ""
                 self.oled.text(f"任务模式\n{extension_txt}", (1,1))
@@ -351,6 +353,9 @@ class MainSystem:
                             printLog(Fore.RED + f"图像处理失败，稍后重试: {e}" + Fore.RESET)
                         except Exception as e:
                             printLog(Fore.RED + f"图像处理失败:{e}" + Fore.RESET, Fore.RED)
+
+                        if self.Recorder:
+                            self.Recorder.record(res_img)
 
                         if sign is None:
                             if self.switch.read_status():
@@ -414,7 +419,17 @@ class MainSystem:
                             # 关闭识别指示灯
                             self.detecting_LED.off()
                             break
+                        else:
+                            self.missed_frames += 1
+
+                    # 计算丢图率
+                    miss_rate = self.missed_frames / self.missed_frames + 1
+                    printLog(Fore.WHITE + f"丢图率: {miss_rate:.2%}" + Fore.RESET)
+
         self.start_LED.off()
+
+        if self.Recorder:
+            self.Recorder.release()
 
     def updateConfig(self):
         """

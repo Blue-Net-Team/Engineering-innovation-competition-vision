@@ -37,6 +37,7 @@ class Ad_Config(Solution):
     * 调整直线参数，canny算子参数
     * 调整颜色阈值
     """
+    missed_frames:int = 0  # 没有识别到图像的帧数
 
     def __init__(
         self,
@@ -74,6 +75,8 @@ class Ad_Config(Solution):
                     Fore.WHITE + f"y" + Fore.RESET,
                     Fore.MAGENTA + f"{res[8:11]}" + Fore.RESET,
                 )
+            else:
+                self.missed_frames += 1
 
             cv2.imshow("img", res_img)
 
@@ -86,6 +89,10 @@ class Ad_Config(Solution):
                 # 保存配置
                 detector.save_config("config.yaml")
                 print(Fore.GREEN + "保存配置")
+
+        # 计算丢图率
+        miss_rate = self.missed_frames / (self.missed_frames + 1)
+        print(Fore.WHITE + f"丢图率: {miss_rate:.2%}" + Fore.RESET)
 
     def adjust_color_threshold(self, color_name: str="R"):
         """
@@ -169,6 +176,8 @@ class Ad_Config(Solution):
                     Fore.WHITE + f"y:" + Fore.RESET,
                     Fore.MAGENTA + f"{res[8:11]}" + Fore.RESET,
                 )
+            else:
+                self.missed_frames += 1
 
             cv2.imshow("img", res_img)
 
@@ -182,6 +191,10 @@ class Ad_Config(Solution):
                     Fore.GREEN + f"[{timeStamp}]" + Fore.RESET,
                     Fore.CYAN + "保存配置" + Fore.RESET
                 )
+
+        # 计算丢图率
+        miss_rate = self.missed_frames / (self.missed_frames + 1)
+        print(Fore.WHITE + f"丢图率: {miss_rate:.2%}" + Fore.RESET)
 
 
 class Ad_Area_config:

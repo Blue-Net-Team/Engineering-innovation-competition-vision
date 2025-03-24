@@ -427,7 +427,7 @@ class MainSystem:
         if isinstance(self.sender_debug, SendImgUDP):
             self.sender_debug.clients_ip = self.solution.clientsIp_debug
         if isinstance(self.sender_main, SendImgUDP):
-            self.sender_main.clients_ip = self.solution.clientsIp_debug
+            self.sender_main.clients_ip = self.solution.clientsIp_main
 
     def clear_img_buffer(self, img:cv2.typing.MatLike):
         """

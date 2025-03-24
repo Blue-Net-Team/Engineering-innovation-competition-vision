@@ -67,7 +67,6 @@ class MainSystem:
         pgkTAIL:str,
         sender_debug: SendImg | None = None,
         sender_main: SendImg |None = None,
-        deal_img_method: str = "hide",
         config_path: str = "config.yaml",
     ) -> None:
         """
@@ -79,7 +78,6 @@ class MainSystem:
             pgkTAIL (str): 包尾
             sender_debug (SendImg): 调试图传发送器
             sender_main (SendImg): 任务图传发送器
-            deal_img_method (str): 处理图像的方法,包含"record"(记录)--此参数还在开发
             config_path (str): 配置文件路径
         """
         self.Recorder: Recorder | None = None
@@ -91,10 +89,9 @@ class MainSystem:
         self.oled = OLED_I2C(2,0x3c)
         self.sender_debug = sender_debug
         self.sender_main = sender_main
-        self.deal_img_method = deal_img_method
         self.HEAD = pkgHEAD
         self.TAIL = pgkTAIL
-        self.DEAL_IMG_DICT = {"show": Solution.show, "hide": lambda x: None}
+        self.DEAL_IMG_DICT = {"hide": lambda x: None}
 
         self.TASK_DICT = {
             "1": self.solution.material_moving_detect,  # 物料运动检测
@@ -483,19 +480,12 @@ if __name__ == "__main__":
     # region 获取命令行参数deal_method
     parser = argparse.ArgumentParser(description="MainSystem")
     parser.add_argument(
-        "-d", "--deal_method",
-        type=str,
-        default="send",
-        help="处理图像的方法,包含record(记录)",
-    )
-    parser.add_argument(
         "-c", "--config_path",
         type=str,
         default="config.yaml",
         help="配置文件路径",
     )
     args = parser.parse_args()
-    deal_method = args.deal_method
     config_path = args.config_path
     # endregion
 
@@ -509,7 +499,6 @@ if __name__ == "__main__":
         pgkTAIL="#",
         sender_debug=sender_wired,
         sender_main=sender_wireless,
-        deal_img_method=deal_method,
         config_path=config_path,
     )
 

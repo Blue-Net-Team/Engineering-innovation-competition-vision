@@ -64,7 +64,8 @@ class MainSystem:
         ser_port: str,
         pkgHEAD:str,
         pgkTAIL:str,
-        sender: SendImg | None = None,
+        sender_debug: SendImg | None = None,
+        sender_main: SendImg |None = None,
         deal_img_method: str = "hide",
         config_path: str = "config.yaml",
     ) -> None:
@@ -75,8 +76,9 @@ class MainSystem:
             ser_port (str): 串口号
             pkgHEAD (str): 包头
             pgkTAIL (str): 包尾
-            sender (SendImg): 图传发送器
-            deal_img_method (str): 处理图像的方法,包含"show"(显示)、"hide"(隐藏)、"send"(发送)
+            sender_debug (SendImg): 调试图传发送器
+            sender_main (SendImg): 任务图传发送器
+            deal_img_method (str): 处理图像的方法,包含"record"(记录)--此参数还在开发
             config_path (str): 配置文件路径
         """
         self.solution = Solution.Solution(ser_port, config_path)
@@ -85,7 +87,9 @@ class MainSystem:
         self.start_LED = LED("GPIO3-A2")
         self.detecting_LED = LED("GPIO3-A4")
         self.oled = OLED_I2C(2,0x3c)
-        self.sender = sender
+        self.sender_debug = sender_debug
+        self.sender_main = sender_main
+        self.deal_img_method = deal_img_method
         self.HEAD = pkgHEAD
         self.TAIL = pgkTAIL
         self.DEAL_IMG_DICT = {"show": Solution.show, "hide": lambda x: None}
@@ -108,12 +112,6 @@ class MainSystem:
                             )
         }
 
-        self.deal_img_method = deal_img_method
-        printLog(
-            Fore.WHITE + "deal_img_method为" + Fore.RESET +
-            Fore.CYAN + deal_img_method + Fore.RESET
-        )
-
         # 先读取20帧，打开摄像头
         for i in range(20):
             tmp_img = self.cap.read()[1]
@@ -123,7 +121,7 @@ class MainSystem:
         """
         检查wlan是否连接
         """
-        if self.sender.host == "":
+        if self.sender_debug.host == "":
             printLog(
                 Fore.RED + "未连接到图传网络,尝试连接" + Fore.RESET
             )
@@ -132,7 +130,7 @@ class MainSystem:
             self.oled.text("未连接到图传网络\n尝试连接...", (1, 1))
             self.oled.display()
 
-            while self.sender.host == "":
+            while self.sender_debug.host == "":
                 conn_res = connect_to_wifi("EIC-FF", "lckfb666")
                 if conn_res[0]:
                     printLog(
@@ -144,7 +142,7 @@ class MainSystem:
                     self.oled.display()
 
                     # 更新host
-                    self.sender.update_host()
+                    self.sender_debug.update_host()
                     break
                 else:
                     printLog(
@@ -179,7 +177,7 @@ class MainSystem:
                 )
 
                 # 检查sender
-                if self.sender is None:
+                if self.sender_debug is None:
                     printLog(Fore.RED + "没有设置图传发送器对象" + Fore.RESET)
                     break
 
@@ -194,16 +192,16 @@ class MainSystem:
                 self.task_running_flag = False
 
                 # 等待tcp握手
-                if isinstance(self.sender, SendImgTCP):
+                if isinstance(self.sender_debug, SendImgTCP):
                     # region 等待连接
                     printLog(
                         Fore.WHITE + "等待TCP连接\tIP:" + Fore.RESET +
-                        Fore.CYAN + f"{self.sender.host}" + Fore.RESET, )
+                        Fore.CYAN + f"{self.sender_debug.host}" + Fore.RESET, )
                     self.oled.clear()
-                    self.oled.text(f"TCP图传模式\n等待图传连接\nIP:{self.sender.host}", (1, 1))
+                    self.oled.text(f"TCP图传模式\n等待图传连接\nIP:{self.sender_debug.host}", (1, 1))
                     self.oled.display()
                     while self.ori_imgTrans_running_flag:
-                        if self.sender.connecting():
+                        if self.sender_debug.connecting():
                             break
                         if not self.switch.read_status():
                             # 开关状态2，关闭图传
@@ -221,9 +219,9 @@ class MainSystem:
                     self.oled.display()
                     # endregion
                 # udp直接发送，不等待连接
-                elif isinstance(self.sender, SendImgUDP):
+                elif isinstance(self.sender_debug, SendImgUDP):
                     self.oled.clear()
-                    self.oled.text(f"UDP图传模式\nIP:{self.sender.host}", (1, 1))
+                    self.oled.text(f"UDP图传模式\nIP:{self.sender_debug.host}", (1, 1))
                     self.oled.display()
                 else:
                     raise TypeError("不支持的图传发送器类型")
@@ -242,10 +240,10 @@ class MainSystem:
 
                     # 发送图像
                     try:
-                        self.sender.send(img)
+                        self.sender_debug.send(img)
                     # 只有tcp会跑出此异常
                     except NeedReConnect:
-                        self.sender.close()
+                        self.sender_debug.close()
                         printLog(Fore.RED + "图传连接中断" + Fore.RESET)
 
                         self.oled.clear()
@@ -269,7 +267,7 @@ class MainSystem:
                                     # 开关状态2，关闭图传
                                     self.ori_imgTrans_running_flag = False
                                     break
-                                if self.sender.connecting():
+                                if self.sender_debug.connecting():
                                     printLog(Fore.WHITE + "图传连接成功" + Fore.RESET,)
                                     self.oled.clear()
                                     self.oled.text("图传连接成功", (1,1))
@@ -289,18 +287,18 @@ class MainSystem:
                                   Fore.CYAN + "任务模式" + Fore.RESET)
 
                 self.oled.clear()
-                if self.deal_img_method == "send":
-                    if isinstance(self.sender, SendImgTCP):
-                        extension_txt = f"TCP图传等待连接"
-                    elif isinstance(self.sender, SendImgUDP):
-                        extension_txt = f"收到信号后，UDP图传会执行发送程序"
-                    else:
-                        raise TypeError("不支持的图传发送器类型")
-
-                elif self.deal_img_method == "record":
-                    extension_txt = "记录器开始记录"
+                if isinstance(self.sender_main, SendImgTCP):
+                    raise TypeError("main中不再支持TCP图传")
+                elif isinstance(self.sender_main, SendImgUDP):
+                    extension_txt = f"收到信号后，UDP图传会执行发送程序"
                 else:
-                    extension_txt = ""
+                    raise TypeError("不支持的图传发送器类型")
+
+                # TODO:完成记录器
+                if self.deal_img_method == "record":
+                    extension_txt += "\n记录器开始记录"
+                else:
+                    extension_txt += ""
                 self.oled.text(f"任务模式\n{extension_txt}", (1,1))
                 self.oled.display()
 
@@ -310,24 +308,6 @@ class MainSystem:
 
                 # 加载参数
                 self.updateConfig()
-
-                # 等待TCP握手
-                if self.deal_img_method == "send" and isinstance(self.sender, SendImgTCP):
-                    printLog(Fore.WHITE + "等待图传连接\tIP:" + Fore.RESET +
-                             Fore.CYAN + f"{self.sender.host}" + Fore.RESET)
-
-                    while self.task_running_flag:
-                        if self.sender.connecting():
-                            printLog(Fore.WHITE + "图传连接成功" + Fore.RESET, )
-
-                            self.oled.clear()
-                            self.oled.text("图传连接成功", (1, 1))
-                            self.oled.display()
-
-                            break
-                        if self.switch.read_status():
-                            self.task_running_flag = False
-                            break
 
                 # 开始任务
                 while self.task_running_flag:
@@ -365,18 +345,19 @@ class MainSystem:
                         res, res_img = self.TASK_DICT[sign](img)
 
                         try:
-                            self.DEAL_IMG_DICT[self.deal_img_method](res_img)
+                            if self.sender_main is not None:
+                                self.sender_main.send(res_img)
                         except BlockingIOError as e:
                             printLog(Fore.RED + f"图像处理失败，稍后重试: {e}" + Fore.RESET)
                         except Exception as e:
                             printLog(Fore.RED + f"图像处理失败:{e}" + Fore.RESET, Fore.RED)
 
-                        # 如果有识别结果
                         if sign is None:
                             if self.switch.read_status():
                                 self.task_running_flag = False
                             break
 
+                        # 如果有识别结果
                         if res:
                             t1 = time.perf_counter()
                             used_time_ms = (t1 - t0) * 1000
@@ -401,7 +382,7 @@ class MainSystem:
                                     Fore.WHITE + "used time:" + Fore.RESET +
                                     color + f"{used_time_ms:.2f}ms" + Fore.RESET
                                 )
-                                oled_txt = f"角度：{'+' if res[1]=='1' else '-'}{res[2:4]}.{res[4]}\nX:{res[5:8]}\nY:{res[8:11]}"
+                                oled_txt = f"角度：{'+' if res[1]=='1' else '-'}{res[2:4]}.{res[4]}\nX:{res[5:8]}  Y:{res[8:11]}"
                             # 打印物料位号
                             elif res[0] == "C" and res[-1] == "E":
                                 printLog(
@@ -412,7 +393,7 @@ class MainSystem:
                                     Fore.WHITE + "used time:" + Fore.RESET +
                                     color + f"{used_time_ms:.2f}ms" + Fore.RESET
                                 )
-                                oled_txt = f"物料位号：{res[1]}\n{res[2]}\n{res[3]}"
+                                oled_txt = f"物料位号：R{res[1]} G{res[2]} B{res[3]}"
                             # 其他情况直接打印res
                             else:
                                 printLog(
@@ -443,8 +424,10 @@ class MainSystem:
         # 更新裁剪参数
         self.cap.NEED2CUT = self.solution.NEED2CUT
         # 更新客户端ip
-        if isinstance(self.sender, SendImgUDP):
-            self.sender.clients_ip = self.solution.clientsIp
+        if isinstance(self.sender_debug, SendImgUDP):
+            self.sender_debug.clients_ip = self.solution.clientsIp_debug
+        if isinstance(self.sender_main, SendImgUDP):
+            self.sender_main.clients_ip = self.solution.clientsIp_debug
 
     def clear_img_buffer(self, img:cv2.typing.MatLike):
         """
@@ -478,7 +461,7 @@ if __name__ == "__main__":
         "-d", "--deal_method",
         type=str,
         default="send",
-        help="处理图像的方法,包含show(显示)、hide(隐藏)、send(发送)",
+        help="处理图像的方法,包含record(记录)",
     )
     parser.add_argument(
         "-c", "--config_path",
@@ -486,26 +469,21 @@ if __name__ == "__main__":
         default="config.yaml",
         help="配置文件路径",
     )
-    parser.add_argument(
-        "-i", "--interface",
-        type=str,
-        default="wlan0",
-        help="图传发送器的网络接口",
-    )
     args = parser.parse_args()
     deal_method = args.deal_method
     config_path = args.config_path
-    interface = args.interface
     # endregion
 
     # 设置图传发送器
-    sender = SendImgUDP(interface, 4444)
+    sender_wired = SendImgUDP("eth0", 4444)
+    sender_wireless = SendImgUDP("wlan0", 4444)
 
     mainsystem = MainSystem(
         ser_port="/dev/ttyS3",
         pkgHEAD="@",
         pgkTAIL="#",
-        sender=sender,
+        sender_debug=sender_wired,
+        sender_main=sender_wireless,
         deal_img_method=deal_method,
         config_path=config_path,
     )

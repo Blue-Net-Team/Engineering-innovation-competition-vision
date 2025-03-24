@@ -148,7 +148,7 @@ class Test_solution(Solution):
                     )
 
 
-            # if self.sender is None:
+            # if self.sender_wired is None:
             #     if cv2.waitKey(1) & 0xFF == ord("q"):
             #         break
 

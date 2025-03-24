@@ -33,8 +33,10 @@ area3_points:
   - 118
 - - 360
   - 237
-clientsIp:
+clientsIp_debug:
 - 169.254.233.52
+clientsIp_main:
+- 192.168.137.1
 color:
   B:
     L_S: 80

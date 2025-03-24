@@ -109,7 +109,8 @@ class Solution(ConfigLoader):
         self.area3_points:list[list[int]] = [[0,0],[0,0]]
         self.target_angle:int = 45
         self.NEED2CUT:int = 40
-        self.clientsIp = []
+        self.clientsIp_debug = []
+        self.clientsIp_main = []
         # 读取配置文件
         self.load_config()
 
@@ -136,7 +137,8 @@ class Solution(ConfigLoader):
             self.load_param(config, "area3_points"),
             self.load_param(config, "target_angle", ),
             self.load_param(config, "need2cut_height", "NEED2CUT"),
-            self.load_param(config, "clientsIp"),
+            self.load_param(config, "clientsIp_debug"),
+            self.load_param(config, "clientsIp_main"),
         ]
         # 加载圆环识别的圆环参数
         load_err1 = self.annulus_circle_detector.load_config(self.configPath)

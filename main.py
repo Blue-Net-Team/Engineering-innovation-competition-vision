@@ -44,7 +44,7 @@ import numpy as np
 
 import Solution
 from ImgTrans import SendImg, SendImgTCP, SendImgUDP
-from utils import Cap, Switch, LED, OLED_I2C, recorder, connect_to_wifi, get_CPU_temp, get_GPU_temp, printLog
+from utils import Cap, Switch, LED, OLED_I2C, connect_to_wifi, get_CPU_temp, get_GPU_temp, printLog
 from ImgTrans.ImgTrans import NeedReConnect
 from utils.UART import Uart
 
@@ -92,7 +92,7 @@ class MainSystem:
         self.sender_main = sender_main
         self.HEAD = pkgHEAD
         self.TAIL = pgkTAIL
-        self.DEAL_IMG_DICT = {"show": Solution.show, "hide": lambda x: None}
+        self.DEAL_IMG_DICT = {"hide": lambda x: None}
 
         self.TASK_DICT = {
             "1": self.solution.material_moving_detect,  # 物料运动检测
@@ -167,6 +167,7 @@ class MainSystem:
             switch_status = self.switch.read_status()
 
             if switch_status:
+                # 切换到图传模式，终止记录
                 # 更新配置
                 self.updateConfig()
 
@@ -294,12 +295,7 @@ class MainSystem:
                 else:
                     raise TypeError("不支持的图传发送器类型")
 
-                # TODO:完成记录器
-                if self.deal_img_method == "record":
-                    extension_txt += "\n记录器开始记录"
-                    self.Recorder = recorder.Recorder()
-                else:
-                    extension_txt += ""
+                extension_txt += ""
                 self.oled.text(f"任务模式\n{extension_txt}", (1,1))
                 self.oled.display()
 
@@ -364,13 +360,13 @@ class MainSystem:
                             except Exception as e:
                                 printLog(Fore.RED + f"图像处理失败:{e}" + Fore.RESET, Fore.RED)
 
-                            if self.Recorder:
-                                self.Recorder.record(res_img)
+                        if self.Recorder:
+                            self.Recorder.record(res_img)
 
-                            if sign is None:
-                                if self.switch.read_status():
-                                    self.task_running_flag = False
-                                break
+                        if sign is None:
+                            if self.switch.read_status():
+                                self.task_running_flag = False
+                            break
 
                             # 如果有识别结果
                             if res:
@@ -446,10 +442,9 @@ class MainSystem:
                             else:
                                 self.missed_frames += 1
 
+
         self.start_LED.off()
 
-        if self.Recorder:
-            self.Recorder.release()
 
     def updateConfig(self):
         """

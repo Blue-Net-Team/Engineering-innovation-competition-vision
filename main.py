@@ -315,6 +315,8 @@ class MainSystem:
                 while self.task_running_flag:
                     # 读取空帧的次数
                     self.read_empty_frame_num = 0
+                    # 丢图数置零
+                    self.missed_frames = 0
                     # 读取串口信号
                     sign = self.solution.uart.new_read(self.HEAD, self.TAIL)
 
@@ -364,6 +366,8 @@ class MainSystem:
 
                         # 如果有识别结果
                         if res:
+                            # 计算丢图率=
+                            miss_present = self.missed_frames / (self.missed_frames + 1)
                             t1 = time.perf_counter()
                             used_time_ms = (t1 - t0) * 1000
                             if used_time_ms < 40:
@@ -383,9 +387,10 @@ class MainSystem:
                                     Fore.GREEN + f"{res[5:8]}\t" + Fore.RESET +
                                     Fore.WHITE + "Y:" + Fore.RESET +
                                     Fore.GREEN + f"{res[8:11]}\t" + Fore.RESET +
-                                    # Fore.MAGENTA + f"{res}\t" + Fore.RESET +
                                     Fore.WHITE + "used time:" + Fore.RESET +
-                                    color + f"{used_time_ms:.2f}ms" + Fore.RESET
+                                    color + f"{used_time_ms:.2f}ms" + Fore.RESET +
+                                    Fore.WHITE + "missed present:" + Fore.RESET +
+                                    color + f"{miss_present:.2%}" + Fore.RESET
                                 )
                                 oled_txt = f"角度：{'+' if res[1]=='1' else '-'}{res[2:4]}.{res[4]}\nX:{res[5:8]}  Y:{res[8:11]}"
                             # 打印物料位号
@@ -396,7 +401,9 @@ class MainSystem:
                                     Fore.GREEN + res[2] + "\t" + Fore.RESET +
                                     Fore.BLUE + res[3] + "\t" + Fore.RESET +
                                     Fore.WHITE + "used time:" + Fore.RESET +
-                                    color + f"{used_time_ms:.2f}ms" + Fore.RESET
+                                    color + f"{used_time_ms:.2f}ms" + Fore.RESET +
+                                    Fore.WHITE + "missed present:" + Fore.RESET +
+                                    color + f"{miss_present:.2%}" + Fore.RESET
                                 )
                                 oled_txt = f"物料位号：R{res[1]} G{res[2]} B{res[3]}"
                             # 其他情况直接打印res
@@ -405,7 +412,9 @@ class MainSystem:
                                     Fore.WHITE + "res:" + Fore.RESET +
                                     Fore.MAGENTA + f"{res}\t" + Fore.RESET +
                                     Fore.WHITE + "used time:" + Fore.RESET +
-                                    color + f"{used_time_ms:.2f}ms" + Fore.RESET
+                                    color + f"{used_time_ms:.2f}ms" + Fore.RESET +
+                                    Fore.WHITE + "missed present:" + Fore.RESET +
+                                    color + f"{miss_present:.2%}" + Fore.RESET
                                 )
                                 oled_txt = f"res:{res}"
 
@@ -421,10 +430,6 @@ class MainSystem:
                             break
                         else:
                             self.missed_frames += 1
-
-                    # 计算丢图率
-                    miss_rate = self.missed_frames / self.missed_frames + 1
-                    printLog(Fore.WHITE + f"丢图率: {miss_rate:.2%}" + Fore.RESET)
 
         self.start_LED.off()
 

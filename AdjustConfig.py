@@ -67,6 +67,8 @@ class Ad_Config(Solution):
             res, res_img = self.annulus_top(img)
 
             if res:
+                # 计算丢图率
+                miss_rate = self.missed_frames / (self.missed_frames + 1)
                 timeStamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
                 print(
                     Fore.GREEN + f"[{timeStamp}]" + Fore.RESET,
@@ -74,6 +76,8 @@ class Ad_Config(Solution):
                     Fore.MAGENTA + f"{res[5:8]}" + Fore.RESET,
                     Fore.WHITE + f"y" + Fore.RESET,
                     Fore.MAGENTA + f"{res[8:11]}" + Fore.RESET,
+                    Fore.WHITE + f"miss rate" + Fore.RESET,
+                    Fore.MAGENTA + f"{miss_rate:.2%}" + Fore.RESET,
                 )
             else:
                 self.missed_frames += 1
@@ -89,10 +93,6 @@ class Ad_Config(Solution):
                 # 保存配置
                 detector.save_config("config.yaml")
                 print(Fore.GREEN + "保存配置")
-
-        # 计算丢图率
-        miss_rate = self.missed_frames / (self.missed_frames + 1)
-        print(Fore.WHITE + f"丢图率: {miss_rate:.2%}" + Fore.RESET)
 
     def adjust_color_threshold(self, color_name: str="R"):
         """
@@ -166,6 +166,7 @@ class Ad_Config(Solution):
             res, res_img = self.right_angle_detect(img)
 
             if res:
+                miss_present = self.missed_frames / (self.missed_frames + 1)
                 timeStamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
                 print(
                     Fore.GREEN + f"[{timeStamp}]" + Fore.RESET,
@@ -175,6 +176,7 @@ class Ad_Config(Solution):
                     Fore.MAGENTA + f"{res[5:8]}\t" + Fore.RESET,
                     Fore.WHITE + f"y:" + Fore.RESET,
                     Fore.MAGENTA + f"{res[8:11]}" + Fore.RESET,
+                    Fore.WHITE + f"miss present: {miss_present:.2%}" + Fore.RESET,
                 )
             else:
                 self.missed_frames += 1
@@ -191,10 +193,6 @@ class Ad_Config(Solution):
                     Fore.GREEN + f"[{timeStamp}]" + Fore.RESET,
                     Fore.CYAN + "保存配置" + Fore.RESET
                 )
-
-        # 计算丢图率
-        miss_rate = self.missed_frames / (self.missed_frames + 1)
-        print(Fore.WHITE + f"丢图率: {miss_rate:.2%}" + Fore.RESET)
 
 
 class Ad_Area_config:

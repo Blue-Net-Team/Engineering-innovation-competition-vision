@@ -44,7 +44,7 @@ import numpy as np
 
 import Solution
 from ImgTrans import SendImg, SendImgTCP, SendImgUDP
-from utils import Cap, Switch, LED, OLED_I2C, Recorder, connect_to_wifi, get_CPU_temp, get_GPU_temp, printLog
+from utils import Cap, Switch, LED, OLED_I2C, connect_to_wifi, get_CPU_temp, get_GPU_temp, printLog
 from ImgTrans.ImgTrans import NeedReConnect
 
 init(autoreset=True)
@@ -53,7 +53,6 @@ class MainSystem:
     """
     主任务系统
     """
-    deal_img_method = "hide"  # 处理图像的方法
     ori_imgTrans_running_flag = False  # 原始图像是否正在传输
     task_running_flag = False  # 任务是否正在运行
     read_empty_frame_num:int = 0  # 读取空帧的次数
@@ -80,7 +79,6 @@ class MainSystem:
             sender_main (SendImg): 任务图传发送器
             config_path (str): 配置文件路径
         """
-        self.Recorder: Recorder | None = None
         self.solution = Solution.Solution(ser_port, config_path)
         self.cap = Cap()
         self.switch = Switch("GPIO3-A3", True)
@@ -167,10 +165,6 @@ class MainSystem:
 
             if switch_status:
                 # 切换到图传模式，终止记录
-                if self.Recorder:
-                    self.Recorder.release()
-                    # 置空Recorder引用
-                    self.Recorder = None
                 # 更新配置
                 self.updateConfig()
 
@@ -298,12 +292,7 @@ class MainSystem:
                 else:
                     raise TypeError("不支持的图传发送器类型")
 
-                # TODO:完成记录器
-                if self.deal_img_method == "record":
-                    extension_txt += "\n记录器开始记录"
-                    self.Recorder = Recorder()
-                else:
-                    extension_txt += ""
+                extension_txt += ""
                 self.oled.text(f"任务模式\n{extension_txt}", (1,1))
                 self.oled.display()
 
@@ -358,9 +347,6 @@ class MainSystem:
                             printLog(Fore.RED + f"图像处理失败，稍后重试: {e}" + Fore.RESET)
                         except Exception as e:
                             printLog(Fore.RED + f"图像处理失败:{e}" + Fore.RESET, Fore.RED)
-
-                        if self.Recorder:
-                            self.Recorder.record(res_img)
 
                         if sign is None:
                             if self.switch.read_status():

@@ -84,7 +84,7 @@ class MainSystem:
             config_path (str): 配置文件路径
         """
         self.solution = Solution.Solution(ser_port, config_path)
-        self.shower = Uart("/dev/ttyUSB0",9600)
+        self.shower = Uart("/dev/ttyUSB0", 115200)
         self.cap = Cap()
         self.switch = Switch("GPIO3-A3", True)
         self.start_LED = LED("GPIO3-A2")

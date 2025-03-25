@@ -345,6 +345,10 @@ class MainSystem:
                         if sign is not None:
                             printLog(Fore.WHITE + f"收到信号 {sign}" + Fore.RESET)
                             self.detecting_LED.on()
+
+                        if sign == "1":
+                            self.solution.position_id_stack = []
+
                         t0 = time.perf_counter()
 
                         while self.task_running_flag:

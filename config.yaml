@@ -60,6 +60,6 @@ color:
     centre: 0
     error: 17
 max_material_area: 26000
-min_material_area: 0
+min_material_area: 300
 need2cut_height: 0
 target_angle: 46

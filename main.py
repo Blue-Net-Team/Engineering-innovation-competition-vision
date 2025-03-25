@@ -80,7 +80,6 @@ class MainSystem:
             sender_main (SendImg): 任务图传发送器
             config_path (str): 配置文件路径
         """
-        self.Recorder = None
         self.solution = Solution.Solution(ser_port, config_path)
         self.shower = Uart("/dev/ttyUSB0", 115200)
         self.cap = Cap()
@@ -360,13 +359,10 @@ class MainSystem:
                             except Exception as e:
                                 printLog(Fore.RED + f"图像处理失败:{e}" + Fore.RESET, Fore.RED)
 
-                        if self.Recorder:
-                            self.Recorder.record(res_img)
-
-                        if sign is None:
-                            if self.switch.read_status():
-                                self.task_running_flag = False
-                            break
+                            if sign is None:
+                                if self.switch.read_status():
+                                    self.task_running_flag = False
+                                break
 
                             # 如果有识别结果
                             if res:

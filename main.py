@@ -46,6 +46,7 @@ import Solution
 from ImgTrans import SendImg, SendImgTCP, SendImgUDP
 from utils import Cap, Switch, LED, OLED_I2C, recorder, connect_to_wifi, get_CPU_temp, get_GPU_temp, printLog
 from ImgTrans.ImgTrans import NeedReConnect
+from utils.UART import Uart
 
 init(autoreset=True)
 
@@ -83,6 +84,7 @@ class MainSystem:
             config_path (str): 配置文件路径
         """
         self.solution = Solution.Solution(ser_port, config_path)
+        self.shower = Uart("/dev/ttyUSB0",9600)
         self.cap = Cap()
         self.switch = Switch("GPIO3-A3", True)
         self.start_LED = LED("GPIO3-A2")
@@ -320,116 +322,121 @@ class MainSystem:
                     # 读取串口信号
                     sign = self.solution.uart.new_read(self.HEAD, self.TAIL)
 
-                    if sign not in self.TASK_DICT.keys():
-                        printLog(Fore.RED + f"非法信号 {sign}" + Fore.RESET)
-
-                        self.oled.clear()
-                        self.oled.text(f"非法信号 {sign}", (1,1))
-                        self.oled.display()
-
-                        # 检查开关
-                        if self.switch.read_status():
-                            self.task_running_flag = False
-                            break
-                        else:
-                            continue
-
-                    # 执行任务
-                    if sign is not None:
-                        printLog(Fore.WHITE + f"收到信号 {sign}" + Fore.RESET)
-                        self.detecting_LED.on()
-                    t0 = time.perf_counter()
-
-                    while self.task_running_flag:
-                        _, img = self.cap.read()
-
-                        if img is None:
-                            continue
-
-                        res, res_img = self.TASK_DICT[sign](img)
-
-                        try:
-                            if self.sender_main is not None:
-                                self.sender_main.send(res_img)
-                        except BlockingIOError as e:
-                            printLog(Fore.RED + f"图像处理失败，稍后重试: {e}" + Fore.RESET)
-                        except Exception as e:
-                            printLog(Fore.RED + f"图像处理失败:{e}" + Fore.RESET, Fore.RED)
-
-                        if self.Recorder:
-                            self.Recorder.record(res_img)
-
-                        if sign is None:
-                            if self.switch.read_status():
-                                self.task_running_flag = False
-                            break
-
-                        # 如果有识别结果
-                        if res:
-                            # 计算丢图率=
-                            miss_present = self.missed_frames / (self.missed_frames + 1)
-                            t1 = time.perf_counter()
-                            used_time_ms = (t1 - t0) * 1000
-                            if used_time_ms < 40:
-                                color = Fore.GREEN
-                            elif used_time_ms < 60:
-                                color = Fore.YELLOW
-                            else:
-                                color = Fore.RED
-
-                            # 打印定位信息
-                            if res[0] == "L" and res[-1] == "E":
-                                printLog(
-                                    Fore.WHITE + "res:" + Fore.RESET +
-                                    Fore.WHITE + "角度:" + Fore.RESET +
-                                    Fore.GREEN + f"{'+' if res[1]=='1' else '-'}{res[2:4]}.{res[4]}\t" + Fore.RESET +
-                                    Fore.WHITE + f"X:" + Fore.RESET +
-                                    Fore.GREEN + f"{res[5:8]}\t" + Fore.RESET +
-                                    Fore.WHITE + "Y:" + Fore.RESET +
-                                    Fore.GREEN + f"{res[8:11]}\t" + Fore.RESET +
-                                    Fore.WHITE + "used time:" + Fore.RESET +
-                                    color + f"{used_time_ms:.2f}ms" + Fore.RESET +
-                                    Fore.WHITE + "missed present:" + Fore.RESET +
-                                    color + f"{miss_present:.2%}" + Fore.RESET
-                                )
-                                oled_txt = f"角度：{'+' if res[1]=='1' else '-'}{res[2:4]}.{res[4]}\nX:{res[5:8]}  Y:{res[8:11]}"
-                            # 打印物料位号
-                            elif res[0] == "C" and res[-1] == "E":
-                                printLog(
-                                    Fore.WHITE + "res:" + Fore.RESET +
-                                    Fore.RED + res[1] + "\t" + Fore.RESET +
-                                    Fore.GREEN + res[2] + "\t" + Fore.RESET +
-                                    Fore.BLUE + res[3] + "\t" + Fore.RESET +
-                                    Fore.WHITE + "used time:" + Fore.RESET +
-                                    color + f"{used_time_ms:.2f}ms" + Fore.RESET +
-                                    Fore.WHITE + "missed present:" + Fore.RESET +
-                                    color + f"{miss_present:.2%}" + Fore.RESET
-                                )
-                                oled_txt = f"物料位号：R{res[1]} G{res[2]} B{res[3]}"
-                            # 其他情况直接打印res
-                            else:
-                                printLog(
-                                    Fore.WHITE + "res:" + Fore.RESET +
-                                    Fore.MAGENTA + f"{res}\t" + Fore.RESET +
-                                    Fore.WHITE + "used time:" + Fore.RESET +
-                                    color + f"{used_time_ms:.2f}ms" + Fore.RESET +
-                                    Fore.WHITE + "missed present:" + Fore.RESET +
-                                    color + f"{miss_present:.2%}" + Fore.RESET
-                                )
-                                oled_txt = f"res:{res}"
+                    if sign is not None and "+" in sign:
+                        tasks = sign.split("+")
+                        need2write = f"({tasks[0]}{tasks[1]})"
+                        self.shower.write(need2write)
+                    else:
+                        if sign not in self.TASK_DICT.keys():
+                            printLog(Fore.RED + f"非法信号 {sign}" + Fore.RESET)
 
                             self.oled.clear()
-                            self.oled.text(f"收到信号{sign}\n{oled_txt}", (1, 1))
+                            self.oled.text(f"非法信号 {sign}", (1,1))
                             self.oled.display()
-                            # 清空缓冲区的时候结果为1，这个结果不发送
-                            if res != "1":
-                                self.solution.uart.write(res)
 
-                            # 关闭识别指示灯
-                            self.detecting_LED.off()
-                            break
-                        else:
-                            self.missed_frames += 1
+                            # 检查开关
+                            if self.switch.read_status():
+                                self.task_running_flag = False
+                                break
+                            else:
+                                continue
+
+                        # 执行任务
+                        if sign is not None:
+                            printLog(Fore.WHITE + f"收到信号 {sign}" + Fore.RESET)
+                            self.detecting_LED.on()
+                        t0 = time.perf_counter()
+
+                        while self.task_running_flag:
+                            _, img = self.cap.read()
+
+                            if img is None:
+                                continue
+
+                            res, res_img = self.TASK_DICT[sign](img)
+
+                            try:
+                                if self.sender_main is not None:
+                                    self.sender_main.send(res_img)
+                            except BlockingIOError as e:
+                                printLog(Fore.RED + f"图像处理失败，稍后重试: {e}" + Fore.RESET)
+                            except Exception as e:
+                                printLog(Fore.RED + f"图像处理失败:{e}" + Fore.RESET, Fore.RED)
+
+                            if self.Recorder:
+                                self.Recorder.record(res_img)
+
+                            if sign is None:
+                                if self.switch.read_status():
+                                    self.task_running_flag = False
+                                break
+
+                            # 如果有识别结果
+                            if res:
+                                # 计算丢图率=
+                                miss_present = self.missed_frames / (self.missed_frames + 1)
+                                t1 = time.perf_counter()
+                                used_time_ms = (t1 - t0) * 1000
+                                if used_time_ms < 40:
+                                    color = Fore.GREEN
+                                elif used_time_ms < 60:
+                                    color = Fore.YELLOW
+                                else:
+                                    color = Fore.RED
+
+                                # 打印定位信息
+                                if res[0] == "L" and res[-1] == "E":
+                                    printLog(
+                                        Fore.WHITE + "res:" + Fore.RESET +
+                                        Fore.WHITE + "角度:" + Fore.RESET +
+                                        Fore.GREEN + f"{'+' if res[1]=='1' else '-'}{res[2:4]}.{res[4]}\t" + Fore.RESET +
+                                        Fore.WHITE + f"X:" + Fore.RESET +
+                                        Fore.GREEN + f"{res[5:8]}\t" + Fore.RESET +
+                                        Fore.WHITE + "Y:" + Fore.RESET +
+                                        Fore.GREEN + f"{res[8:11]}\t" + Fore.RESET +
+                                        Fore.WHITE + "used time:" + Fore.RESET +
+                                        color + f"{used_time_ms:.2f}ms" + Fore.RESET +
+                                        Fore.WHITE + "missed present:" + Fore.RESET +
+                                        color + f"{miss_present:.2%}" + Fore.RESET
+                                    )
+                                    oled_txt = f"角度：{'+' if res[1]=='1' else '-'}{res[2:4]}.{res[4]}\nX:{res[5:8]}  Y:{res[8:11]}"
+                                # 打印物料位号
+                                elif res[0] == "C" and res[-1] == "E":
+                                    printLog(
+                                        Fore.WHITE + "res:" + Fore.RESET +
+                                        Fore.RED + res[1] + "\t" + Fore.RESET +
+                                        Fore.GREEN + res[2] + "\t" + Fore.RESET +
+                                        Fore.BLUE + res[3] + "\t" + Fore.RESET +
+                                        Fore.WHITE + "used time:" + Fore.RESET +
+                                        color + f"{used_time_ms:.2f}ms" + Fore.RESET +
+                                        Fore.WHITE + "missed present:" + Fore.RESET +
+                                        color + f"{miss_present:.2%}" + Fore.RESET
+                                    )
+                                    oled_txt = f"物料位号：R{res[1]} G{res[2]} B{res[3]}"
+                                # 其他情况直接打印res
+                                else:
+                                    printLog(
+                                        Fore.WHITE + "res:" + Fore.RESET +
+                                        Fore.MAGENTA + f"{res}\t" + Fore.RESET +
+                                        Fore.WHITE + "used time:" + Fore.RESET +
+                                        color + f"{used_time_ms:.2f}ms" + Fore.RESET +
+                                        Fore.WHITE + "missed present:" + Fore.RESET +
+                                        color + f"{miss_present:.2%}" + Fore.RESET
+                                    )
+                                    oled_txt = f"res:{res}"
+
+                                self.oled.clear()
+                                self.oled.text(f"收到信号{sign}\n{oled_txt}", (1, 1))
+                                self.oled.display()
+                                # 清空缓冲区的时候结果为1，这个结果不发送
+                                if res != "1":
+                                    self.solution.uart.write(res)
+
+                                # 关闭识别指示灯
+                                self.detecting_LED.off()
+                                break
+                            else:
+                                self.missed_frames += 1
 
         self.start_LED.off()
 

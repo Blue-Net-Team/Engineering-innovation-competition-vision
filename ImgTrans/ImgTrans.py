@@ -43,8 +43,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import io
 import socket
 import struct
-import threading
-
 import cv2
 import numpy as np
 from colorama import Fore, Style, init
@@ -298,15 +296,9 @@ class SendImgUDP(SendImg):
         # 构造完整数据包：包头 + 图像数据 + 包尾
         packet = header + img_data + self.EOF_MARKER
 
-        threads:list[threading.Thread] = []
-
-        # 改成多线程发送
+        # 发送图像数据到对端
         for ip in self.clients_ip:
-            t = threading.Thread(target=self.server_socket.sendto, args=(packet, (ip, self.port)))
-            t.start()
-        for t in threads:
-            t.join()
-
+            self.server_socket.sendto(packet, (ip, self.port))
         return True
 
     def close(self):

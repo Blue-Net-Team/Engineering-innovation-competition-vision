@@ -83,6 +83,7 @@ class MainSystem:
             deal_img_method (str): 处理图像的方法,包含"record"(记录)--此参数还在开发
             config_path (str): 配置文件路径
         """
+        self.Recorder = None
         self.solution = Solution.Solution(ser_port, config_path)
         self.shower = Uart("/dev/ttyUSB0", 115200)
         self.cap = Cap()

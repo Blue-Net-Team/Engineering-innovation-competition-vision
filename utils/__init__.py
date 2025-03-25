@@ -22,7 +22,6 @@ from .tspi_board_info import get_CPU_temp, get_GPU_temp
 from .wifi_connect import connect_to_wifi
 from .logger import printLog
 from .ConfigLoader import ConfigLoader
-from .Recorder import Recorder
 
 __all__ = [
     "Cap",
@@ -37,6 +36,5 @@ __all__ = [
     "get_GPU_temp",
     "connect_to_wifi",
     "printLog",
-    "ConfigLoader",
-    "Recorder",
+    "ConfigLoader"
 ]

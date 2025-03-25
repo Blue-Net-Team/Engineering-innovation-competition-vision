@@ -377,7 +377,7 @@ class MainSystem:
 
                             # 如果有识别结果
                             if res:
-                                # 计算丢图率=
+                                # 计算丢图率
                                 miss_present = self.missed_frames / (self.missed_frames + 1)
                                 t1 = time.perf_counter()
                                 used_time_ms = (t1 - t0) * 1000
@@ -387,6 +387,13 @@ class MainSystem:
                                     color = Fore.YELLOW
                                 else:
                                     color = Fore.RED
+
+                                if miss_present < 0.20:
+                                    loss_color = Fore.GREEN
+                                elif miss_present < 0.60:
+                                    loss_color = Fore.YELLOW
+                                else:
+                                    loss_color = Fore.RED
 
                                 # 打印定位信息
                                 if res[0] == "L" and res[-1] == "E":
@@ -399,9 +406,9 @@ class MainSystem:
                                         Fore.WHITE + "Y:" + Fore.RESET +
                                         Fore.GREEN + f"{res[8:11]}\t" + Fore.RESET +
                                         Fore.WHITE + "used time:" + Fore.RESET +
-                                        color + f"{used_time_ms:.2f}ms" + Fore.RESET +
-                                        Fore.WHITE + "missed present:" + Fore.RESET +
-                                        color + f"{miss_present:.2%}" + Fore.RESET
+                                        color + f"{used_time_ms:.2f}ms\t" + Fore.RESET +
+                                        Fore.WHITE + "loss:" + Fore.RESET +
+                                        loss_color + f"{miss_present:.2%}" + Fore.RESET
                                     )
                                     oled_txt = f"角度：{'+' if res[1]=='1' else '-'}{res[2:4]}.{res[4]}\nX:{res[5:8]}  Y:{res[8:11]}"
                                 # 打印物料位号
@@ -412,9 +419,9 @@ class MainSystem:
                                         Fore.GREEN + res[2] + "\t" + Fore.RESET +
                                         Fore.BLUE + res[3] + "\t" + Fore.RESET +
                                         Fore.WHITE + "used time:" + Fore.RESET +
-                                        color + f"{used_time_ms:.2f}ms" + Fore.RESET +
-                                        Fore.WHITE + "missed present:" + Fore.RESET +
-                                        color + f"{miss_present:.2%}" + Fore.RESET
+                                        color + f"{used_time_ms:.2f}ms\t" + Fore.RESET +
+                                        Fore.WHITE + "loss:" + Fore.RESET +
+                                        loss_color + f"{miss_present:.2%}" + Fore.RESET
                                     )
                                     oled_txt = f"物料位号：R{res[1]} G{res[2]} B{res[3]}"
                                 # 其他情况直接打印res
@@ -423,9 +430,9 @@ class MainSystem:
                                         Fore.WHITE + "res:" + Fore.RESET +
                                         Fore.MAGENTA + f"{res}\t" + Fore.RESET +
                                         Fore.WHITE + "used time:" + Fore.RESET +
-                                        color + f"{used_time_ms:.2f}ms" + Fore.RESET +
-                                        Fore.WHITE + "missed present:" + Fore.RESET +
-                                        color + f"{miss_present:.2%}" + Fore.RESET
+                                        color + f"{used_time_ms:.2f}ms\t" + Fore.RESET +
+                                        Fore.WHITE + "loss:" + Fore.RESET +
+                                        loss_color + f"{miss_present:.2%}" + Fore.RESET
                                     )
                                     oled_txt = f"res:{res}"
 

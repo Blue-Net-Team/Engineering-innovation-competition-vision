@@ -218,8 +218,8 @@ class TraditionalColorDetector(Detect):
         cv2.createTrackbar("L_V", "Trackbar", self.L_V, 255, self.__callback)
         cv2.createTrackbar("U_V", "Trackbar", self.U_V, 255, self.__callback)
         cv2.createTrackbar("color", "Trackbar", 0, 2, self._color_callback)
-        cv2.createTrackbar("min_area", "Trackbar", self.min_material_area // 100, 1000, self.__callback)
-        cv2.createTrackbar("max_area", "Trackbar", self.max_material_area // 100, 1000, self.__callback)
+        cv2.createTrackbar("min_area", "Trackbar", self.min_material_area // 10, 1000, self.__callback)
+        cv2.createTrackbar("max_area", "Trackbar", self.max_material_area // 10, 1000, self.__callback)
 
     def __callback(self, x):
         try:
@@ -229,8 +229,8 @@ class TraditionalColorDetector(Detect):
             self.U_S = cv2.getTrackbarPos("U_S", "Trackbar")
             self.L_V = cv2.getTrackbarPos("L_V", "Trackbar")
             self.U_V = cv2.getTrackbarPos("U_V", "Trackbar")
-            self.min_material_area = cv2.getTrackbarPos("min_area", "Trackbar") * 100
-            self.max_material_area = cv2.getTrackbarPos("max_area", "Trackbar") * 100
+            self.min_material_area = cv2.getTrackbarPos("min_area", "Trackbar") * 10
+            self.max_material_area = cv2.getTrackbarPos("max_area", "Trackbar") * 10
 
             self.color_threshold[self.color] = {
                 "centre": self.centre,
@@ -287,8 +287,8 @@ class TraditionalColorDetector(Detect):
             cv2.setTrackbarPos("L_V", "Trackbar", self.L_V)
             cv2.setTrackbarPos("U_V", "Trackbar", self.U_V)
             cv2.setTrackbarPos("color", "Trackbar", self.color_index)
-            cv2.setTrackbarPos("min_area", "Trackbar", self.min_material_area // 100)
-            cv2.setTrackbarPos("max_area", "Trackbar", self.max_material_area // 100)
+            cv2.setTrackbarPos("min_area", "Trackbar", self.min_material_area // 10)
+            cv2.setTrackbarPos("max_area", "Trackbar", self.max_material_area // 10)
         except:
             pass
 

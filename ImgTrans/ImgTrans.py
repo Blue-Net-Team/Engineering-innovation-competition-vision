@@ -263,6 +263,7 @@ class SendImgUDP(SendImg):
         打开udp套接字
         """
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.server_socket.bind((self.host, self.port))
 
     def connecting(self):

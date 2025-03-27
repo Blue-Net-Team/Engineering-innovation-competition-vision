@@ -5,7 +5,7 @@ LineDetector:
   bias: 1
   iter_time: 2
   maxLineGap: 49
-  minLineLength: 0
+  minLineLength: 60
   odd_index: 2
   sigma: 0.0
 annulus:

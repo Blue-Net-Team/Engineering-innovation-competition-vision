@@ -530,8 +530,13 @@ class Solution(ConfigLoader):
                 (255, 0, 0),
                 2
             )
-            # 画出圆心
-            cv2.circle(new_img, avg_point, 2, (255, 255, 0), 2)
+            cv2.circle(
+                new_img,
+                avg_point,
+                5,
+                (0, 255, 255),
+                1
+            )
 
         res_img = new_img
 

@@ -193,6 +193,7 @@ class Ad_Config(Solution):
                     Fore.GREEN + f"[{timeStamp}]" + Fore.RESET,
                     Fore.CYAN + "保存配置" + Fore.RESET
                 )
+        cv2.destroyAllWindows()
 
 
 class Ad_Area_config:
@@ -285,6 +286,7 @@ class Ad_Area_config:
             elif key & 0xFF == ord("s"):
                 self.save_config()
                 print(Fore.GREEN + "保存配置")
+        cv2.destroyAllWindows()
 
 
 def ad_color(_cap: cv2.VideoCapture | Cap | ReceiveImg):

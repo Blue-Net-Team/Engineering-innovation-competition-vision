@@ -93,6 +93,7 @@ class Ad_Config(Solution):
                 # 保存配置
                 detector.save_config("config.yaml")
                 print(Fore.GREEN + "保存配置")
+        cv2.destroyAllWindows()
 
     def adjust_color_threshold(self, color_name: str="R"):
         """

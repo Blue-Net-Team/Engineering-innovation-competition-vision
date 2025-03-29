@@ -103,6 +103,13 @@ class LineDetector(Detect):
     * 获取直线角度
     * 获取两条直线的夹角
     """
+    # 颜色二值化参数
+    H_Low = 0
+    S_Low = 0
+    V_Low = 0
+    H_High = 100
+    S_High = 255
+    V_High = 255
 
     # canny边缘检测参数
     Min_val = 120
@@ -126,7 +133,13 @@ class LineDetector(Detect):
         return 2 * self.odd_index - 1
 
     def createTrackbar(self):
-        cv2.namedWindow("Trackbar")
+        cv2.namedWindow("Trackbar", cv2.WINDOW_NORMAL)
+        cv2.createTrackbar("H_Low", "Trackbar", self.H_Low, 179, self.__callback)
+        cv2.createTrackbar("S_Low", "Trackbar", self.S_Low, 255, self.__callback)
+        cv2.createTrackbar("V_Low", "Trackbar", self.V_Low, 255, self.__callback)
+        cv2.createTrackbar("H_High", "Trackbar", self.H_High, 179, self.__callback)
+        cv2.createTrackbar("S_High", "Trackbar", self.S_High, 255, self.__callback)
+        cv2.createTrackbar("V_High", "Trackbar", self.V_High, 255, self.__callback)
         cv2.createTrackbar("Min_val", "Trackbar", self.Min_val, 255, self.__callback)
         cv2.createTrackbar("Max_val", "Trackbar", self.Max_val, 255, self.__callback)
         cv2.createTrackbar("Hough_threshold", "Trackbar", self.Hough_threshold, 1000, self.__callback)
@@ -139,6 +152,12 @@ class LineDetector(Detect):
 
     def __callback(self, x):
         try:
+            self.H_Low = cv2.getTrackbarPos("H_Low", "Trackbar")
+            self.S_Low = cv2.getTrackbarPos("S_Low", "Trackbar")
+            self.V_Low = cv2.getTrackbarPos("V_Low", "Trackbar")
+            self.H_High = cv2.getTrackbarPos("H_High", "Trackbar")
+            self.S_High = cv2.getTrackbarPos("S_High", "Trackbar")
+            self.V_High = cv2.getTrackbarPos("V_High", "Trackbar")
             self.Min_val = cv2.getTrackbarPos("Min_val", "Trackbar")
             self.Max_val = cv2.getTrackbarPos("Max_val", "Trackbar")
             self.Hough_threshold = cv2.getTrackbarPos("Hough_threshold", "Trackbar")
@@ -204,6 +223,14 @@ class LineDetector(Detect):
 
         line_dict = {}
         for line in lines:
+            # 蓝色将直线画出
+            cv2.line(
+                res_img,
+                (line[0][0], line[0][1]),
+                (line[0][2], line[0][3]),
+                (255, 0, 0),
+                1
+            )
             degree: float = round(np.degrees(np.arctan2(line[0][3] - line[0][1], line[0][2] - line[0][0])), 1)
             line_dict[degree] = line[0]
 
@@ -216,8 +243,11 @@ class LineDetector(Detect):
             )
 
             for target_degree in target_degree_range:
+                target_degree = round(target_degree, 1)
                 if target_degree in line_dict:  # 判断目标角在字典的话
-                    target_line = line_dict[target_degree]
+                    # 保留一位小数
+                    _target_degree = round(target_degree, 1)
+                    target_line = line_dict[_target_degree]
 
                     # 计算交点
                     x1, y1, x2, y2 = line[0]
@@ -253,7 +283,8 @@ class LineDetector(Detect):
             直线参数
         """
         img = _img.copy()
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # 转为灰度图
+
+        # TODO: 颜色二值化
         img = cv2.medianBlur(img, self.kernel_size)
         img = cv2.GaussianBlur(
             img,
@@ -261,14 +292,19 @@ class LineDetector(Detect):
             self.sigma,
             borderType=cv2.BORDER_REPLICATE
         )
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        range_img = cv2.inRange(hsv,
+                          np.array((self.H_Low, self.S_Low, self.S_Low)),
+                          np.array((self.H_High, self.S_High, self.S_High)),
+                        )
 
         # canny边缘检测
-        canny_img = cv2.Canny(img, self.Min_val, self.Max_val)
+        canny_img = cv2.Canny(range_img, self.Min_val, self.Max_val)
 
-        # 膨胀再腐蚀
+        # 膨胀
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
         canny_img = cv2.dilate(canny_img, kernel, iterations=self.iter_time)
-        canny_img = cv2.erode(canny_img, kernel, iterations=self.iter_time)
+        # canny_img = cv2.erode(canny_img, kernel, iterations=self.iter_time)
 
         # 霍夫直线检测
         # lines是形状为(n,1,4)的数组
@@ -320,7 +356,13 @@ class LineDetector(Detect):
             "bias": self.bias,
             "sigma": self.sigma,
             "odd_index": self.odd_index,
-            "iter_time": self.iter_time
+            "iter_time": self.iter_time,
+            "H_Low": self.H_Low,
+            "S_Low": self.S_Low,
+            "V_Low": self.V_Low,
+            "H_High": self.H_High,
+            "S_High": self.S_High,
+            "V_High": self.V_High,
         }
         super().save_config(path, config)
 
@@ -352,5 +394,11 @@ class LineDetector(Detect):
         res_str += super().load_param(config, "sigma")
         res_str += super().load_param(config, "odd_index")
         res_str += super().load_param(config, "iter_time")
+        res_str += super().load_param(config, "H_Low")
+        res_str += super().load_param(config, "S_Low")
+        res_str += super().load_param(config, "V_Low")
+        res_str += super().load_param(config, "H_High")
+        res_str += super().load_param(config, "S_High")
+        res_str += super().load_param(config, "V_High")
 
         return res_str

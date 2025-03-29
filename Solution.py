@@ -111,6 +111,7 @@ class Solution(ConfigLoader):
         self.NEED2CUT:int = 40
         self.clientsIp_debug = []
         self.clientsIp_main = []
+        self.right_angel_stack = []
         # 读取配置文件
         self.load_config()
 
@@ -216,7 +217,7 @@ class Solution(ConfigLoader):
     # endregion
 
     # region 物料位置检测
-    def get_material(self, _img:cv2.typing.MatLike) -> tuple[str|None, cv2.typing.MatLike]:
+    def get_material(self, _img:cv2.typing.MatLike) -> tuple[str, cv2.typing.MatLike]:
         """
         获取物料位置，返回字符发送电控
         ----
@@ -345,6 +346,8 @@ class Solution(ConfigLoader):
 
         if angel1 is None or angel2 is None or cross_point_ff is None:
             return None, detect_res_img
+
+        # 交点
         cross_point = round(cross_point_ff[0][0]), round(cross_point_ff[1][0])
 
         # 取出大于0的角度
@@ -359,7 +362,25 @@ class Solution(ConfigLoader):
             2,
         )
 
+        # 做差角的10倍
         diff_angel = int((angel - self.target_angle)*10)
+
+        # 如果栈有值，弹出，并且与当前做差角做差
+        if len(self.right_angel_stack) > 0:
+            # 取出值但是不弹出
+            last_diff_angel = self.right_angel_stack[0]
+            # 计算波动，如果波动太大 ，认为识别到别的直线
+            fluctuation = diff_angel - last_diff_angel
+            abs_fluctuation = abs(fluctuation)
+            # 如果波动大于20度，不弹出，并且不发送数据
+            if abs_fluctuation > 200:
+                return None, detect_res_img
+            # 否则，弹出上次的角度，并且将当前角度入栈
+            else:
+                # 弹出
+                self.right_angel_stack.pop()
+                # 入栈
+                self.right_angel_stack.append(diff_angel)
 
         res1 = f"L{'0' if diff_angel < 0 else '1'}{str(abs(diff_angel)).rjust(3, '0')}"
         res3 =  f"{str(abs(cross_point[0])).rjust(3, '0')}"\

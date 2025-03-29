@@ -1,15 +1,15 @@
 LineDetector:
-  H_High: 100
-  H_Low: 0
+  H_High: 57
+  H_Low: 12
   Hough_threshold: 30
   Max_val: 21
   Min_val: 0
-  S_High: 255
-  S_Low: 10
-  V_High: 255
+  S_High: 200
+  S_Low: 5
+  V_High: 240
   V_Low: 0
   bias: 4
-  iter_time: 8
+  iter_time: 1
   maxLineGap: 49
   minLineLength: 60
   odd_index: 6

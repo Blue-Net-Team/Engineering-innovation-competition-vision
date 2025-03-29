@@ -192,9 +192,24 @@ class Solution(ConfigLoader):
 
         # 如果两个字典不相等，说明物料运动了
         if now_color_position_id_dict != last_color_position_id_dict\
-        and (len(set(now_color_position_id_dict.values())) == 3
-             or list(now_color_position_id_dict.values()).count(None) == 2):
+        and (
+            len(set(now_color_position_id_dict.values())) == 3     # 并且三个值都不重复
+            or list(now_color_position_id_dict.values()).count(None) == 2   # 或者有两个没看见(有2个被夹走了)
+        ):
             res, res_img = self.get_material(_img)
+            # 对字符判断，如果有一个没看到，将0自适应改为没有的123
+            data = res[1:-1]
+            if "0" in data:
+                total = set(["1","2","3"])
+                # 将"012"转换成["0","1","2"]
+                data_lst = list(data)
+                detect_color = set(data_lst) - set("0")     # 去除0
+                miss_color = total - detect_color
+                miss_color = list(miss_color)[0]
+                # 将"0"替换成miss_color
+                data_lst[data_lst.index("0")] = miss_color
+                data = "".join(data_lst)
+                res = "C" + data + "E"
             return res, res_img
         else:
             return None, res_img

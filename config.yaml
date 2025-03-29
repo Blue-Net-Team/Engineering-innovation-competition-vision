@@ -1,13 +1,19 @@
 LineDetector:
+  H_High: 100
+  H_Low: 0
   Hough_threshold: 30
-  Max_val: 154
-  Min_val: 33
-  bias: 1
-  iter_time: 2
+  Max_val: 21
+  Min_val: 0
+  S_High: 255
+  S_Low: 10
+  V_High: 255
+  V_Low: 0
+  bias: 4
+  iter_time: 8
   maxLineGap: 49
   minLineLength: 60
-  odd_index: 2
-  sigma: 0.0
+  odd_index: 6
+  sigma: 2.4
 annulus:
   dp: 1
   iter_time: 5
@@ -35,11 +41,6 @@ area3_points:
   - 237
 clientsIp_debug:
 - 169.254.255.255
-clientsIp_main:
-- 192.168.137.1
-- 192.168.137.83
-- 192.168.137.252
-- 192.168.137.78
 color:
   B:
     L_S: 80

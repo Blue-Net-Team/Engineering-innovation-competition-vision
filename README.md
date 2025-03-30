@@ -1,9 +1,29 @@
 # 2025年全国大学生工程实践与创新能力大赛（工创）--视觉识别部分
 
+## 项目情况
+
+本比赛已经结束，很遗憾这个方案没有进入决赛。我们赛后进行回顾和分析，得到一下结论
+
+1. 指导老师没有买到官方地图，是本方案没能晋级的根本原因。在实验室的地图，中央4个黄色放个有黑色方框，识别直线的难度非常低，然而广工（广东工业大学）现场没有黑色边框，导致识别难度大大加大，再加上赛场灯光的多重阴影，最终定位效果并不如意
+2. 本仓库在3月28的最后一次提交是实验室最稳定的版本，没有考虑到任何无线连接的干扰，在main中添加了无线图传，然而在赛场可能存在一些干扰，导致电脑的网卡频繁掉线，导致泰山派的main直接卡死，这个问题导致10分钟的调试时间没有发挥到最好的作用
+
+在赛程一早上的10分钟调试时间，我们发现了实验室的地图与现场不同之后，从12:00开始想出新的识别方案，到13:00现场检录，我们更新了哈希为`37760572`的提交，此前，删除了main中的无线图传，避免卡死。
+
+**值得注意的是，在哈希`37760572`提交之前，直角识别的参数bias工作一直不正常，都是介于还可以使用，在实验室就没有修改。**
+
+接下来，本仓库将详细介绍思路以及相关改进思路；从泰山派的部署，到赛场的临时调试的注意事项，以及后续改比赛的思考。
+
+## 分支说明
+
+1. `master`分支：该分支同步泰山派的代码，与参赛时的代码和参数相同
+2. `developing`分支：该分支用于开发新的功能，新的功能开发完成之后在这个分支进行测试，确保分支逻辑没有问题，会合并到`master`分支
+3. `dev-329`分支：这个分支是3月29中午添加的分支，用于临时修改直线识别的逻辑和思路，虽然这个功能没有测试直接进行使用，但是可以确定的是，这个逻辑没有问题，。但是定位效果也一般般，也可能是参数调试过于仓促导致，也与底层的设计有关。初赛后曲儿该逻辑没问题后，这个分支也合并到了master分支，但是由于光线和其他问题，初赛后还是对其进行了修改，如果转盘物料转动后有物料没有识别到(包含0在结果中)会对0进行填补，自适应填补没有识别到的颜色；直角识别的角度两帧之间相差超过20°，认为是不应该出现的波动，就不会返回角度而是继续识别。但是这个功能最后没有在赛场进行 验证，也不知道其可行性。
+
+## 项目简介
+
 本代码是该比赛智慧物流搬运赛道的视觉识别部分，该方案
 
 - 将色相重构，使用中心点色相和容差的方式识别色相，然后轻微对饱和度和亮度进行调整，基本可以保证参数的鲁棒性。
-- 不再提供圆环的定位，而是使用圆环旁边的T型路口的直角进行定位，全场的定位可以完全依赖这个。
 - 函数设计上，将所有的顶层需求都使用固定参数传入，固定类型传出，从而实现顶层的多态，底层的单一职责，这样可以保证代码的可维护性和可扩展性。
 
 ## 设备清单
@@ -24,6 +44,8 @@
 ### ADB的使用
 
 完成了系统烧录，应该也知道了loader和adb模式，直接用typeC将泰山派连接到电脑，连接后直接用adb连接
+
+> ADB (Android Debug Brigade)即安卓调试桥，本来是用于进行安卓开发的真机调试工具，但是也可以用在其他的一些Linux开发板中，可以为开发者提供有线的命令行环境
 
 ```shell
 adb shell su lckfb
@@ -171,22 +193,25 @@ sudo mount /dev/mmcblk1p1 /media/sdcard
 sudo mount -a
 ```
 
-### 安装miniconda3
+### 安装miniconda3(选做)
+
+> 笔者开发的环境是使用`conda`，conda可以更换python版本，本仓库是使用python3.13进行开发
 
 可以先下载了安装包后使用sftp将文件传到泰山派（需要ssh），也可以直接下载
 
 使用 `wget`命令下载安装包
 
 ```bash
-# 创建Downloads文件夹，并且将安装包放在里面
+# 创建Downloads文件夹并打开
 mkdir Downloads && cd Downloads
+# 下载conda安装包到当前文件夹
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-aarch64.sh
 ```
 
 下载完成后，运行安装脚本
 
 ```bash
-# -p后面的参数是安装目录
+# -b代表安装到指定目录，-p后面的参数是安装目录，这样可以快速安装不需要阅读许可协议
 bash Miniconda3-latest-Linux-aarch64.sh -b -p /media/sdcard/miniconda3
 ```
 
@@ -270,6 +295,8 @@ sudo chmod 660 /dev/gpiochip0
 
 ### 自启动的脚本
 
+上个标题的步骤，重新之后可能会失效，所以需要做一个开机自启动脚本
+
 **下面的内容需要创建了gpio组，并且将当前用户(这里是 `lckfb`)添加到gpio组中在运行**
 
 ```bash
@@ -300,7 +327,61 @@ sudo systemctl status gpio-setup.service
 
 **`gpio-setup.service`里面的 `ExecStart`需要修改到 `run_auto`文件夹下 `gpio-setup.sh`文件的绝对路径**
 
+#### 解析
+
+其实制作自启动脚本的流程基本都是一样的，在固定的位置写好需要运行的脚本，可以是python脚本也可以是bash脚本，然后创建对应的service文件，然后放到系统的服务文件中，刷新，然后打开服务自启动即可
+
+可能很难理解说明的`服务`，其实并没有那么复杂，服务其实就是运行在后台的一个程序，只是说这个程序一般是用来服务用户的其他操作，所以叫做`服务`
+
+**如果使用bash脚本，必须在脚本开头写上**
+
+```bash
+#!/bin/bash
+```
+
+用于表明解释器，使用bash解释器
+
+如果创建service文件，标准的service文件如下
+
+```
+[Unit]
+Description=Change Board LED
+After=network.target
+
+[Service]
+ExecStart=/media/sdcard/code/Engineering-innovation-competition-vision/run_auto/change_board_led.sh
+Type=simple
+RemainAfterExit=true
+User=root
+
+[Install]
+WantedBy=multi-user.target
+```
+
+- `Unit` 单元信息，定义服务的元信息和依赖关系。
+  - `Description`：描述服务的功能，便于管理员了解服务的用途。
+  - `After`：指定服务的启动顺序，表示该服务需要在某些目标或服务启动后再启动。
+  - `Requires` 和 `Wants`：定义服务的依赖关系，Requires 表示强依赖，Wants 表示弱依赖。
+  - `Before`：与 `After` 相反，表示该服务需要在指定目标或服务之前启动。
+- `Service`: 服务，用于定义服务的行为和运行方式
+  - `ExecStart`：指定服务启动时执行的命令或脚本。
+  - `Type`：定义服务的启动类型，例如：
+    - `simple`：默认类型，直接运行 ExecStart 中的命令。
+    - `forking`：服务会派生出一个子进程，父进程退出后，子进程继续运行。
+    - `oneshot`：服务运行一次后立即退出，通常用于初始化任务。
+  - `RemainAfterExit`：如果设置为 true，即使服务的主进程退出，服务仍然被认为是“活动”状态。
+  - `User`：指定运行服务的用户。
+  - `Restart`：定义服务失败时的重启策略，例如 always 表示服务失败后总是重启。
+- `Install` 安装行为，用于设置服务的启动目标
+  - `WantedBy`：指定服务在哪些目标（target）下启用。例如：
+    - `multi-user.target`：表示服务在多用户模式下启动。
+    - `graphical.target`：表示服务在图形界面模式下启动。
+  - `RequiredBy`：类似于 WantedBy，但表示强依赖关系。
+  - `Alias`：为服务创建别名。
+
 ### 摄像头索引查询
+
+不管是树莓派还是泰山派，摄像头的索引可能会被其他的USB设备替代，摄像头的索引就会发生改变，所以我们需要确认摄像头的索引编号
 
 使用以下命令查看可用的摄像头
 
@@ -308,13 +389,22 @@ sudo systemctl status gpio-setup.service
 v4l2-ctl --list-devices
 ```
 
-找到usb那个，泰山派比较特殊，摄像头的索引不是0
+找到我们使用的摄像头，一般有USB或者1080p、60等字样，泰山派比较特殊，摄像头的索引不是0。会得到类型于下面的输出
+
+```
+/dev/video0
+/dev/video1
+```
+
+这种情况一般就是第一个，如果第一个不行就试一下第二个
 
 ### 引脚资源释放
 
 `run_auto/cleanup.sh`脚本是用来释放引脚资源，如果程序被kill，没有关闭对应的LED灯和OLED模块，需要手动释放引脚资源
 
 #### 创建快捷方式
+
+> 下面的方法可以适用于任何比较长的命令
 
 在 `~/.bashrc`文件中添加以下内容
 
@@ -339,11 +429,10 @@ source ~/.bashrc
 在main中添加了命令行传参，方便传递处理图像是否使用图传以及config的路径，可以使用以下命令快速执行
 
 ```bash
-/media/sdcard/miniconda3/envs/EIC/bin/python /media/sdcard/code/Engineering-innovation-competition-vision/main.py --deal_method hide --config_path /media/sdcard/code/Engineering-innovation-competition-vision/config.json
+/media/sdcard/miniconda3/envs/EIC/bin/python /media/sdcard/code/Engineering-innovation-competition-vision/main.py -c /media/sdcard/code/Engineering-innovation-competition-vision/config.yaml
 ```
 
-- --deal_method hide: 表示隐藏处理过程的图像，可以选的有send和show
-- --config_path: 表示配置文件的路径，默认是当前目录下的config.json
+- --config_path(-c): 表示配置文件的路径，默认是当前目录下的config.yaml
 
 #### 快捷方式的创建
 
@@ -351,16 +440,14 @@ source ~/.bashrc
 
 ```bash
 # 正式版的main，不显示图像
-alias run="/media/sdcard/miniconda3/envs/EIC/bin/python /media/sdcard/code/Engineering-innovation-competition-vision/main.py --deal_method hide --config_path /media/sdcard/code/Engineering-innovation-competition-vision/config.json"
-# 调试版的main，显示图像(图传)
-alias run-debug="/media/sdcard/miniconda3/envs/EIC/bin/python /media/sdcard/code/Engineering-innovation-competition-vision/main.py --deal_method send --config_path /media/sdcard/code/Engineering-innovation-competition-vision/config.json"
+alias run="/media/sdcard/miniconda3/envs/EIC/bin/python /media/sdcard/code/Engineering-innovation-competition-vision/main.py --config_path /media/sdcard/code/Engineering-innovation-competition-vision/config.yaml"
 ```
 
 也可以使用`echo`命令添加
 
 ```bash
-echo "alias run=\"/media/sdcard/miniconda3/envs/EIC/bin/python /media/sdcard/code/Engineering-innovation-competition-vision/main.py --deal_method hide --config_path /media/sdcard/code/Engineering-innovation-competition-vision/config.json\"" >> ~/.bashrc
-echo "alias run-debug=\"/media/sdcard/miniconda3/envs/EIC/bin/python /media/sdcard/code/Engineering-innovation-competition-vision/main.py --deal_method send --config_path /media/sdcard/code/Engineering-innovation-competition-vision/config.json\"" >> ~/.bashrc
+echo "alias run=\"/media/sdcard/miniconda3/envs/EIC/bin/python /media/sdcard/code/Engineering-innovation-competition-vision/main.py --config_path /media/sdcard/code/Engineering-innovation-competition-vision/config.yaml\"" >> ~/.bashrc
+echo "alias run-debug=\"/media/sdcard/miniconda3/envs/EIC/bin/python /media/sdcard/code/Engineering-innovation-competition-vision/main.py --deal_method send --config_path /media/sdcard/code/Engineering-innovation-competition-vision/config.yaml\"" >> ~/.bashrc
 ```
 
 然后使用 `source ~/.bashrc`命令使其生效
@@ -393,6 +480,7 @@ sudo systemctl disable run-main-auto.service
 下面不会在讲到非必要文件，例如.gitignore，LICENSE等文件
 
 ```
+run_auto                    用于自启动服务及其脚本的文件夹
 detector
     |___ __init__.py        检测器的初始化文件
     |___ Detector.py        检测器的基类
@@ -404,10 +492,15 @@ utils                       用于存放工具代码的文件夹
     |___ _cap.py            关于摄像头的代码
     |___ typingCheck.py     用于检查函数的的形参和实参是否匹配
     |___ UART.py            串口通信的代码
-    |___ ImgTrans.py        用于远程图传的代码
     |___ gpio.py            有关于GPIO的代码，主要是开关,LED,OLED的抽象
     |___ tspi_boaed_info.py 用于获取泰山派的信息
     |___ wifi_connect.py    用于连接wifi的代码
+    |___ ConfigLoader.py    用于加载配置文件的代码
+    |___ logger.py          用于打印日志的函数，主要是包含了时间戳和字体颜色
+ImgTrans                    用于存放图传逻辑的文件夹
+    |___ __init__.py        图传逻辑的初始化文件
+    |___ IImgTrans.py       图传逻辑的基类(类似于接口)
+    |___ ImgTrans.py        图传逻辑的实现类，包括TCP和UDP
 
 AdjustConfig.py             用于调整配置的调试代码
 Solution.py                 用于存放解决方案的代码，包括颜色识别，圆环识别，直线识别以及串口等使用的函数
@@ -426,14 +519,14 @@ environment.sh              用于一键配置泰山派环境的脚本，还没�
 - 物料的运动检测，即物料所在位号发生变化认为物料运动，直接返回物料位号
 
 ```
-"R1G2B3"代表红色在1号位，绿色在2号位，蓝色在3号位
+"C123E"代表红色在1号位，绿色在2号位，蓝色在3号位
 如果有物料没识别到位号（可能被夹走），对应的数字变为0
 ```
 
 - 获取物料位置，返回位号，这个是直接看当前位置，不等待运动，与上面的不同
 
 ```
-"R1G2B3"代表红色在1号位，绿色在2号位，蓝色在3号位
+"C123E"代表红色在1号位，绿色在2号位，蓝色在3号位
 如果有物料没识别到位号（可能被夹走），对应的数字变为0
 ```
 
@@ -447,7 +540,7 @@ str的结果会表示为
         其中：
         * L(location),表示定位
         * XXX是角度的十倍(如果是圆环，此处为000)
-        * H代表正负号（0和1）(如果是圆环，此处为000)
+        * H代表正负号（0和1）(如果是圆环，此处为0)
         * xxx和yyy代表交点的坐标
 ```
 
@@ -457,7 +550,7 @@ str的结果会表示为
 
 - 物料追踪
 
-## 外部调节的参数(config.json)
+## 外部调节的参数(config.yaml)
 
 ### 直线识别参数
 
@@ -473,6 +566,12 @@ LineDetector:
   bias: 1               #允许的角度误差
   sigma: 0              #Canny边缘检测的sigma
   odd_index: 3          #kernel_size(滤波卷积核尺寸)是第几个奇数
+  H_High: 57
+  H_Low: 12
+  S_High: 200
+  S_Low: 5
+  V_High: 240
+  V_Low: 0
 ```
 
 ### 位号参数
@@ -601,7 +700,7 @@ def func(self, img:cv2.typing.MatLike) -> tuple[None|str, cv2.typing.MatLike]:..
 
 在图传接收器中，将ip地址改为树莓派的ip地址，端口号改为图传的端口号，即可在电脑上调整参数。**但是需要先在树莓派上运行图传文件**
 
-完成本地调参之后，将 `config.json`文件复制到树莓派上。
+完成本地调参之后，将 `config.yaml`文件复制到树莓派上。
 
 树莓派的无线网卡延迟比较高，远程图传的体检较差，我用的是有线网口进行的有线网络连接，使用的是双机通信内环IP(169.254.0.0/16)
 
@@ -613,11 +712,7 @@ def func(self, img:cv2.typing.MatLike) -> tuple[None|str, cv2.typing.MatLike]:..
 
 ### 远程图传(img_trans.py)
 
-在树莓派和本地电脑的文件是不同的，对应不同的仓库分支，分支 `developing`是本地电脑的开发版本，分支 `master`是树莓派的正式版本。
-
-在树莓派的版本中，所有图传都是向外发送;在本地版本中，所有图传都是接收。
-
-**所有图传都要树莓派(服务端)先运行**，然后本地电脑(客户端)再运行，否则会出现 `地址已被占用`的错误。如果已经排除了这个问题仍然出现这个错误，检查ip是否是**服务端的ip**，端口号在**两端中是否一致**。
+图传文件在一开始在两个平台是不能混用的，但是到现在这个版本，做了平台的判断，如果是Linux平台，会执行发送图传的逻辑，反之执行接收图传的逻辑
 
 ## 创新点
 
